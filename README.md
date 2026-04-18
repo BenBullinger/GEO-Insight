@@ -8,30 +8,39 @@ A decision-support prototype that ranks active humanitarian crises by the mismat
 ## Quick start
 
 ```bash
-# 1. Clone
 git clone git@github.com:BenBullinger/GEO-Insight.git
 cd GEO-Insight
-
-# 2. Download source data (~270 MB, Python stdlib only, no pip install)
-python3 Data/download.py            # ~2–3 min on broadband
-python3 Data/download.py --check    # verify
-
-# 3. Read the proposal
-open proposal/proposal.pdf          # or the .tex if you want to edit
-
-# 4. Run the presentation
-cd presentation && python3 -m http.server 8000
-#    open http://localhost:8000 in any browser
-#    keyboard: Space/→ next · S speaker · F fullscreen · ? shortcuts
-#    PDF export: append ?print-pdf and Cmd/Ctrl-P → Save as PDF
-
-# 5. Run the data-landscape dashboard (for team orientation / discussion)
-cd dashboard && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # one-time
-.venv/bin/streamlit run app.py
-#    opens http://localhost:8501 — see dashboard/README.md for sections
+./run.sh
 ```
 
-Toolchain: Python 3 stdlib covers everything except the dashboard, which needs `streamlit + pandas + plotly` in a venv.
+That's it. `run.sh` is idempotent: on first run it downloads the ~270 MB of source data, creates the dashboard virtualenv, and installs Streamlit; on subsequent runs it just starts the servers. Ctrl-C shuts everything down cleanly.
+
+Once it's running:
+
+- **Presentation** — <http://localhost:8000> (reveal.js deck · `S` speaker view · `F` fullscreen · `?` shortcuts)
+- **Dashboard** — <http://localhost:8501> (data-landscape explorer across the 5 sources)
+- **Proposal** — `proposal/proposal.pdf`
+
+Nothing is hosted publicly. Everything is localhost-only.
+
+### Running pieces individually
+
+If you want just one surface up (or `run.sh` conflicts with something else on 8000/8501):
+
+```bash
+python3 Data/download.py             # one-time: pull ~270 MB source data into Data/
+cd presentation && python3 -m http.server 8000               # presentation only
+cd dashboard && .venv/bin/streamlit run app.py               # dashboard only (needs venv set up once)
+```
+
+Dashboard venv setup (one-time, if not using `run.sh`):
+
+```bash
+cd dashboard
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+```
+
+Toolchain: Python 3 stdlib covers everything except the dashboard, which needs `streamlit + pandas + plotly` in a venv (handled automatically by `run.sh`).
 
 ## Research direction
 
@@ -59,6 +68,7 @@ When almost every response is underfunded, a single coverage ratio stops being d
 ```
 GEO-Insight/
 ├── README.md                 this file
+├── run.sh                    single-command launcher (presentation + dashboard)
 ├── .gitignore
 ├── task/
 │   └── challenge.md          official challenge brief
