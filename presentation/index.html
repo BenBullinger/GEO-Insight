@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GEO-Insight — Datathon 2026</title>
+
+    <!-- reveal.js core + reset -->
+    <link rel="stylesheet" href="vendor/reveal.js/dist/reset.css">
+    <link rel="stylesheet" href="vendor/reveal.js/dist/reveal.css">
+    <!-- base theme (we override with theme-un.css) -->
+    <link rel="stylesheet" href="vendor/reveal.js/dist/theme/white.css" id="theme">
+    <!-- custom theme -->
+    <link rel="stylesheet" href="css/theme-un.css">
+    <!-- code highlighting theme -->
+    <link rel="stylesheet" href="vendor/reveal.js/dist/plugin/highlight/monokai.css">
+</head>
+
+<body>
+<div class="reveal">
+    <div class="slides">
+
+        <!-- ===== TITLE ===== -->
+        <section class="title-slide">
+            <div class="eyebrow">ETH Zürich · Datathon 2026 · FS26</div>
+            <h1>GEO-Insight</h1>
+            <div class="subtitle">Which humanitarian crises are most overlooked?<br>
+                A multi-attribute gap-ranking system for need vs. funding coverage.</div>
+            <div class="meta">
+                <strong>Team:</strong> [Names]<br>
+                <strong>Date:</strong> [Final presentation date]<br>
+                <strong>Repository:</strong> github.com/BenBullinger/GEO-Insight
+            </div>
+        </section>
+
+        <!-- ===== MOTIVATION ===== -->
+        <section>
+            <h1>The question</h1>
+            <p>Humanitarian coordinators and donor advisors need rapid, defensible answers to one recurring question:</p>
+            <blockquote>Relative to documented need, which crises are most overlooked?</blockquote>
+            <p>Typical decision-maker queries:</p>
+            <ul>
+                <li>Which crises have the highest people-in-need but the lowest fund allocations?</li>
+                <li>Which countries with active HRPs have negligible funding?</li>
+                <li>Which regions are consistently underfunded across multiple years?</li>
+                <li>Which food-security hotspots received under 10% of requirements?</li>
+            </ul>
+            <div class="footer"><span>GEO-Insight · Datathon 2026</span><span>1</span></div>
+        </section>
+
+        <!-- ===== WHY NOW ===== -->
+        <section>
+            <h1>Why this matters now</h1>
+            <div class="cols-3">
+                <div class="stat"><span class="value">$33B</span><span class="label">2026 GHO appeal</span></div>
+                <div class="stat"><span class="value">$12B</span><span class="label">Raised in 2025 (decade low)</span></div>
+                <div class="stat"><span class="value">19</span><span class="label">Severely underfunded contexts (vs. 8 in 2021)</span></div>
+            </div>
+            <h3 style="margin-top: 0.8em;">Headline coverage ratios</h3>
+            <table>
+                <thead><tr><th>Country</th><th>2024</th><th>2025</th><th>Change</th></tr></thead>
+                <tbody>
+                    <tr><td>Sudan</td><td>69%</td><td>35%</td><td>-34 pp</td></tr>
+                    <tr><td>Yemen</td><td>~40%</td><td>~24%</td><td>-16 pp</td></tr>
+                    <tr><td>Somalia</td><td>~45%</td><td>~24%</td><td>-21 pp</td></tr>
+                    <tr><td>DRC</td><td>~40%</td><td>~22%</td><td>-18 pp</td></tr>
+                </tbody>
+            </table>
+            <p class="sources">Sources: OCHA Global Humanitarian Overview 2026; The New Humanitarian (Dec 2025). Figures approximate pending final FTS reconciliation.</p>
+            <div class="footer"><span>GEO-Insight · Datathon 2026</span><span>2</span></div>
+        </section>
+
+        <!-- ===== SECTION DIVIDER: APPROACH ===== -->
+        <section class="section-divider">
+            <div class="eyebrow">Part I</div>
+            <h1 style="color: white; border-color: var(--un-accent-warm);">Approach</h1>
+        </section>
+
+        <!-- ===== DATA SOURCES ===== -->
+        <section>
+            <h1>Data sources</h1>
+            <table>
+                <thead><tr><th>Dataset</th><th>Role</th><th>Source</th></tr></thead>
+                <tbody>
+                    <tr><td>HNO</td><td>People in need by country &amp; sector</td><td>HDX / OCHA HPC</td></tr>
+                    <tr><td>HRP</td><td>Plan targets, status, requirements</td><td>HDX / OCHA</td></tr>
+                    <tr><td>FTS</td><td>Requested, pledged, received funding</td><td>HDX / OCHA FTS</td></tr>
+                    <tr><td>CoD-PS</td><td>Population denominators</td><td>HDX</td></tr>
+                    <tr><td>CBPF</td><td>Pooled fund allocations</td><td>cbpf.data.unocha.org</td></tr>
+                    <tr><td>HDX HAPI</td><td>Unified daily-refresh API</td><td>HDX</td></tr>
+                </tbody>
+            </table>
+            <div class="callout"><strong>Validation benchmark:</strong> CERF Underfunded Emergencies list — OCHA's own human-curated record of neglected crises. Used for Overlap@K and rank correlation, never as a scoring input.</div>
+            <div class="footer"><span>GEO-Insight · Datathon 2026</span><span>3</span></div>
+        </section>
+
+        <!-- ===== GAP SCORE ===== -->
+        <section>
+            <h1>The gap score</h1>
+            <p>Following a multi-attribute utility framing <em>(Rye &amp; Aktas, 2022)</em>. For each eligible crisis <code>u</code>:</p>
+            <p style="text-align: center; margin: 0.8em 0;">
+                \[G(u) \;=\; \sum_{i=1}^{5} w_i \cdot U_i\!\left(\tilde{a}_i(u)\right)\]
+            </p>
+            <div class="cols">
+                <div>
+                    <h3>Attributes</h3>
+                    <ul>
+                        <li>Coverage shortfall</li>
+                        <li>Per-PIN funding gap</li>
+                        <li>Need intensity (PIN / population)</li>
+                        <li>Severity (HNO / IPC)</li>
+                        <li>Donor concentration (HHI)</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Properties</h3>
+                    <ul>
+                        <li>Weights elicited via AHP</li>
+                        <li>Every score decomposes into attribute contributions</li>
+                        <li>Three default profiles: balanced, equity, donor-advisory</li>
+                        <li>Concave utility on coverage for low-coverage tail</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer"><span>GEO-Insight · Datathon 2026</span><span>4</span></div>
+        </section>
+
+        <!-- ===== STRUCTURAL VS ACUTE ===== -->
+        <section>
+            <h1>Structural vs. acute neglect</h1>
+            <p>For the bonus task, we decompose the gap score temporally:</p>
+            <p style="text-align: center;">
+                \[\bar{G}_k(u) = \tfrac{1}{k}\!\!\sum_{t=T-k+1}^{T}\! G_t(u) \quad\quad \Delta G(u) = G_T(u) - \tfrac{1}{k-1}\!\!\sum_{t=T-k+1}^{T-1}\! G_t(u)\]
+            </p>
+            <div class="cols">
+                <div>
+                    <h3>Chronic axis</h3>
+                    <p style="font-size: 0.85em;">Persistent underfunding across k years. Policy response: multi-year pooled funding.</p>
+                </div>
+                <div>
+                    <h3>Acute axis</h3>
+                    <p style="font-size: 0.85em;">Recent deviation from rolling mean. Policy response: CERF rapid-response window.</p>
+                </div>
+            </div>
+            <div class="callout"><em>[Figure placeholder: chronic × acute quadrant scatter — one point per country, coloured by region]</em></div>
+            <div class="footer"><span>GEO-Insight · Datathon 2026</span><span>5</span></div>
+        </section>
+
+        <!-- ===== SECTION DIVIDER: RESULTS ===== -->
+        <section class="section-divider">
+            <div class="eyebrow">Part II</div>
+            <h1 style="color: white; border-color: var(--un-accent-warm);">Results</h1>
+        </section>
+
+        <!-- ===== DEMO / RESULTS ===== -->
+        <section>
+            <h1>Top-ranked overlooked crises</h1>
+            <p><em>[Placeholder — populate from implementation output]</em></p>
+            <table>
+                <thead><tr><th>#</th><th>Country</th><th>Score</th><th>Coverage</th><th>PIN</th><th>Dominant attribute</th></tr></thead>
+                <tbody>
+                    <tr><td>1</td><td>[—]</td><td>[0.xx]</td><td>[xx%]</td><td>[xx M]</td><td>[—]</td></tr>
+                    <tr><td>2</td><td>[—]</td><td>[0.xx]</td><td>[xx%]</td><td>[xx M]</td><td>[—]</td></tr>
+                    <tr><td>3</td><td>[—]</td><td>[0.xx]</td><td>[xx%]</td><td>[xx M]</td><td>[—]</td></tr>
+                </tbody>
+            </table>
+            <div class="footer"><span>GEO-Insight · Datathon 2026</span><span>6</span></div>
+        </section>
+
+        <!-- ===== VALIDATION ===== -->
+        <section>
+            <h1>Validation against CERF UFE</h1>
+            <div class="cols">
+                <div>
+                    <h3>Metrics</h3>
+                    <ul>
+                        <li>Overlap@K with CERF UFE list</li>
+                        <li>Spearman rank correlation</li>
+                        <li>Weight-profile sensitivity band</li>
+                        <li>Data-removal stress tests</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Results</h3>
+                    <p><em>[Placeholder: Overlap@10 = xx%, ρ = 0.xx, sensitivity band ±xx%]</em></p>
+                </div>
+            </div>
+            <div class="callout-warn"><strong>Interpretation caveat:</strong> Agreement with CERF UFE is a sanity check, not a ground truth. Defensible disagreement is informative.</div>
+            <div class="footer"><span>GEO-Insight · Datathon 2026</span><span>7</span></div>
+        </section>
+
+        <!-- ===== LIMITATIONS ===== -->
+        <section>
+            <h1>Limitations &amp; ethics</h1>
+            <ul>
+                <li><strong>Decision support, not automation.</strong> The tool ranks; humans decide.</li>
+                <li><strong>Visibility bias.</strong> Crises with collapsed statistical systems may appear under-ranked because HNO data is stale or missing.</li>
+                <li><strong>Political sensitivity.</strong> Outputs report numeric facts and attribute contributions, never donor-shaming framing.</li>
+                <li><strong>No false precision.</strong> Scores to two significant figures; sensitivity bands shown alongside point values.</li>
+                <li><strong>Reproducibility.</strong> Data fetches timestamped and versioned; LLM calls logged.</li>
+            </ul>
+            <div class="footer"><span>GEO-Insight · Datathon 2026</span><span>8</span></div>
+        </section>
+
+        <!-- ===== NEXT STEPS / CLOSING ===== -->
+        <section>
+            <h1>Next steps</h1>
+            <div class="cols">
+                <div>
+                    <h3>Short term</h3>
+                    <ul>
+                        <li>Extend ranking to sector × country</li>
+                        <li>Harden NL query layer</li>
+                        <li>Publish reproducible notebook</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Open questions</h3>
+                    <ul>
+                        <li>Bias correction for missing HNO vintages</li>
+                        <li>Integrating ACLED / IPC signals without double-counting</li>
+                        <li>User study with humanitarian analysts</li>
+                    </ul>
+                </div>
+            </div>
+            <p style="margin-top: 1.5em;"><strong>Thank you.</strong> Questions?</p>
+            <p class="sources">Proposal: <code>proposal/proposal.pdf</code> · Repository: <code>github.com/BenBullinger/GEO-Insight</code></p>
+            <div class="footer"><span>GEO-Insight · Datathon 2026</span><span>9</span></div>
+        </section>
+
+    </div>
+</div>
+
+<!-- reveal.js core -->
+<script src="vendor/reveal.js/dist/reveal.js"></script>
+<!-- plugins -->
+<script src="vendor/reveal.js/dist/plugin/highlight.js"></script>
+<script src="vendor/reveal.js/dist/plugin/notes.js"></script>
+<script src="vendor/reveal.js/dist/plugin/math.js"></script>
+
+<script>
+    Reveal.initialize({
+        hash: true,
+        slideNumber: false,
+        controls: true,
+        progress: true,
+        center: false,
+        transition: 'fade',
+        transitionSpeed: 'fast',
+        width: 1280,
+        height: 800,
+        margin: 0.06,
+        minScale: 0.2,
+        maxScale: 2.0,
+        katex: {
+            version: 'latest',
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\(', right: '\\)', display: false},
+                {left: '\\[', right: '\\]', display: true}
+            ],
+            ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+        },
+        plugins: [RevealHighlight, RevealNotes, RevealMath.KaTeX]
+    });
+</script>
+</body>
+</html>

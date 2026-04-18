@@ -1,0 +1,350 @@
+/* GEO-Insight presentation theme
+ * Custom theme inspired by UN publication aesthetics (muted, clean, blue accent).
+ * Does not use UN branding, logos, or typefaces. */
+
+:root {
+    --un-blue: #009EDB;
+    --un-blue-dark: #0072BC;
+    --un-blue-deep: #1F4E79;
+    --un-gray-dark: #2C3E50;
+    --un-gray: #595959;
+    --un-gray-light: #8A8A8A;
+    --un-bg: #FFFFFF;
+    --un-bg-alt: #F4F7FA;
+    --un-rule: #D8DEE4;
+    --un-accent-warm: #E99C2D;
+}
+
+.reveal-viewport {
+    background: var(--un-bg);
+}
+
+.reveal {
+    font-family: "Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif;
+    font-size: 28px;
+    font-weight: 300;
+    color: var(--un-gray-dark);
+    letter-spacing: 0.005em;
+}
+
+.reveal .slides {
+    text-align: left;
+}
+
+.reveal .slides > section,
+.reveal .slides > section > section {
+    padding: 40px 60px;
+    line-height: 1.4;
+}
+
+/* Headings */
+.reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+    font-family: inherit;
+    color: var(--un-blue-deep);
+    text-transform: none;
+    text-shadow: none;
+    font-weight: 500;
+    letter-spacing: 0;
+    margin: 0 0 0.6em 0;
+}
+
+.reveal h1 {
+    font-size: 1.7em;
+    border-bottom: 3px solid var(--un-blue);
+    padding-bottom: 0.25em;
+    margin-bottom: 0.8em;
+    font-weight: 400;
+}
+
+.reveal h2 { font-size: 1.3em; }
+.reveal h3 { font-size: 1.05em; color: var(--un-gray-dark); font-weight: 500; }
+.reveal h4 { font-size: 0.9em; color: var(--un-gray); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+
+.reveal p { margin: 0 0 0.6em 0; }
+
+.reveal strong, .reveal b {
+    color: var(--un-blue-deep);
+    font-weight: 600;
+}
+
+.reveal em, .reveal i {
+    color: var(--un-gray-dark);
+    font-style: italic;
+}
+
+/* Lists */
+.reveal ul, .reveal ol {
+    margin: 0 0 0.6em 1em;
+    padding: 0;
+}
+
+.reveal ul li, .reveal ol li {
+    margin-bottom: 0.35em;
+}
+
+.reveal ul li::marker { color: var(--un-blue); }
+
+/* Tables */
+.reveal table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.5em 0;
+    font-size: 0.75em;
+    background: var(--un-bg);
+}
+
+.reveal table th {
+    background: var(--un-blue-deep);
+    color: white;
+    font-weight: 500;
+    text-align: left;
+    padding: 8px 14px;
+    border: none;
+}
+
+.reveal table td {
+    padding: 7px 14px;
+    border-bottom: 1px solid var(--un-rule);
+    vertical-align: top;
+}
+
+.reveal table tbody tr:hover { background: var(--un-bg-alt); }
+
+/* Code */
+.reveal code, .reveal pre {
+    font-family: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+}
+
+.reveal code {
+    font-size: 0.85em;
+    background: var(--un-bg-alt);
+    padding: 2px 8px;
+    border-radius: 3px;
+    color: var(--un-blue-deep);
+}
+
+.reveal pre {
+    box-shadow: none;
+    font-size: 0.65em;
+    line-height: 1.4;
+    margin: 0.6em 0;
+}
+
+.reveal pre code {
+    padding: 16px 20px;
+    border-radius: 4px;
+    background: var(--un-bg-alt);
+    color: var(--un-gray-dark);
+    border-left: 3px solid var(--un-blue);
+    max-height: 500px;
+    overflow: auto;
+}
+
+/* Blockquote */
+.reveal blockquote {
+    display: block;
+    position: static;
+    width: 100%;
+    margin: 0.6em 0;
+    padding: 10px 20px;
+    background: var(--un-bg-alt);
+    border-left: 4px solid var(--un-blue);
+    box-shadow: none;
+    font-style: normal;
+    color: var(--un-gray-dark);
+    font-size: 0.95em;
+}
+
+/* Links */
+.reveal a {
+    color: var(--un-blue-dark);
+    text-decoration: none;
+    border-bottom: 1px solid var(--un-blue);
+    transition: color 0.15s;
+}
+
+.reveal a:hover { color: var(--un-blue-deep); }
+
+/* Math (KaTeX) — keep default sizing but match color */
+.reveal .katex { color: var(--un-gray-dark); }
+
+/* Slide controls + progress bar */
+.reveal .controls {
+    color: var(--un-blue-dark);
+}
+
+.reveal .progress {
+    color: var(--un-blue);
+    background: var(--un-rule);
+    height: 3px;
+}
+
+.reveal .slide-number {
+    color: var(--un-gray);
+    background: transparent;
+    font-size: 14px;
+    font-family: inherit;
+    right: 24px;
+    bottom: 16px;
+}
+
+/* Title slide (add class="title-slide" on the section) */
+.reveal .title-slide {
+    text-align: left;
+}
+
+.reveal .title-slide::before {
+    content: "";
+    display: block;
+    width: 80px;
+    height: 4px;
+    background: var(--un-blue);
+    margin-bottom: 28px;
+}
+
+.reveal .title-slide .eyebrow {
+    font-size: 0.55em;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--un-gray);
+    margin-bottom: 1.2em;
+    font-weight: 500;
+}
+
+.reveal .title-slide h1 {
+    font-size: 2.3em;
+    font-weight: 300;
+    border: none;
+    padding: 0;
+    margin-bottom: 0.2em;
+    color: var(--un-blue-deep);
+    line-height: 1.1;
+}
+
+.reveal .title-slide .subtitle {
+    font-size: 1.1em;
+    color: var(--un-gray-dark);
+    font-weight: 300;
+    margin-bottom: 2em;
+    line-height: 1.3;
+}
+
+.reveal .title-slide .meta {
+    font-size: 0.55em;
+    color: var(--un-gray);
+    border-top: 1px solid var(--un-rule);
+    padding-top: 0.8em;
+    display: inline-block;
+    min-width: 360px;
+    line-height: 1.6;
+}
+
+.reveal .title-slide .meta strong {
+    color: var(--un-gray-dark);
+    font-weight: 500;
+}
+
+/* Section divider slides */
+.reveal .section-divider {
+    text-align: left;
+    background: var(--un-blue-deep);
+    color: white;
+}
+
+.reveal .section-divider h1,
+.reveal .section-divider h2 {
+    color: white;
+    border-bottom-color: var(--un-accent-warm);
+}
+
+.reveal .section-divider .eyebrow {
+    font-size: 0.55em;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: rgba(255,255,255,0.7);
+}
+
+/* Footer (add <div class="footer"> inside a section) */
+.reveal .footer {
+    position: absolute;
+    bottom: 16px;
+    left: 60px;
+    right: 60px;
+    font-size: 0.45em;
+    color: var(--un-gray-light);
+    border-top: 1px solid var(--un-rule);
+    padding-top: 6px;
+    display: flex;
+    justify-content: space-between;
+    letter-spacing: 0.03em;
+}
+
+/* Two-column layout helper (add class="cols" on a wrapper div) */
+.reveal .cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    align-items: start;
+}
+
+.reveal .cols-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+/* Callout box */
+.reveal .callout {
+    background: var(--un-bg-alt);
+    border-left: 4px solid var(--un-blue);
+    padding: 14px 18px;
+    margin: 0.6em 0;
+    font-size: 0.9em;
+}
+
+.reveal .callout-warn {
+    background: #FDF6EC;
+    border-left: 4px solid var(--un-accent-warm);
+    padding: 14px 18px;
+    margin: 0.6em 0;
+    font-size: 0.9em;
+}
+
+/* Big stat block */
+.reveal .stat {
+    text-align: center;
+    padding: 12px;
+}
+
+.reveal .stat .value {
+    font-size: 2.2em;
+    font-weight: 300;
+    color: var(--un-blue-deep);
+    line-height: 1;
+    display: block;
+}
+
+.reveal .stat .label {
+    font-size: 0.8em;
+    color: var(--un-gray);
+    margin-top: 6px;
+    display: block;
+}
+
+/* Sources line */
+.reveal .sources {
+    font-size: 0.5em;
+    color: var(--un-gray-light);
+    margin-top: 1.5em;
+    line-height: 1.4;
+    border-top: 1px solid var(--un-rule);
+    padding-top: 6px;
+}
+
+/* Print / PDF export — let reveal handle pagination */
+@media print {
+    .reveal .slides section {
+        page-break-after: always;
+    }
+}
