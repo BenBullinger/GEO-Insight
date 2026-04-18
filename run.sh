@@ -21,6 +21,7 @@ cd "$(dirname "$0")"
 PORT_LAND=7777
 PORT_PRES=8000
 PORT_DASH=8501
+PORT_ANAL=8502
 
 # ─── 1. Source data ──────────────────────────────────────────────────────────
 if ! python3 Data/download.py --check >/dev/null 2>&1; then
@@ -81,7 +82,7 @@ free_port() {
     sleep 1
 }
 
-for p in "$PORT_LAND" "$PORT_PRES" "$PORT_DASH"; do
+for p in "$PORT_LAND" "$PORT_PRES" "$PORT_DASH" "$PORT_ANAL"; do
     free_port "$p"
 done
 
@@ -104,11 +105,18 @@ dashboard/.venv/bin/streamlit run dashboard/app.py \
     >"$LOG_DIR/dashboard.log" 2>&1 &
 DASH_PID=$!
 
+dashboard/.venv/bin/streamlit run analysis/app.py \
+    --server.port="$PORT_ANAL" \
+    --server.headless=true \
+    --browser.gatherUsageStats=false \
+    >"$LOG_DIR/analysis.log" 2>&1 &
+ANAL_PID=$!
+
 # ─── 5. Shutdown handling ────────────────────────────────────────────────────
 cleanup() {
     echo ""
     echo "→ Shutting down…"
-    kill "$LAND_PID" "$PRES_PID" "$DASH_PID" 2>/dev/null || true
+    kill "$LAND_PID" "$PRES_PID" "$DASH_PID" "$ANAL_PID" 2>/dev/null || true
     wait 2>/dev/null || true
     echo "  Done."
     exit 0
@@ -122,10 +130,11 @@ cat <<EOF
 
   ┌──────────────────────────────────────────────────────────────────┐
   │                                                                  │
-  │   ▸ Landing      http://localhost:$PORT_LAND  (start here)             │
-  │     Presentation http://localhost:$PORT_PRES                           │
-  │     Dashboard    http://localhost:$PORT_DASH                           │
-  │     Proposal PDF proposal/proposal.pdf                           │
+  │   ▸ Landing          http://localhost:$PORT_LAND  (start here)         │
+  │     Presentation     http://localhost:$PORT_PRES                       │
+  │     Data exploration http://localhost:$PORT_DASH                       │
+  │     Analysis (ML)    http://localhost:$PORT_ANAL                       │
+  │     Proposal PDF     proposal/proposal.pdf                       │
   │                                                                  │
   │   Logs:          $LOG_DIR
   │                                                                  │

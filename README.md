@@ -47,7 +47,8 @@ Opens the landing page in your default browser. `Ctrl-C` in the terminal shuts e
 |---|---|---|
 | **<http://localhost:7777>** | **Landing page** | Start here — clean page linking to everything else |
 | <http://localhost:8000> | Presentation | reveal.js deck · `S` speaker · `F` fullscreen · `?` shortcuts · `?print-pdf` for PDF export |
-| <http://localhost:8501> | Dashboard | Streamlit data-landscape explorer across the 5 primary sources + INFORM Severity |
+| <http://localhost:8501> | Data exploration | Streamlit landscape explorer across the 5 primary sources + INFORM Severity |
+| <http://localhost:8502> | Analysis (unsupervised) | Streamlit site: PCA, k-means, hierarchical, t-SNE, temporal archetypes, correlation |
 | `proposal/proposal.pdf` | Proposal | Also reachable from the landing page card |
 
 ## Running pieces individually
@@ -62,8 +63,11 @@ python3 Data/download.py --check       # report what's on disk, no download
 # Presentation on :8000
 python3 -m http.server 8000 --directory presentation
 
-# Dashboard on :8501 (requires one-time venv setup below)
+# Data exploration on :8501 (requires one-time venv setup below)
 dashboard/.venv/bin/streamlit run dashboard/app.py
+
+# Analysis on :8502 (shares the same venv)
+dashboard/.venv/bin/streamlit run analysis/app.py --server.port 8502
 
 # Landing page on :7777
 python3 -m http.server 7777 --directory landing
@@ -114,10 +118,14 @@ GEO-Insight/
 │   ├── index.html            localhost landing page
 │   └── proposal.pdf          symlink to ../proposal/proposal.pdf
 ├── dashboard/
-│   ├── app.py                Streamlit data-landscape dashboard
-│   ├── requirements.txt      streamlit, pandas, plotly
+│   ├── app.py                Streamlit data-exploration dashboard (9 sections)
+│   ├── requirements.txt      streamlit, pandas, plotly, openpyxl, scikit-learn, scipy
 │   ├── README.md             dashboard-specific notes
-│   └── .venv/                created by run.sh (gitignored)
+│   └── .venv/                created by run.sh (gitignored; shared with analysis/)
+├── analysis/
+│   ├── app.py                Streamlit unsupervised-analysis site (7 sections)
+│   ├── features.py           per-country feature matrix + trajectory matrix builders
+│   └── README.md
 └── src/                      implementation — to be written
 ```
 
