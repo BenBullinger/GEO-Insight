@@ -1,0 +1,225 @@
+/* GEO-Insight — shared design tokens
+ *
+ * Single source of truth for typography, colour, spacing and
+ * component primitives. Consumed directly by landing/ and mirrored
+ * (tokens only) by the slide-deck theme and the Streamlit _theme.py.
+ *
+ * Principles: oxblood-red single accent, generous whitespace,
+ * monospace numerics, zero decoration that isn't informational.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+    /* Neutrals */
+    --ink:     #111111;
+    --text:    #222222;
+    --muted:   #555555;
+    --subtle:  #888888;
+    --faint:   #bcbcbc;
+    --rule:    #e8e8e8;
+    --surface: #fafafa;
+    --bg:      #ffffff;
+
+    /* Single accent — oxblood red */
+    --accent:      #7c1d1d;
+    --accent-dim:  #9a2a2a;
+    --accent-soft: #c9554f;
+    --accent-wash: #f8ecec;
+    --accent-mist: #fcf5f5;
+
+    /* Spacing scale (4-px base) */
+    --s-1: 4px;
+    --s-2: 8px;
+    --s-3: 12px;
+    --s-4: 16px;
+    --s-5: 24px;
+    --s-6: 32px;
+    --s-7: 48px;
+    --s-8: 72px;
+
+    /* Fonts */
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* ─── Base reset ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-sans);
+    color: var(--text);
+    background: var(--bg);
+    font-weight: 400;
+    line-height: 1.55;
+    letter-spacing: -0.005em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+code, kbd, pre, .mono, .tabular {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: 400;
+}
+
+/* ─── Typography utilities ───────────────────────────────────── */
+.eyebrow {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+h1, .h1 {
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+    margin: 0 0 var(--s-3) 0;
+}
+
+h2, .h2 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+    margin: 0 0 var(--s-3) 0;
+}
+
+h3, .h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 0 0 var(--s-2) 0;
+}
+
+p, .body {
+    font-size: 0.95rem;
+    color: var(--text);
+    line-height: 1.65;
+    margin: 0 0 var(--s-3) 0;
+}
+
+.muted   { color: var(--muted); }
+.subtle  { color: var(--subtle); }
+.accent  { color: var(--accent); font-weight: 600; }
+
+/* ─── Accent rule (geometric mark instead of decorative line) ─ */
+.accent-bar {
+    display: inline-block;
+    width: 42px;
+    height: 3px;
+    background: var(--accent);
+    border-radius: 2px;
+    margin-bottom: var(--s-5);
+}
+
+/* ─── Card primitive ─────────────────────────────────────────── */
+.card {
+    display: block;
+    background: var(--bg);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: var(--s-5) var(--s-5);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+    position: relative;
+}
+
+.card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 6px 18px rgba(124, 29, 29, 0.08);
+    transform: translateY(-1px);
+}
+
+.card .card-label {
+    font-size: 0.68rem;
+    color: var(--subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 600;
+    margin-bottom: var(--s-2);
+}
+
+.card h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 0 0 var(--s-2) 0;
+    letter-spacing: -0.01em;
+}
+
+.card p {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin: 0;
+    line-height: 1.55;
+}
+
+.card .card-url {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--subtle);
+    margin-top: var(--s-3);
+    display: block;
+    letter-spacing: 0;
+}
+
+.card .card-arrow {
+    position: absolute;
+    top: var(--s-5);
+    right: var(--s-5);
+    color: var(--accent);
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity .15s ease, transform .15s ease;
+    font-size: 1rem;
+}
+
+.card:hover .card-arrow { opacity: 1; transform: translateX(0); }
+
+/* ─── Stat primitive ─────────────────────────────────────────── */
+.stat {
+    display: block;
+}
+
+.stat .stat-value {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 1.9rem;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: -0.025em;
+    line-height: 1;
+    margin-bottom: var(--s-2);
+    display: block;
+}
+
+.stat .stat-label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    line-height: 1.5;
+    font-weight: 400;
+}
+
+/* ─── Callout / abstract box ─────────────────────────────────── */
+.callout {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    padding: var(--s-4) var(--s-5);
+    border-radius: 0 4px 4px 0;
+    font-size: 0.92rem;
+    color: var(--text);
+    line-height: 1.65;
+    margin: 0;
+}
+
+.callout strong { color: var(--ink); font-weight: 600; }
+.callout em     { color: var(--accent); font-style: normal; font-weight: 500; }

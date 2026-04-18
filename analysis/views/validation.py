@@ -2,7 +2,7 @@
 
 CERF UFE (OCHA underfunded-emergencies allocations) and CARE Breaking the
 Silence (under-reported humanitarian crises) provide human-curated ground
-truth on two orthogonal dimensions of overlooked-ness. We compute
+truth on two orthogonal dimensions of overlookedness. We compute
 set-overlap metrics (precision / recall at K) against CERF UFE and a
 Spearman rank correlation against CARE's 1–10 ranking.
 

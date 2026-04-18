@@ -12,11 +12,15 @@ proposal depends on.
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _theme import apply_theme, page_header, COLORS  # noqa: E402
 
 DATA = Path(__file__).resolve().parent.parent / "Data"
 
@@ -25,6 +29,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+apply_theme()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -304,7 +309,7 @@ def page_coverage() -> None:
         locations="iso3",
         locationmode="ISO-3",
         color="in_all_core",
-        color_discrete_map={True: "#0072BC", False: "#D8DEE4"},
+        color_discrete_map={True: COLORS["accent"], False: COLORS["faint"]},
         title=f"Countries present in HNO + FTS (country & cluster) + HRP for {year}",
     )
     fig.update_layout(margin={"l": 0, "r": 0, "t": 40, "b": 0}, height=500)
@@ -393,7 +398,7 @@ def page_fts() -> None:
         big = sub[sub["requirements"] >= 100_000_000].sort_values("coverage").head(20)
         st.plotly_chart(
             px.bar(big, x="coverage", y="countryCode", orientation="h",
-                   color="requirements", color_continuous_scale="Blues").update_layout(
+                   color="requirements", color_continuous_scale="Reds").update_layout(
                 yaxis={"categoryorder": "total descending"}, height=500, margin={"l":0,"r":0,"t":10,"b":0}
             ),
             use_container_width=True,
@@ -637,10 +642,10 @@ def page_inform() -> None:
             margin={"l": 0, "r": 0, "t": 10, "b": 0}, height=420,
         )
         # Mark the Feb 2026 methodology break on both plots for context
-        fig2.add_vline(x="2026-02-01", line_dash="dash", line_color="#E99C2D")
+        fig2.add_vline(x="2026-02-01", line_dash="dash", line_color=COLORS["subtle"])
         fig2.add_annotation(x="2026-02-01", y=y_range[1], yref="y",
                             text="methodology rescaling", showarrow=False,
-                            font=dict(size=10, color="#E99C2D"), yshift=-6)
+                            font=dict(size=10, color=COLORS["muted"]), yshift=-6)
         st.plotly_chart(fig2, use_container_width=True)
 
     st.markdown("---")
@@ -680,7 +685,7 @@ def page_inform() -> None:
         )
         # Same methodology-rescaling annotation — indicators themselves don't jump,
         # but consistent markup helps when comparing across views.
-        fig4.add_vline(x="2026-02-01", line_dash="dot", line_color="#8A8A8A")
+        fig4.add_vline(x="2026-02-01", line_dash="dot", line_color=COLORS["subtle"])
         st.plotly_chart(fig4, use_container_width=True)
 
     # PIN-composition view for a single country

@@ -3,211 +3,189 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>GEO-Insight — Local</title>
+    <title>GEO-Insight</title>
+    <link rel="stylesheet" href="shared.css">
     <style>
-        :root {
-            --un-blue: #009EDB;
-            --un-blue-dark: #0072BC;
-            --un-blue-deep: #1F4E79;
-            --un-gray-dark: #2C3E50;
-            --un-gray: #595959;
-            --un-gray-light: #8A8A8A;
-            --un-bg: #FFFFFF;
-            --un-bg-alt: #F4F7FA;
-            --un-rule: #D8DEE4;
-            --un-green: #16A34A;
-            --un-amber: #E99C2D;
-        }
-        * { box-sizing: border-box; }
-        html, body { margin: 0; padding: 0; }
+        /* Page-specific composition only — tokens live in shared.css */
         body {
-            font-family: "Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif;
-            background: var(--un-bg-alt);
-            color: var(--un-gray-dark);
-            font-weight: 300;
-            line-height: 1.5;
-            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            padding: 56px 24px;
+            padding: var(--s-8) var(--s-5);
+            min-height: 100vh;
         }
-        .page { max-width: 920px; width: 100%; }
-        header {
-            border-left: 4px solid var(--un-blue);
-            padding-left: 22px;
-            margin-bottom: 44px;
+        .page {
+            width: 100%;
+            max-width: 960px;
         }
-        .eyebrow {
+
+        /* Header */
+        .header {
+            margin-bottom: var(--s-8);
+        }
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            letter-spacing: -0.035em;
+            margin: 0 0 var(--s-4) 0;
+        }
+        .header .tagline {
+            font-size: 1.15rem;
+            color: var(--muted);
+            max-width: 56ch;
+            line-height: 1.45;
+            margin: 0;
+        }
+
+        /* Abstract */
+        .abstract {
+            margin-bottom: var(--s-8);
+            max-width: 72ch;
+        }
+
+        /* Stats strip */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--s-7);
+            margin-bottom: var(--s-8);
+            padding-top: var(--s-5);
+            border-top: 1px solid var(--rule);
+        }
+
+        @media (max-width: 700px) {
+            .stats { grid-template-columns: repeat(2, 1fr); gap: var(--s-5); }
+            .header h1 { font-size: 2.2rem; }
+        }
+
+        /* Surface cards */
+        .section-label {
             font-size: 0.72rem;
             text-transform: uppercase;
             letter-spacing: 0.15em;
-            color: var(--un-gray);
-            font-weight: 500;
-            margin-bottom: 10px;
-        }
-        h1 {
-            font-size: 2.4rem;
-            font-weight: 300;
-            color: var(--un-blue-deep);
-            margin: 0 0 10px 0;
-            line-height: 1.05;
-            letter-spacing: -0.01em;
-        }
-        .tagline {
-            font-size: 1.05rem;
-            color: var(--un-gray);
-            margin: 0;
-            max-width: 56ch;
+            color: var(--subtle);
+            font-weight: 600;
+            margin-bottom: var(--s-4);
         }
         .cards {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 14px;
-            margin-bottom: 36px;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: var(--s-4);
+            margin-bottom: var(--s-7);
         }
-        .card {
-            display: block;
-            background: white;
-            border: 1px solid var(--un-rule);
-            border-radius: 6px;
-            padding: 22px 24px;
-            text-decoration: none;
-            color: inherit;
-            transition: border-color .15s, box-shadow .15s, transform .15s;
-            position: relative;
-        }
-        .card:hover {
-            border-color: var(--un-blue);
-            box-shadow: 0 8px 22px rgba(0, 114, 188, 0.09);
-            transform: translateY(-1px);
-        }
-        .card .label {
-            font-size: 0.68rem;
-            color: var(--un-gray-light);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            font-weight: 500;
-            margin-bottom: 6px;
-        }
-        .card h2 {
-            font-size: 1.15rem;
-            font-weight: 500;
-            color: var(--un-blue-deep);
-            margin: 0 0 8px 0;
-        }
-        .card .desc {
-            font-size: 0.88rem;
-            color: var(--un-gray);
-            margin: 0;
-            line-height: 1.45;
-        }
-        .card .url {
-            font-size: 0.72rem;
-            color: var(--un-gray-light);
-            margin-top: 12px;
-            font-family: "SF Mono", Menlo, Consolas, monospace;
-        }
-        .card .arrow {
-            position: absolute;
-            top: 22px;
-            right: 22px;
-            color: var(--un-blue);
-            opacity: 0;
-            transition: opacity .15s, transform .15s;
-            font-size: 1.1rem;
-        }
-        .card:hover .arrow { opacity: 1; transform: translateX(2px); }
-        .ctx {
-            background: white;
-            border: 1px solid var(--un-rule);
-            border-left: 4px solid var(--un-blue);
-            border-radius: 4px;
-            padding: 16px 22px;
-            font-size: 0.88rem;
-            color: var(--un-gray-dark);
-            margin-bottom: 40px;
-            line-height: 1.6;
-        }
-        .ctx strong { color: var(--un-blue-deep); font-weight: 500; }
-        footer {
-            border-top: 1px solid var(--un-rule);
-            padding-top: 16px;
-            font-size: 0.78rem;
-            color: var(--un-gray-light);
+
+        /* Footer */
+        .footer {
+            padding-top: var(--s-4);
+            border-top: 1px solid var(--rule);
             display: flex;
             justify-content: space-between;
+            align-items: center;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: var(--s-3);
+            font-size: 0.78rem;
+            color: var(--subtle);
         }
-        footer code {
-            background: var(--un-bg-alt);
-            padding: 1px 6px;
+        .footer code {
+            background: var(--surface);
+            padding: 2px 8px;
             border-radius: 3px;
-            color: var(--un-gray-dark);
-            font-size: 0.9em;
+            color: var(--muted);
+            font-size: 0.85em;
+        }
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--s-2);
         }
         .status-dot {
-            display: inline-block;
             width: 7px; height: 7px;
             border-radius: 50%;
-            background: var(--un-green);
-            margin-right: 7px;
-            vertical-align: middle;
+            background: var(--accent);
+            display: inline-block;
         }
     </style>
 </head>
 <body>
 <div class="page">
-    <header>
-        <div class="eyebrow">Cache Me if You Can · Datathon 2026 · FS26</div>
+
+    <!-- ── Header ────────────────────────────────────────────── -->
+    <header class="header">
+        <div class="eyebrow" style="margin-bottom: var(--s-4);">Cache Me if You Can · Datathon 2026 · FS26</div>
+        <span class="accent-bar" style="margin-bottom: var(--s-5);"></span>
         <h1>GEO-Insight</h1>
-        <p class="tagline">Which humanitarian crises are most overlooked? A multi-attribute, multi-stakeholder gap-ranking system.</p>
+        <p class="tagline">Which humanitarian crises are most overlooked?</p>
     </header>
 
-    <div class="ctx">
-        <strong>Core idea.</strong> Overlookedness as a <em>joint distribution</em> across donor-preference profiles, with an intra-crisis equity correction — not a scalar gap ratio. Four-cell typology distinguishes <em>consensus-overlooked</em>, <em>contested</em>, and <em>sector-starved</em> crises that existing tools conflate. See proposal for details.
-    </div>
+    <!-- ── Abstract ──────────────────────────────────────────── -->
+    <section class="abstract">
+        <div class="callout">
+            When nearly every response is underfunded, a single coverage ratio no longer discriminates between crises. GEO-Insight reframes overlookedness as a <strong>joint distribution</strong> over four donor-preference profiles, with an <em>intra-crisis equity</em> term and a <em>cross-stakeholder disagreement</em> term. A typed five-level semantic layer makes every score traceable to its source data. Validated against two independent human-curated benchmarks.
+        </div>
+    </section>
 
+    <!-- ── Stats strip ───────────────────────────────────────── -->
+    <section class="stats">
+        <div class="stat">
+            <span class="stat-value">$33B</span>
+            <span class="stat-label">2026 GHO appeal<br>for 135 M people in need</span>
+        </div>
+        <div class="stat">
+            <span class="stat-value">19</span>
+            <span class="stat-label">Country contexts below<br>50% coverage in 2025</span>
+        </div>
+        <div class="stat">
+            <span class="stat-value">71</span>
+            <span class="stat-label">Typed properties<br>across five derivation levels</span>
+        </div>
+        <div class="stat">
+            <span class="stat-value">114</span>
+            <span class="stat-label">Countries scored,<br>all with declared provenance</span>
+        </div>
+    </section>
+
+    <!-- ── Surfaces ──────────────────────────────────────────── -->
+    <div class="section-label">Surfaces</div>
     <section class="cards">
+        <a class="card" href="http://localhost:8000" target="_blank" rel="noopener">
+            <span class="card-arrow">→</span>
+            <div class="card-label">Deck</div>
+            <h3>Presentation</h3>
+            <p>Thirteen-slide research narrative: motivation, methodology, semantic layer, four-cell typology, validation, limitations.</p>
+            <span class="card-url">localhost:8000</span>
+        </a>
+
         <a class="card" href="http://localhost:8501" target="_blank" rel="noopener">
-            <span class="arrow">→</span>
-            <div class="label">Interactive</div>
-            <h2>Data exploration</h2>
-            <p class="desc">Landscape explorer across HNO, HRP, FTS, CoD-PS, CBPF, INFORM. Maps, cross-dataset coverage, cluster-equity preview.</p>
-            <div class="url">localhost:8501</div>
+            <span class="card-arrow">→</span>
+            <div class="card-label">Exploratory</div>
+            <h3>Data landscape</h3>
+            <p>Country coverage and top-line figures across HNO, HRP, FTS, CoD-PS, CBPF, INFORM — orients before committing to a methodology.</p>
+            <span class="card-url">localhost:8501</span>
         </a>
 
         <a class="card" href="http://localhost:8502" target="_blank" rel="noopener">
-            <span class="arrow">→</span>
-            <div class="label">Unsupervised</div>
-            <h2>Analysis</h2>
-            <p class="desc">PCA, k-means, hierarchical, t-SNE, temporal archetypes, correlation structure. Triangulates our typology against the data's geometry.</p>
-            <div class="url">localhost:8502</div>
-        </a>
-
-        <a class="card" href="http://localhost:8000" target="_blank" rel="noopener">
-            <span class="arrow">→</span>
-            <div class="label">Slides</div>
-            <h2>Presentation</h2>
-            <p class="desc">reveal.js deck mirroring the proposal: motivation, core insight, four-cell typology, validation, limitations.</p>
-            <div class="url">localhost:8000</div>
+            <span class="card-arrow">→</span>
+            <div class="card-label">Semantic analysis</div>
+            <h3>Lens × mode grid</h3>
+            <p>Eight lenses over the semantic layer, six view modes each (atlas, PCA, clustering, profile, cross-lens, validation) — 48 analysis surfaces.</p>
+            <span class="card-url">localhost:8502</span>
         </a>
 
         <a class="card" href="proposal.pdf" target="_blank">
-            <span class="arrow">→</span>
-            <div class="label">PDF · ~10 pages</div>
-            <h2>Proposal</h2>
-            <p class="desc">Research framing, methodology, data-availability audit (§4), metric provenance (§4.5), validation strategy, limitations.</p>
-            <div class="url">proposal/proposal.pdf</div>
+            <span class="card-arrow">→</span>
+            <div class="card-label">PDF — methodology</div>
+            <h3>Proposal</h3>
+            <p>Research framing, attribute provenance, evidence-bounded MAUT scoring, validation strategy, limitations.</p>
+            <span class="card-url">proposal/proposal.pdf</span>
         </a>
     </section>
 
-    <footer>
-        <span><span class="status-dot"></span>Local only — no public hosting</span>
-        <span>Run <code>./run.sh</code> · Ctrl-C to stop</span>
+    <!-- ── Footer ────────────────────────────────────────────── -->
+    <footer class="footer">
+        <span class="status"><span class="status-dot"></span>Local only — no public hosting</span>
+        <span>Launch with <code>./run.sh</code> · stop with <kbd>Ctrl-C</kbd></span>
     </footer>
+
 </div>
 </body>
 </html>

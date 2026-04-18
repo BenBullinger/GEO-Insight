@@ -330,18 +330,21 @@ We average these over profiles and surface the (chronic, acute) pair as a 2-D vi
 
 \section{System Architecture}
 
+\subsection{Typed semantic layer}\label{sec:semantic-layer}
+Every analytic quantity in the system is registered as a named property at one of five derivation levels: \emph{L1 observations} (22 raw primitives, e.g.\ HNO in-need counts, FTS requirements and funding), \emph{L2 ratios} (18 scale-normalised signals, e.g.\ coverage, gap-per-person-in-need), \emph{L3 inequality} (10 distribution indices: sector Gini, donor HHI, weakest-sector coverage), \emph{L4 trends} (12 windowed aggregates: rolling baselines, deltas, slopes, persistence), and \emph{L5 composites} (9 scores, typology labels, and the completeness flag). The canonical declaration lives in a single YAML specification that names, for each of the 71 properties, its formula, input lineage, unit, granularity, and known failure modes. A registry class reads this specification at import time, so every displayed value can carry a tooltip derived directly from the spec; no analytic column exists in code that is not declared in the ontology. This is the Palantir-Foundry-style substrate on which the scoring engine runs.
+
 \begin{enumerate}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
     \item \textbf{Ingestion.} HDX HAPI client (preferred) with fallback to direct CSV pulls. Pandas dataframes cached locally with dataset version and fetch timestamp.
     \item \textbf{Harmonisation.} Country ISO-3 canonicalisation, sector taxonomy mapping (HNO clusters $\leftrightarrow$ FTS sector codes), plan-year alignment.
     \item \textbf{Scoring engine.} Pure-Python computation of Equations~(1)--(\ref{eq:gap}); deterministic, fully unit-testable. Gini via a vectorised pandas implementation.
     \item \textbf{Multi-profile driver.} Re-runs scoring under each $w_p$; aggregates $\widetilde{\text{rank}}$ and IQR.
     \item \textbf{Query layer.} Pydantic schema + LLM-assisted parser; fallback to keyword routing.
-    \item \textbf{Presentation.} Notebook for development; Streamlit dashboard with four-cell scatter plot; JSON export.
+    \item \textbf{Presentation.} Streamlit analysis site (eight lenses $\times$ six modes over the semantic layer) for exploration; reveal.js deck for narrative; JSON export.
 \end{enumerate}
 
 \section{Validation Strategy and First Results}\label{sec:validation}
 
-We validate against \emph{two independent benchmarks} --- each human-curated by a different organisation using methodology unrelated to ours --- on two orthogonal dimensions of overlooked-ness.
+We validate against \emph{two independent benchmarks} --- each human-curated by a different organisation using methodology unrelated to ours --- on two orthogonal dimensions of overlookedness.
 
 \begin{itemize}[leftmargin=1.2em,itemsep=3pt,topsep=3pt]
     \item \textbf{Consensus axis --- CERF Underfunded Emergencies.}\footnote{\url{https://cerf.un.org/what-we-do/underfunded-emergencies}} OCHA's own twice-yearly allocation to ``protracted or neglected humanitarian crises where funding is low but vulnerability is high.'' Our 2025 snapshot has 17 countries across both windows (March + December).

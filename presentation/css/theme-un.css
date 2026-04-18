@@ -597,6 +597,16 @@ html, body, .reveal-viewport { background: var(--bg); }
 
 .reveal .before-after .side .sub em { color: var(--accent); font-weight: 500; }
 
+/* Sub-axis note on the before-after "after" side */
+.reveal .before-after .side.after .axis-sub {
+    color: var(--subtle);
+    margin-top: 10px;
+    font-size: 0.7em;
+    font-weight: 500;
+}
+
+.reveal .cols.cols-benchmark { margin-top: 24px; }
+
 .reveal .caption {
     text-align: center;
     font-size: 0.5em;

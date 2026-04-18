@@ -14,18 +14,22 @@ from pathlib import Path
 import streamlit as st
 
 # Allow `import ontology`, `import features`, `from views import ...` from the
-# analysis/ folder regardless of CWD
+# analysis/ folder regardless of CWD; also expose the shared _theme helper
+# that lives next door in dashboard/.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "dashboard"))
 
 from ontology import Registry
 import features
 from views import atlas, pca as pca_view, cluster, profile, cross_lens, validation as validation_view
+from _theme import apply_theme, COLORS  # noqa: E402
 
 st.set_page_config(
-    page_title="GEO-Insight — Unsupervised Analysis",
+    page_title="GEO-Insight — Semantic Analysis",
     layout="wide",
     initial_sidebar_state="expanded",
 )
+apply_theme()
 
 
 # ─── Registry + enriched frame (cached) ────────────────────────────────────
