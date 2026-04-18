@@ -99,7 +99,8 @@ HDX HAPI & Unified daily-refresh API over above sources & HDX \\
 CERF Underfunded Emergencies & \textbf{Validation benchmark} (consensus axis) & cerf.un.org \\
 CARE \emph{Breaking the Silence} & \textbf{Validation benchmark} (sector/attention axis) & ReliefWeb annual report \\
 \midrule
-IPC (required for severity $a_4$) & Food-security phase classification 1--5 & ipcinfo.org \\
+INFORM Severity Index (required for $a_4$) & Monthly 1--10 severity, 109 countries, 2020-09--2026-03 & EU JRC DRMKC \\
+IPC (backup for $a_4$ on food-security crises) & Food-security phase classification 1--5 & ipcinfo.org \\
 ACLED, UNHCR (optional enrichment) & Conflict events, displacement & External, declared \\
 \bottomrule
 \end{tabularx}
@@ -120,7 +121,7 @@ An audit of the five downloaded HDX datasets (run 2026-04-18) maps each score at
 $a_1$ coverage shortfall & \texttt{fts\_requirements\_funding\_global.csv}\newline \texttt{countryCode, year, requirements, funding} & Ready \\
 $a_2$ per-PIN gap     & above + \texttt{hpc\_hno\_2025.csv} (\texttt{In Need}) + \texttt{cod\_population\_admin0.csv} (\texttt{Population}) & Ready \\
 $a_3$ need intensity  & \texttt{hpc\_hno\_2025.csv} / \texttt{cod\_population\_admin0.csv} & Ready \\
-$a_4$ severity        & IPC Population Tracking Tool export (xlsx) in \texttt{Data/Third-Party/IPCInfo/} --- per-unit Phase 1--5 populations and overall phase & Partial on disk (AF dense 2017--2025; AO sparse); expand via same tool \\
+$a_4$ severity        & INFORM Severity Index 1--10 (with a 1--5 category), monthly, from the EU JRC DRMKC. 67 monthly snapshots 2020-09 to 2026-03 consolidated into \texttt{Data/Third-Party/DRMKC-INFORM/inform\_severity\_long.csv}. IPC xlsx retained as a richer single-country backup. & Ready --- 5,298 country\,$\times$\,month rows across 109 countries; every full-stack priority country has $\geq$60 months \\
 $a_5$ donor HHI       & \texttt{fts\_incoming\_funding\_global.csv}\newline \texttt{amountUSD, srcOrganization, destLocations} & Ready; multi-country rule needed \\
 $a_6$ cluster Gini    & \texttt{fts\_requirements\_funding\_cluster\_global.csv} $\times$ \texttt{hpc\_hno\_2025.csv} & Ready; cluster-taxonomy map needed \\
 \midrule
@@ -137,7 +138,7 @@ CARE \emph{Breaking the Silence} & \url{https://www.care.org/our-work/other-work
 Three items needed by the methodology are not on disk. All three are openly available online.
 
 \begin{itemize}[leftmargin=1.2em,itemsep=3pt,topsep=3pt]
-    \item \textbf{Severity ($a_4$).} HNO 2024/2025 CSVs do not carry a structured severity score --- only a free-text \texttt{Description} field. We use the IPC Population Tracking Tool (\url{https://www.ipcinfo.org/ipc-country-analysis/population-tracking-tool/en/}) which returns per-unit Phase 1--5 populations and an overall phase. An initial export is present in \texttt{Data/Third-Party/IPCInfo/} covering Afghanistan densely (17 analyses 2017--2025) and Angola sparsely; this is a \emph{format sample}, not global coverage. Expanding coverage to the $\sim$20 full-stack countries (AF, SYR, YEM, SSD, COD, SOM, SDN, \ldots) requires repeated exports from the same tool, one per country-region selection. Where IPC coverage is absent (non-food-driven crises), we degrade $a_4$ to a binary plan-typology flag (Flash Appeal vs.\ HRP) and expose the degradation via a data-quality annotation rather than imputing a numeric severity.
+    \item \textbf{Severity ($a_4$) --- solved at global scale via INFORM Severity.} HNO 2024/2025 CSVs do not carry a structured severity score. We therefore fold in the EU JRC's INFORM Severity Index from \url{https://drmkc.jrc.ec.europa.eu/inform-index/INFORM-Severity/Results-and-data}: a 1--10 composite assessed monthly for every active humanitarian crisis worldwide. All 67 monthly snapshots (2020-09 to 2026-03) are downloaded by \texttt{Data/Third-Party/DRMKC-INFORM/download.py} and consolidated by \texttt{consolidate.py} into a single long-format CSV with 5,298 (country\,$\times$\,month) rows covering 109 countries; every full-stack priority country has $\geq$60 months of history. This is load-bearing in two ways: it resolves the $a_4$ attribute globally, and it supplies the panel-data backbone that makes the temporal bonus task tractable (state-space filtering, hierarchical baselines). An earlier IPC export remains at \texttt{Data/Third-Party/IPCInfo/} as a richer single-country backup (Afghanistan, 17 analyses 2017--2025) for demo purposes.
     \item \textbf{CERF UFE benchmark.} Annual list published on CERF's website; scraped manually once per cycle. $\sim$30 entries per year, trivial to transcribe.
     \item \textbf{CARE \emph{Breaking the Silence}.} Annual PDF on CARE and ReliefWeb; top-10 list is extracted manually.
 \end{itemize}
