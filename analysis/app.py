@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from ontology import Registry
 import features
-from views import atlas, pca as pca_view, cluster, profile, cross_lens
+from views import atlas, pca as pca_view, cluster, profile, cross_lens, validation as validation_view
 
 st.set_page_config(
     page_title="GEO-Insight — Unsupervised Analysis",
@@ -72,7 +72,7 @@ lens = REGISTRY.lenses[lens_id]
 
 mode_id = st.sidebar.radio(
     "Mode",
-    ["atlas", "pca", "cluster", "profile", "cross_lens"],
+    ["atlas", "pca", "cluster", "profile", "cross_lens", "validation"],
     format_func=lambda m: REGISTRY.modes[m].name,
 )
 
@@ -94,6 +94,7 @@ VIEWS = {
     "cluster": cluster.render,
     "profile": profile.render,
     "cross_lens": cross_lens.render,
+    "validation": validation_view.render,
 }
 
 VIEWS[mode_id](enriched, lens, REGISTRY)

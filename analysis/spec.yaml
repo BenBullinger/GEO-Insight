@@ -751,6 +751,11 @@ ui:
       description: "Radar per crisis with one axis per lens. Only active in 'all_features' lens view."
       requires_lens: all_features
 
+    - id: validation
+      name: Validation
+      description: "Our median_rank vs independent external benchmarks (CERF UFE, CARE Breaking the Silence). Overlap@K, Spearman ρ, agreement table."
+      requires_lens: geo_insight_score
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # CODE ARCHITECTURE
