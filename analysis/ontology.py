@@ -17,6 +17,7 @@ import yaml
 class Property:
     name: str
     level: int
+    description: str | None = None
     formula: str | None = None
     source: str | None = None
     inputs: list[str] = field(default_factory=list)
@@ -59,6 +60,7 @@ class Registry:
             name: Property(
                 name=name,
                 level=int(p["level"]),
+                description=p.get("description"),
                 formula=p.get("formula"),
                 source=p.get("source"),
                 inputs=list(p.get("inputs", []) or []),
@@ -103,11 +105,18 @@ class Registry:
         return list(self.lenses[lens_id].properties)
 
     def tooltip(self, name: str) -> str:
-        """Markdown-friendly provenance string for a single property."""
+        """Markdown-friendly provenance string for a single property.
+
+        Description comes first (italicised) as the human-readable hook;
+        technical provenance follows below.
+        """
         p = self.properties.get(name)
         if p is None:
             return f"_{name}_ — not in registry."
-        lines = [f"**{p.name}**  · Level {p.level}"]
+        lines = []
+        if p.description:
+            lines.append(f"_{p.description}_")
+        lines.append(f"**{p.name}**  · Level {p.level}")
         if p.formula:
             lines.append(f"Formula: `{p.formula}`")
         if p.source:
@@ -124,3 +133,10 @@ class Registry:
             lines.append("Failure modes:")
             lines += [f"  - {fm}" for fm in p.failure_modes]
         return "\n\n".join(lines)
+
+    def short_help(self, name: str) -> str:
+        """One-line description (falls back to name if missing)."""
+        p = self.properties.get(name)
+        if p is None or not p.description:
+            return name
+        return p.description

@@ -39,6 +39,7 @@ properties:
   # ── Level 1 — Primitives ────────────────────────────────────────────────
   pin_total:
     level: 1
+    description: "Total people in humanitarian need in the country."
     formula: "Σ over sectors of HNO `In Need`"
     source: HNO
     unit: people
@@ -49,6 +50,7 @@ properties:
 
   pin_by_sector:
     level: 1
+    description: "People in need broken out by sector cluster (health, food, WASH, etc.)."
     formula: "HNO `In Need` per cluster"
     source: HNO
     unit: people
@@ -57,6 +59,7 @@ properties:
 
   requirements:
     level: 1
+    description: "Total USD requested in the country's humanitarian appeal."
     formula: "FTS `requirements` summed across plan types"
     source: fts_requirements_funding_global
     unit: USD
@@ -65,6 +68,7 @@ properties:
 
   requirements_by_sector:
     level: 1
+    description: "Requested USD broken out by sector cluster."
     formula: "FTS cluster `requirements`"
     source: fts_requirements_funding_cluster_global
     unit: USD
@@ -73,6 +77,7 @@ properties:
 
   funding_received:
     level: 1
+    description: "Total USD reported as received against the appeal."
     formula: "FTS `funding` summed across plan types"
     source: fts_requirements_funding_global
     unit: USD
@@ -83,6 +88,7 @@ properties:
 
   funding_by_donor:
     level: 1
+    description: "USD contributed by each donor, per country-year."
     formula: "FTS incoming `amountUSD` grouped by srcOrganization"
     source: fts_incoming_funding_global
     unit: USD
@@ -93,6 +99,7 @@ properties:
 
   funding_by_sector:
     level: 1
+    description: "USD received broken out by sector cluster."
     formula: "FTS cluster `funding`"
     source: fts_requirements_funding_cluster_global
     unit: USD
@@ -100,6 +107,7 @@ properties:
 
   population:
     level: 1
+    description: "Country population (all ages, all genders)."
     formula: "CoD-PS admin0 `Population` summed across all-age, all-gender rows"
     source: cod_population_admin0
     unit: people
@@ -108,6 +116,7 @@ properties:
 
   severity_index:
     level: 1
+    description: "INFORM's continuous composite severity score. Rescaled Feb 2026 — not directly comparable across that boundary."
     formula: "INFORM `severity` (raw, as published)"
     source: INFORM_severity
     unit: continuous_rescaled_2026_02
@@ -118,6 +127,7 @@ properties:
 
   severity_category:
     level: 1
+    description: "INFORM's 1–5 ordinal severity bucket (Very Low → Very High). Stable across time."
     formula: "INFORM `category` (1–5 ordinal)"
     source: INFORM_severity
     unit: ordinal_1_5
@@ -126,6 +136,7 @@ properties:
 
   pin_phase_1:
     level: 1
+    description: "People at minimal humanitarian conditions (least severe)."
     formula: "# people at minimal humanitarian conditions"
     source: INFORM_indicators
     unit: people
@@ -133,6 +144,7 @@ properties:
 
   pin_phase_2:
     level: 1
+    description: "People at stressed humanitarian conditions."
     formula: "# people at stressed humanitarian conditions"
     source: INFORM_indicators
     unit: people
@@ -140,6 +152,7 @@ properties:
 
   pin_phase_3:
     level: 1
+    description: "People at moderate humanitarian conditions."
     formula: "# people at moderate humanitarian conditions"
     source: INFORM_indicators
     unit: people
@@ -147,6 +160,7 @@ properties:
 
   pin_phase_4:
     level: 1
+    description: "People at severe humanitarian conditions."
     formula: "# people at severe humanitarian conditions"
     source: INFORM_indicators
     unit: people
@@ -154,6 +168,7 @@ properties:
 
   pin_phase_5:
     level: 1
+    description: "People at extreme/catastrophic humanitarian conditions."
     formula: "# people at extreme humanitarian conditions"
     source: INFORM_indicators
     unit: people
@@ -161,6 +176,7 @@ properties:
 
   affected:
     level: 1
+    description: "Total people affected by the crisis (not all of whom are in need)."
     source: INFORM_indicators
     unit: people
     granularity: country_month
@@ -168,18 +184,21 @@ properties:
 
   displaced:
     level: 1
+    description: "Crisis-related displaced population (IDPs + refugees)."
     source: INFORM_indicators
     unit: people
     granularity: country_month
 
   fatalities:
     level: 1
+    description: "Crisis-related deaths reported."
     source: INFORM_indicators
     unit: people
     granularity: country_month
 
   access_limited:
     level: 1
+    description: "People in need facing LIMITED access to humanitarian assistance."
     formula: "INFORM `access_limited` — people in need facing limited access"
     source: INFORM_indicators
     unit: people
@@ -187,6 +206,7 @@ properties:
 
   access_restricted:
     level: 1
+    description: "People in need facing RESTRICTED access (more severe than limited)."
     formula: "INFORM `access_restricted` — people in need facing restricted access"
     source: INFORM_indicators
     unit: people
@@ -194,6 +214,7 @@ properties:
 
   impediments:
     level: 1
+    description: "Bureaucratic/administrative impediments to humanitarian entry."
     formula: "INFORM `impediments_bureaucratic` — bureaucratic and administrative impediments"
     source: INFORM_indicators
     unit: ordinal
@@ -201,6 +222,7 @@ properties:
 
   cbpf_allocation:
     level: 1
+    description: "USD allocated to the country via Country-Based Pooled Funds."
     formula: "CBPF `Budget` summed per country-year"
     source: cbpf_project_summary
     unit: USD
@@ -211,6 +233,7 @@ properties:
   # ── Level 2 — Scale-normalised ratios + monotone transforms ─────────────
   coverage:
     level: 2
+    description: "Share of the appeal that's been funded. 1.0 = fully funded, 0 = nothing received."
     formula: "funding_received / requirements, clipped at 1.5"
     inputs: [funding_received, requirements]
     unit: fraction
@@ -218,6 +241,7 @@ properties:
 
   coverage_shortfall:
     level: 2
+    description: "How much of the appeal is unmet. 0 = fully funded, 1 = nothing received."
     formula: "1 − min(coverage, 1)"
     inputs: [coverage]
     unit: fraction
@@ -225,6 +249,7 @@ properties:
 
   coverage_by_sector:
     level: 2
+    description: "Per-cluster funding coverage (one value per sector within the country)."
     formula: "funding_by_sector / requirements_by_sector per cluster"
     inputs: [funding_by_sector, requirements_by_sector]
     unit: fraction_per_sector
@@ -232,6 +257,7 @@ properties:
 
   need_intensity:
     level: 2
+    description: "Fraction of the country's population that is in humanitarian need."
     formula: "pin_total / population"
     inputs: [pin_total, population]
     unit: fraction
@@ -240,6 +266,7 @@ properties:
 
   affected_intensity:
     level: 2
+    description: "Fraction of the country's population affected by the crisis."
     formula: "affected / population"
     inputs: [affected, population]
     unit: fraction
@@ -247,6 +274,7 @@ properties:
 
   displaced_intensity:
     level: 2
+    description: "Fraction of the country's population that has been displaced."
     formula: "displaced / population"
     inputs: [displaced, population]
     unit: fraction
@@ -254,6 +282,7 @@ properties:
 
   phase_45_share:
     level: 2
+    description: "Share of affected people in severe or extreme humanitarian conditions."
     formula: "(pin_phase_4 + pin_phase_5) / affected"
     inputs: [pin_phase_4, pin_phase_5, affected]
     unit: fraction
@@ -261,6 +290,7 @@ properties:
 
   phase_5_share:
     level: 2
+    description: "Share of affected people in extreme/catastrophic conditions alone."
     formula: "pin_phase_5 / affected"
     inputs: [pin_phase_5, affected]
     unit: fraction
@@ -268,6 +298,7 @@ properties:
 
   displaced_share_of_pin:
     level: 2
+    description: "Fraction of people in need who are also displaced."
     formula: "displaced / pin_total"
     inputs: [displaced, pin_total]
     unit: fraction
@@ -275,6 +306,7 @@ properties:
 
   access_restricted_share:
     level: 2
+    description: "Fraction of people in need facing restricted humanitarian access."
     formula: "access_restricted / pin_total"
     inputs: [access_restricted, pin_total]
     unit: fraction
@@ -282,6 +314,7 @@ properties:
 
   access_limited_share:
     level: 2
+    description: "Fraction of people in need facing limited humanitarian access."
     formula: "access_limited / pin_total"
     inputs: [access_limited, pin_total]
     unit: fraction
@@ -289,6 +322,7 @@ properties:
 
   per_pin_gap:
     level: 2
+    description: "Dollars of unmet requirement per person in need."
     formula: "max(0, requirements − funding_received) / pin_total"
     inputs: [requirements, funding_received, pin_total]
     unit: USD_per_person
@@ -296,6 +330,7 @@ properties:
 
   per_pin_allocated:
     level: 2
+    description: "Dollars received per person in need."
     formula: "funding_received / pin_total"
     inputs: [funding_received, pin_total]
     unit: USD_per_person
@@ -303,6 +338,7 @@ properties:
 
   log_pin_total:
     level: 2
+    description: "Log-transformed people in need, so small and large crises are comparable on the same axis."
     formula: "log(1 + pin_total)"
     inputs: [pin_total]
     unit: log_people
@@ -310,6 +346,7 @@ properties:
 
   log_requirements:
     level: 2
+    description: "Log-transformed USD requirements."
     formula: "log(1 + requirements)"
     inputs: [requirements]
     unit: log_USD
@@ -317,6 +354,7 @@ properties:
 
   log_affected:
     level: 2
+    description: "Log-transformed total affected."
     formula: "log(1 + affected)"
     inputs: [affected]
     unit: log_people
@@ -324,6 +362,7 @@ properties:
 
   log_displaced:
     level: 2
+    description: "Log-transformed displaced count."
     formula: "log(1 + displaced)"
     inputs: [displaced]
     unit: log_people
@@ -331,6 +370,7 @@ properties:
 
   log_fatalities:
     level: 2
+    description: "Log-transformed fatality count."
     formula: "log(1 + fatalities)"
     inputs: [fatalities]
     unit: log_people
@@ -340,6 +380,7 @@ properties:
   # ── Level 3 — Concentration / inequality ────────────────────────────────
   donor_hhi:
     level: 3
+    description: "Herfindahl–Hirschman index of donor concentration — 0 = perfectly diversified, 1 = single donor."
     formula: "Σ_d s_d²,  s_d = funding_by_donor[d] / Σ_d funding_by_donor"
     inputs: [funding_by_donor]
     unit: "[0,1]"
@@ -350,6 +391,7 @@ properties:
 
   donor_top1_share:
     level: 3
+    description: "Share of all funding coming from the single biggest donor."
     formula: "max_d s_d"
     inputs: [funding_by_donor]
     unit: "[0,1]"
@@ -357,6 +399,7 @@ properties:
 
   donor_top3_share:
     level: 3
+    description: "Share of all funding coming from the top-3 donors combined."
     formula: "sum of top-3 s_d"
     inputs: [funding_by_donor]
     unit: "[0,1]"
@@ -364,6 +407,7 @@ properties:
 
   n_donors:
     level: 3
+    description: "Number of distinct donors who contributed."
     formula: "count of donors with funding_by_donor > 0"
     inputs: [funding_by_donor]
     unit: integer
@@ -371,6 +415,7 @@ properties:
 
   donor_entropy:
     level: 3
+    description: "Shannon entropy of the donor-share distribution — higher values indicate more diversification."
     formula: "−Σ s_d · log(s_d)"
     inputs: [funding_by_donor]
     unit: nats
@@ -378,6 +423,7 @@ properties:
 
   cluster_gini:
     level: 3
+    description: "PIN-weighted Gini of sector-coverage ratios — 0 = every cluster equally funded, 1 = all funding to one cluster."
     formula: "PIN-weighted Gini of coverage_by_sector within a country"
     inputs: [coverage_by_sector, pin_by_sector]
     unit: "[0,1]"
@@ -388,6 +434,7 @@ properties:
 
   cluster_min_coverage:
     level: 3
+    description: "The worst-funded sector's coverage ratio (the starved cluster)."
     formula: "min_c coverage_by_sector[c]"
     inputs: [coverage_by_sector]
     unit: fraction
@@ -395,6 +442,7 @@ properties:
 
   cluster_min_name:
     level: 3
+    description: "Name of the sector with the lowest coverage ratio."
     formula: "argmin_c coverage_by_sector[c]"
     inputs: [coverage_by_sector]
     unit: cluster_name
@@ -402,6 +450,7 @@ properties:
 
   phase_gini:
     level: 3
+    description: "Gini coefficient of the Phase 1–5 humanitarian-conditions distribution within the crisis."
     formula: "Gini of (pin_phase_1, …, pin_phase_5) distribution"
     inputs: [pin_phase_1, pin_phase_2, pin_phase_3, pin_phase_4, pin_phase_5]
     unit: "[0,1]"
@@ -409,6 +458,7 @@ properties:
 
   cbpf_reliance:
     level: 3
+    description: "Share of the country's humanitarian funding that comes from pooled funds (CBPF)."
     formula: "cbpf_allocation / funding_received"
     inputs: [cbpf_allocation, funding_received]
     unit: fraction
@@ -418,6 +468,7 @@ properties:
   # ── Level 4 — Temporal aggregates (windowed) ────────────────────────────
   severity_baseline_24m:
     level: 4
+    description: "Median severity category over the last 24 months — the country's chronic baseline."
     formula: "median(severity_category, trailing 24 months)"
     inputs: [severity_category]
     window: 24_months
@@ -426,6 +477,7 @@ properties:
 
   severity_acute_delta_3m:
     level: 4
+    description: "Recent deviation from the chronic baseline — positive values indicate acute deterioration."
     formula: "severity_category[T] − median(severity_category, [T−3, T−1])"
     inputs: [severity_category]
     window: 3_months
@@ -434,6 +486,7 @@ properties:
 
   severity_volatility_12m:
     level: 4
+    description: "Month-to-month variability of severity category over the last 12 months."
     formula: "std(severity_category, trailing 12 months)"
     inputs: [severity_category]
     window: 12_months
@@ -442,6 +495,7 @@ properties:
 
   severity_trend_12m:
     level: 4
+    description: "Directional trend in severity category over the last 12 months (slope per month)."
     formula: "OLS slope of severity_category vs month, trailing 12 months"
     inputs: [severity_category]
     window: 12_months
@@ -450,6 +504,7 @@ properties:
 
   phase_45_share_baseline_12m:
     level: 4
+    description: "12-month baseline of the share of affected in severe/extreme phases."
     formula: "median(phase_45_share, trailing 12 months)"
     inputs: [phase_45_share]
     window: 12_months
@@ -458,6 +513,7 @@ properties:
 
   phase_45_share_delta_3m:
     level: 4
+    description: "Recent 3-month deviation in phase-4/5 share from the 12-month baseline."
     formula: "phase_45_share[T] − median([T−3, T−1])"
     inputs: [phase_45_share]
     window: 3_months
@@ -466,6 +522,7 @@ properties:
 
   access_restricted_baseline_12m:
     level: 4
+    description: "12-month baseline of the restricted-access share."
     formula: "median(access_restricted_share, trailing 12 months)"
     inputs: [access_restricted_share]
     window: 12_months
@@ -474,6 +531,7 @@ properties:
 
   access_restricted_delta_3m:
     level: 4
+    description: "Recent 3-month deviation in restricted-access share from the 12-month baseline."
     formula: "access_restricted_share[T] − median([T−3, T−1])"
     inputs: [access_restricted_share]
     window: 3_months
@@ -482,6 +540,7 @@ properties:
 
   persistence_P4_plus:
     level: 4
+    description: "Longest consecutive run of months with Phase 4+ population share above 15% — chronic severe-need persistence."
     formula: "max consecutive months with phase_45_share > 0.15"
     inputs: [phase_45_share]
     window: full_panel
@@ -490,6 +549,7 @@ properties:
 
   coverage_baseline_3y:
     level: 4
+    description: "Median coverage ratio over the last 3 years — chronic funding adequacy baseline."
     formula: "median(coverage, trailing 3 years)"
     inputs: [coverage]
     window: 3_years
@@ -498,6 +558,7 @@ properties:
 
   coverage_trend_3y:
     level: 4
+    description: "Directional trend in coverage over the last 3 years (slope per year)."
     formula: "OLS slope of coverage vs year, 3-year window"
     inputs: [coverage]
     window: 3_years
@@ -506,6 +567,7 @@ properties:
 
   displaced_growth_12m:
     level: 4
+    description: "Ratio of current displaced population to 12 months ago — displacement growth factor."
     formula: "displaced[T] / displaced[T − 12 months]"
     inputs: [displaced]
     window: 12_months
@@ -516,6 +578,7 @@ properties:
   # ── Level 5 — Composites ────────────────────────────────────────────────
   gap_score_balanced:
     level: 5
+    description: "Our composite overlooked-ness score under balanced (default) donor-profile weights."
     formula: "Σ_i w_i · U_i(ã_i),  balanced profile"
     inputs: [coverage_shortfall, per_pin_gap, need_intensity, severity_category, donor_hhi, cluster_gini]
     unit: "[0,1]"
@@ -523,6 +586,7 @@ properties:
 
   gap_score_cerf_profile:
     level: 5
+    description: "Overlooked-ness score under CERF-flavoured weights (severity + magnitude emphasis)."
     formula: "Σ_i w_i · U_i(ã_i), CERF-flavoured weights"
     inputs: [coverage_shortfall, per_pin_gap, need_intensity, severity_category, donor_hhi, cluster_gini]
     unit: "[0,1]"
@@ -530,6 +594,7 @@ properties:
 
   gap_score_echo_profile:
     level: 5
+    description: "Overlooked-ness score under ECHO-flavoured weights (equity emphasis)."
     formula: "Σ_i w_i · U_i(ã_i), ECHO-flavoured weights"
     inputs: [coverage_shortfall, per_pin_gap, need_intensity, severity_category, donor_hhi, cluster_gini]
     unit: "[0,1]"
@@ -537,6 +602,7 @@ properties:
 
   gap_score_usaid_profile:
     level: 5
+    description: "Overlooked-ness score under USAID-flavoured weights (donor-concentration emphasis)."
     formula: "Σ_i w_i · U_i(ã_i), USAID-flavoured weights"
     inputs: [coverage_shortfall, per_pin_gap, need_intensity, severity_category, donor_hhi, cluster_gini]
     unit: "[0,1]"
@@ -544,6 +610,7 @@ properties:
 
   gap_score_ngo_profile:
     level: 5
+    description: "Overlooked-ness score under NGO-consortium-flavoured weights (cluster-equity emphasis)."
     formula: "Σ_i w_i · U_i(ã_i), NGO-consortium-flavoured weights"
     inputs: [coverage_shortfall, per_pin_gap, need_intensity, severity_category, donor_hhi, cluster_gini]
     unit: "[0,1]"
@@ -551,6 +618,7 @@ properties:
 
   median_rank:
     level: 5
+    description: "Median rank across the four donor profiles — central tendency of overlooked-ness."
     formula: "median of ranks across the 4 donor profiles"
     inputs: [gap_score_cerf_profile, gap_score_echo_profile, gap_score_usaid_profile, gap_score_ngo_profile]
     unit: rank
@@ -558,6 +626,7 @@ properties:
 
   rank_iqr:
     level: 5
+    description: "Inter-quartile range of ranks across donor profiles — size of the disagreement band."
     formula: "IQR of ranks across the 4 donor profiles — disagreement band"
     inputs: [gap_score_cerf_profile, gap_score_echo_profile, gap_score_usaid_profile, gap_score_ngo_profile]
     unit: rank_spread
@@ -565,6 +634,7 @@ properties:
 
   inform_severity_index:
     level: 5
+    description: "INFORM's native composite severity score, imported as-is (flagged for the Feb-2026 rescaling)."
     formula: "INFORM native composite — imported as-is"
     inputs: [severity_index]
     unit: continuous_rescaled_2026_02

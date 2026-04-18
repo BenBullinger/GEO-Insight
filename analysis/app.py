@@ -85,12 +85,20 @@ if lens_id not in PHASE_1_LENSES:
         "**Funding Pressure** end-to-end."
     )
     st.markdown(f"_Question this lens will answer:_ **{lens.question}**")
-    st.markdown("Properties (once available):")
+    import pandas as _pd
+    rows = []
     for p in lens.properties:
         prop = REGISTRY.properties.get(p)
         if prop:
-            in_frame = "✓" if p in get_enriched().columns else "Phase 2/3"
-            st.markdown(f"- `{p}` — Level {prop.level} · {prop.formula or prop.source or ''} · **{in_frame}**")
+            in_frame = "✓ in enriched frame" if p in get_enriched().columns else "Phase 2/3"
+            rows.append({
+                "property": p,
+                "description": (prop.description if prop.description else "—"),
+                "level": prop.level,
+                "status": in_frame,
+            })
+    st.markdown("#### Properties this lens will read")
+    st.dataframe(_pd.DataFrame(rows), use_container_width=True, hide_index=True)
     st.stop()
 
 enriched = get_enriched()

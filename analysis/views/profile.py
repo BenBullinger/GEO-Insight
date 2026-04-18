@@ -28,7 +28,7 @@ def render(enriched: pd.DataFrame, lens, registry) -> None:
     ranks = enriched[numeric_cols].rank(ascending=False, na_option="bottom")
     n = len(enriched)
 
-    # Value table
+    # Value table — includes a one-line description next to each property
     st.markdown(f"### {iso}")
     info_rows = []
     for c in cols:
@@ -38,13 +38,14 @@ def render(enriched: pd.DataFrame, lens, registry) -> None:
         info_rows.append(
             {
                 "property": c,
+                "description": (prop.description if prop and prop.description else "—"),
                 "value": (f"{val:.3g}" if pd.api.types.is_numeric_dtype(enriched[c]) and pd.notna(val) else str(val)),
                 "rank": f"{rank}/{n}" if rank else "—",
                 "level": prop.level if prop else "?",
                 "unit": prop.unit if prop else "",
             }
         )
-    st.dataframe(pd.DataFrame(info_rows), use_container_width=True, height=260)
+    st.dataframe(pd.DataFrame(info_rows), use_container_width=True, height=300, hide_index=True)
 
     # Radar on rank fractions (1 = most extreme, 0 = least extreme)
     if numeric_cols:
