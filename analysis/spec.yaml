@@ -641,6 +641,17 @@ properties:
     granularity: country_month
     failure_modes: ["Feb-2026 rescaling — use severity_category for time-series"]
 
+  completeness:
+    level: 5
+    description: "Fraction of the six gap-score attributes observed for this country (1.0 = all six, 0 = none). Countries below the 0.5 threshold are withheld from the ranking."
+    formula: "count of non-null gap-score attributes / 6"
+    inputs: [coverage_shortfall, per_pin_gap, need_intensity, severity_category, donor_hhi, cluster_gini]
+    unit: fraction
+    granularity: country_year
+    failure_modes:
+      - "Below 0.5 threshold → gap_score_* set to NaN (no rank assigned)."
+      - "A country with completeness 0.5 is scored by weighted mean over its 3 observed attributes; the score is not directly comparable to a completeness-1.0 score."
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # LENSES
@@ -690,7 +701,7 @@ lenses:
   - id: geo_insight_score
     name: GEO-Insight score
     question: "Our framework's readout"
-    properties: [gap_score_balanced, gap_score_cerf_profile, gap_score_echo_profile, gap_score_usaid_profile, gap_score_ngo_profile, median_rank, rank_iqr]
+    properties: [median_rank, rank_iqr, gap_score_balanced, gap_score_cerf_profile, gap_score_echo_profile, gap_score_usaid_profile, gap_score_ngo_profile, completeness]
 
 
 # ═══════════════════════════════════════════════════════════════════════════

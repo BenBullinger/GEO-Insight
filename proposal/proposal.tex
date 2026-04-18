@@ -261,20 +261,24 @@ NGO-consortium      & 0.20 & 0.15 & 0.15 & 0.10 & 0.10 & 0.30 \\
 
 \subsection{Composite gap score and disagreement band}
 
-Under profile $p$ the score is:
+Under profile $p$, and for any country $u$ whose completeness (see below) is at least $\tau_{\min}$, the score is the weighted mean of observed utilities:
 \begin{equation}
-G_p(u) \;=\; \sum_{i=1}^{6} w_{p,i}\, U_i(\tilde{a}_i(u))
+G_p(u) \;=\; \frac{\displaystyle\sum_{i \in \mathcal{O}(u)} w_{p,i}\, U_i(\tilde{a}_i(u))}{\displaystyle\sum_{i \in \mathcal{O}(u)} w_{p,i}}
 \label{eq:gap}
 \end{equation}
+where $\mathcal{O}(u) \subseteq \{1, \ldots, 6\}$ is the set of attributes observed for $u$. When $\mathcal{O}(u) = \{1, \ldots, 6\}$ this reduces to the standard additive MAUT form $\sum_i w_{p,i}\, U_i(\tilde a_i)$.
 
 For each crisis $u$ we then rank the pool under every profile and report:
 \begin{itemize}[leftmargin=1.2em,itemsep=2pt,topsep=2pt]
     \item $\text{rank}_p(u)$ for each $p \in \{\text{CERF, ECHO, USAID, NGO}\}$;
     \item $\widetilde{\text{rank}}(u) = \mathrm{median}_p\, \text{rank}_p(u)$;
-    \item $\text{IQR}(u) = \text{IQR}_p\, \text{rank}_p(u)$ --- the \emph{disagreement band}.
+    \item $\text{IQR}(u) = \text{IQR}_p\, \text{rank}_p(u)$ --- the \emph{disagreement band};
+    \item $\text{completeness}(u) = |\mathcal{O}(u)| / 6$ --- a Level-5 data-quality flag.
 \end{itemize}
 
 Small IQR on a high median rank indicates \emph{consensus overlooked}: every plausible donor mandate ranks this crisis highly. Large IQR indicates \emph{contested}: the crisis's priority depends on the weighting philosophy.
+
+\paragraph{Graceful degradation instead of drop-or-impute.} Equation~\eqref{eq:gap} is the principled response to a common failure mode: a country may be missing one of the six attributes (most frequently $a_6$, since sector-level FTS data is sparse for smaller appeals). Two naive handlings both fail us: (a) hard-drop the country, which wastes information --- in our data the strict-complete pool is only 18 countries of 114 eligible; (b) impute the missing attribute, which fabricates precision. We instead compute a weighted mean over the \emph{observed} subset $\mathcal{O}(u)$, re-normalising the weights so the score is on the same $[0,1]$ scale regardless of $|\mathcal{O}(u)|$, and publish $\text{completeness}(u)$ as a first-class field. Countries with $\text{completeness}(u) < \tau_{\min}$ (default $\tau_{\min} = 3/6$) are withheld from the ranking entirely; partial-complete countries are ranked but displayed with an explicit flag. The analyst-facing dashboard surfaces a strict/partial/all toggle so conclusions can be drawn either way. This matches the third of Abdulrashid et al.'s~\cite{abdulrashid2026} \S7.3 recommendations: equity-aware modelling must degrade transparently rather than through hidden imputation.
 
 \subsection{Four-cell typology}\label{sec:fourcell}
 

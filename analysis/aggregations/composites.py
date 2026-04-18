@@ -59,35 +59,72 @@ def _min_max(col: pd.Series) -> pd.Series:
     return (col - a) / (b - a)
 
 
-def compute_gap_scores(enriched: pd.DataFrame) -> pd.DataFrame:
-    """Return a DataFrame indexed by ISO3 with seven Level-5 columns."""
+def compute_gap_scores(
+    enriched: pd.DataFrame, min_completeness: float = 3 / 6
+) -> pd.DataFrame:
+    """MAUT scoring with graceful degradation on missing attributes.
+
+    For each country:
+      - identify the subset S ⊆ ATTRIBUTES that is observed (non-NaN),
+      - normalise each attribute's utility via min-max over ALL countries that
+        report it (not restricted to the fully-observed pool — uses every
+        datum we have),
+      - compute the score as a re-weighted mean:
+            G_p(u) = Σ_{i ∈ S} w_{p,i} · U_i(ã_i)  /  Σ_{i ∈ S} w_{p,i}
+      - flag completeness |S| / |ATTRIBUTES|.
+      - countries with completeness < `min_completeness` are withheld from
+        scoring (all gap_score columns NaN) and do not enter the ranking.
+
+    This is the principled alternative to hard-drop (wastes data) and
+    imputation (fabricates precision). It matches the proposal's §5.8
+    commitment to graceful degradation.
+
+    Returns a DataFrame with:
+      gap_score_balanced, gap_score_{cerf,echo,usaid,ngo}_profile,
+      completeness, median_rank, rank_iqr
+    """
     missing = [a for a in ATTRIBUTES if a not in enriched.columns]
     if missing:
         raise ValueError(f"enriched frame is missing required attributes: {missing}")
 
-    # only score countries where every attribute is observed
-    pool = enriched.loc[enriched[ATTRIBUTES].notna().all(axis=1), ATTRIBUTES].copy()
-    if pool.empty:
-        cols = (
-            [f"gap_score_{p if p == 'balanced' else p + '_profile'}" for p in PROFILE_WEIGHTS]
-            + ["median_rank", "rank_iqr"]
-        )
-        return pd.DataFrame(columns=cols)
+    # Per-attribute min-max over every country that reports the attribute.
+    U = pd.DataFrame(index=enriched.index)
+    for attr in ATTRIBUTES:
+        col = enriched[attr]
+        valid = col.dropna()
+        if valid.empty:
+            U[attr] = pd.Series(np.nan, index=enriched.index)
+            continue
+        a, b = valid.min(), valid.max()
+        if b == a:
+            tilde = pd.Series(0.0, index=enriched.index)
+            tilde.loc[col.isna()] = np.nan
+        else:
+            tilde = (col - a) / (b - a)
+        U[attr] = _utility(attr, tilde)
 
-    # normalise + transform
-    tilde = pool.apply(_min_max)
-    U = pd.DataFrame(
-        {name: _utility(name, tilde[name]) for name in ATTRIBUTES},
-        index=tilde.index,
-    )
+    present = U.notna()
+    completeness = (present.sum(axis=1) / len(ATTRIBUTES)).rename("completeness")
+    eligible = completeness >= min_completeness
 
-    # per-profile gap scores
-    out = pd.DataFrame(index=pool.index)
+    # Weighted mean of observed utilities, per profile.
+    out = pd.DataFrame(index=enriched.index)
     for name, weights in PROFILE_WEIGHTS.items():
+        w = pd.Series(weights, index=ATTRIBUTES)
+        weighted_U = U.multiply(w, axis=1)
+        num = weighted_U.sum(axis=1, skipna=True)
+        den = present.multiply(w, axis=1).sum(axis=1)
         col = "gap_score_" + ("balanced" if name == "balanced" else f"{name}_profile")
-        out[col] = U.values @ np.asarray(weights)
+        score = num / den.replace(0.0, np.nan)
+        score.loc[~eligible] = np.nan
+        out[col] = score
 
-    # ranks across donor profiles (exclude balanced — it's the neutral anchor)
+    out["completeness"] = completeness
+    # Completeness is NaN-free by construction, but we still blank it where the
+    # row has effectively no data — this is unreachable in practice.
+    out.loc[completeness == 0, "completeness"] = np.nan
+
+    # Ranks across the four donor profiles only
     donor_cols = [
         "gap_score_cerf_profile",
         "gap_score_echo_profile",
