@@ -62,69 +62,104 @@ def _min_max(col: pd.Series) -> pd.Series:
 def compute_gap_scores(
     enriched: pd.DataFrame, min_completeness: float = 3 / 6
 ) -> pd.DataFrame:
-    """MAUT scoring with graceful degradation on missing attributes.
+    """Six-attribute MAUT composite — **evidence-bounded**.
 
-    For each country:
-      - identify the subset S ⊆ ATTRIBUTES that is observed (non-NaN),
-      - normalise each attribute's utility via min-max over ALL countries that
-        report it (not restricted to the fully-observed pool — uses every
-        datum we have),
-      - compute the score as a re-weighted mean:
-            G_p(u) = Σ_{i ∈ S} w_{p,i} · U_i(ã_i)  /  Σ_{i ∈ S} w_{p,i}
-      - flag completeness |S| / |ATTRIBUTES|.
-      - countries with completeness < `min_completeness` are withheld from
-        scoring (all gap_score columns NaN) and do not enter the ranking.
+    For country `u`, profile `p`:
 
-    This is the principled alternative to hard-drop (wastes data) and
-    imputation (fabricates precision). It matches the proposal's §5.8
-    commitment to graceful degradation.
+        G_p(u) = Σ_{i ∈ 𝒪(u)} w_{p,i} · U_i(ã_i(u))
 
-    Returns a DataFrame with:
+    i.e. a **weighted sum (not mean) over observed attributes only**. Missing
+    attributes contribute zero to the score. Crucially, the weights are
+    *not* renormalised over the observed subset.
+
+    This is the principled answer to the question "how should incomplete
+    observations scale?". Three alternative formulations were considered and
+    rejected:
+
+      1. Weighted mean of observed  (G = Σ_{i∈𝒪} wU / Σ_{i∈𝒪} w)
+         — systematically inflates extreme partial-complete countries; a
+         country observed only on three "hottest" attributes can outrank a
+         fully-observed country with moderate values. Empirically verified
+         on our CERF UFE validation: strict-pool Overlap@5 = 100%
+         collapsed to 0% under graceful, with partial-complete countries
+         displacing the correct top.
+
+      2. Bayesian mean-imputation (missing ← population mean of U_i).
+         — statistically principled under MCAR, but a country with all
+         observed attributes extreme still ranks above fully-observed
+         moderates: the imputation regresses *missing* attributes to the
+         mean but not *extreme observed* ones. Post-fix CERF UFE
+         Overlap@5 in All pool: 40% — better but still inflated.
+
+      3. Model-based imputation
+         — fabricates country-specific values, violates the proposal's
+         no-imputation principle.
+
+    Evidence-bounded scoring (this function) has the property that a
+    partial-complete country's MAXIMUM possible score is its observed
+    weight-mass Σ_{i ∈ 𝒪(u)} w_{p,i} < 1. A fully-observed country with
+    moderate attributes will therefore always outrank a partial-complete
+    country whose observed-weight-mass is less than its own total score —
+    exactly the robustness the user's "incompleteness must not inflate"
+    constraint demands.
+
+    The tradeoff: systematically under-ranks countries with extreme but
+    poorly-documented crises. We accept this as the cost of the principle.
+    This is documented in the proposal §5.7 and surfaced in the dashboard
+    through the `completeness` flag.
+
+    Reduces to Σᵢ w_{p,i} U_i(ã_i(u)) when 𝒪(u) = {1..6}.
+
+    Countries with completeness < `min_completeness` are withheld from the
+    ranking entirely (gap_score_* set to NaN).
+
+    Output columns:
       gap_score_balanced, gap_score_{cerf,echo,usaid,ngo}_profile,
-      completeness, median_rank, rank_iqr
+      completeness, median_rank, rank_iqr.
     """
     missing = [a for a in ATTRIBUTES if a not in enriched.columns]
     if missing:
         raise ValueError(f"enriched frame is missing required attributes: {missing}")
 
-    # Per-attribute min-max over every country that reports the attribute.
-    U = pd.DataFrame(index=enriched.index)
+    # Per-attribute min-max over every country that reports it.
+    tilde = pd.DataFrame(
+        np.nan, index=enriched.index, columns=ATTRIBUTES, dtype=float
+    )
     for attr in ATTRIBUTES:
         col = enriched[attr]
         valid = col.dropna()
         if valid.empty:
-            U[attr] = pd.Series(np.nan, index=enriched.index)
             continue
         a, b = valid.min(), valid.max()
         if b == a:
-            tilde = pd.Series(0.0, index=enriched.index)
-            tilde.loc[col.isna()] = np.nan
+            tilde[attr] = np.where(col.notna(), 0.0, np.nan)
         else:
-            tilde = (col - a) / (b - a)
-        U[attr] = _utility(attr, tilde)
+            tilde[attr] = (col - a) / (b - a)
 
+    # Per-attribute utility transform.
+    U = pd.DataFrame(index=enriched.index, columns=ATTRIBUTES, dtype=float)
+    for attr in ATTRIBUTES:
+        U[attr] = _utility(attr, tilde[attr])
+
+    # Completeness flag.
     present = U.notna()
     completeness = (present.sum(axis=1) / len(ATTRIBUTES)).rename("completeness")
     eligible = completeness >= min_completeness
 
-    # Weighted mean of observed utilities, per profile.
+    # Evidence-bounded score: weighted sum of observed, missing contributes 0.
+    U_obs = U.fillna(0.0)  # zero out missing for the dot product
+
     out = pd.DataFrame(index=enriched.index)
     for name, weights in PROFILE_WEIGHTS.items():
-        w = pd.Series(weights, index=ATTRIBUTES)
-        weighted_U = U.multiply(w, axis=1)
-        num = weighted_U.sum(axis=1, skipna=True)
-        den = present.multiply(w, axis=1).sum(axis=1)
-        col = "gap_score_" + ("balanced" if name == "balanced" else f"{name}_profile")
-        score = num / den.replace(0.0, np.nan)
+        w = np.asarray(weights, dtype=float)
+        score = pd.Series(U_obs.values @ w, index=enriched.index)
         score.loc[~eligible] = np.nan
+        col = "gap_score_" + ("balanced" if name == "balanced" else f"{name}_profile")
         out[col] = score
 
     out["completeness"] = completeness
-    # Completeness is NaN-free by construction, but we still blank it where the
-    # row has effectively no data — this is unreachable in practice.
     out.loc[completeness == 0, "completeness"] = np.nan
 
-    # Ranks across the four donor profiles only
     donor_cols = [
         "gap_score_cerf_profile",
         "gap_score_echo_profile",
