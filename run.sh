@@ -21,6 +21,7 @@ cd "$(dirname "$0")"
 PORT_LAND=7777
 PORT_PRES=8000
 PORT_DASH=8501
+PORT_ANAL=8502
 
 # ─── 1. Source data ──────────────────────────────────────────────────────────
 if ! python3 Data/download.py --check >/dev/null 2>&1; then
@@ -36,6 +37,22 @@ if [ ! -x dashboard/.venv/bin/streamlit ]; then
     dashboard/.venv/bin/pip install --quiet -r dashboard/requirements.txt
 fi
 
+# ─── 2b. Third-party: INFORM Severity (global monthly severity panel) ───────
+# ~130 MB of monthly xlsx → one consolidated CSV. Skipped if already present.
+if [ ! -f Data/Third-Party/DRMKC-INFORM/inform_severity_long.csv ]; then
+    echo "→ Downloading INFORM Severity snapshots (one-time, ~3–5 min, polite rate-limited)…"
+    python3 Data/Third-Party/DRMKC-INFORM/download.py
+    echo "→ Consolidating INFORM snapshots into long-format CSVs…"
+    dashboard/.venv/bin/python Data/Third-Party/DRMKC-INFORM/consolidate.py
+    dashboard/.venv/bin/python Data/Third-Party/DRMKC-INFORM/consolidate_indicators.py
+fi
+# Back-fill the sub-indicator CSV on installs that predate it.
+if [ ! -f Data/Third-Party/DRMKC-INFORM/inform_indicators_long.csv ] && \
+   [ -d Data/Third-Party/DRMKC-INFORM/snapshots ]; then
+    echo "→ Extracting INFORM sub-indicators (one-time)…"
+    dashboard/.venv/bin/python Data/Third-Party/DRMKC-INFORM/consolidate_indicators.py
+fi
+
 # Ensure Streamlit's first-run email prompt is pre-silenced
 if [ ! -f "$HOME/.streamlit/credentials.toml" ]; then
     mkdir -p "$HOME/.streamlit"
@@ -43,12 +60,30 @@ if [ ! -f "$HOME/.streamlit/credentials.toml" ]; then
 fi
 
 # ─── 3. Port checks ──────────────────────────────────────────────────────────
-port_busy() { lsof -nP -iTCP:"$1" -sTCP:LISTEN >/dev/null 2>&1; }
-for p in "$PORT_LAND" "$PORT_PRES" "$PORT_DASH"; do
-    if port_busy "$p"; then
-        echo "✗ Port $p already in use. Stop the process using it or edit run.sh." >&2
-        exit 1
-    fi
+# If a port is still held (e.g. stale server from a prior ./run.sh that
+# wasn't Ctrl-C'd cleanly), release it. SIGTERM first; SIGKILL if the
+# process doesn't exit within 3 s.
+free_port() {
+    local port=$1
+    local pid
+    pid=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN -t 2>/dev/null | head -1 || true)
+    [ -z "$pid" ] && return 0
+    local cmd
+    cmd=$(ps -p "$pid" -o comm= 2>/dev/null | xargs)
+    echo "→ Port $port held by pid $pid ($cmd) — releasing…"
+    kill "$pid" 2>/dev/null || true
+    for _ in 1 2 3; do
+        sleep 1
+        pid=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN -t 2>/dev/null | head -1 || true)
+        [ -z "$pid" ] && return 0
+    done
+    echo "  ↳ still held; sending SIGKILL"
+    kill -9 "$pid" 2>/dev/null || true
+    sleep 1
+}
+
+for p in "$PORT_LAND" "$PORT_PRES" "$PORT_DASH" "$PORT_ANAL"; do
+    free_port "$p"
 done
 
 # ─── 4. Launch servers ───────────────────────────────────────────────────────
@@ -70,11 +105,18 @@ dashboard/.venv/bin/streamlit run dashboard/app.py \
     >"$LOG_DIR/dashboard.log" 2>&1 &
 DASH_PID=$!
 
+dashboard/.venv/bin/streamlit run analysis/app.py \
+    --server.port="$PORT_ANAL" \
+    --server.headless=true \
+    --browser.gatherUsageStats=false \
+    >"$LOG_DIR/analysis.log" 2>&1 &
+ANAL_PID=$!
+
 # ─── 5. Shutdown handling ────────────────────────────────────────────────────
 cleanup() {
     echo ""
     echo "→ Shutting down…"
-    kill "$LAND_PID" "$PRES_PID" "$DASH_PID" 2>/dev/null || true
+    kill "$LAND_PID" "$PRES_PID" "$DASH_PID" "$ANAL_PID" 2>/dev/null || true
     wait 2>/dev/null || true
     echo "  Done."
     exit 0
@@ -88,10 +130,11 @@ cat <<EOF
 
   ┌──────────────────────────────────────────────────────────────────┐
   │                                                                  │
-  │   ▸ Landing      http://localhost:$PORT_LAND  (start here)             │
-  │     Presentation http://localhost:$PORT_PRES                           │
-  │     Dashboard    http://localhost:$PORT_DASH                           │
-  │     Proposal PDF proposal/proposal.pdf                           │
+  │   ▸ Landing          http://localhost:$PORT_LAND  (start here)         │
+  │     Presentation     http://localhost:$PORT_PRES                       │
+  │     Data exploration http://localhost:$PORT_DASH                       │
+  │     Analysis (ML)    http://localhost:$PORT_ANAL                       │
+  │     Proposal PDF     proposal/proposal.pdf                       │
   │                                                                  │
   │   Logs:          $LOG_DIR
   │                                                                  │

@@ -37,13 +37,16 @@ TIMEOUT_S = 120
 CHUNK = 65536
 MAX_WORKERS = 4
 
-# (category, filename, url, approx_size_bytes_for_sanity_check)
+# (category, filename, url)
 #
 # URLs verified against HDX CKAN API on 2026-04-18. If a download 404s, the
 # resource ID may have been re-issued; regenerate via:
 #   curl -sL "https://data.humdata.org/api/3/action/package_show?id=<slug>"
 # for slugs: global-hpc-hno, humanitarian-response-plans, cod-ps-global,
 # global-requirements-and-funding-data, cbpf-allocations-and-contributions.
+#
+# URLs listed in NON_CRITICAL_URLS below will warn-and-continue on network
+# failure rather than aborting the whole run; everything else is required.
 DATASETS: list[tuple[str, str, str]] = [
     # --- HNO (source #1: https://data.humdata.org/dataset/global-hpc-hno) ---
     ("hno", "hpc_hno_2026.csv",
@@ -57,7 +60,7 @@ DATASETS: list[tuple[str, str, str]] = [
     ("hrp", "humanitarian-response-plans.csv",
      "https://data.humdata.org/dataset/f0e95437-b6d9-4897-9e3f-84853bcbfaee/resource/d4e67ae7-a910-47c9-b283-304877c7e5eb/download/humanitarian-response-plans.csv"),
     ("hrp", "hpc_tools_plans.json",
-     "http://api.hpc.tools/v2/public/plan"),
+     "https://api.hpc.tools/v2/public/plan"),
 
     # --- CoD-PS (source #3: https://data.humdata.org/dataset/cod-ps-global) ---
     ("cod-ps", "cod_population_admin0.csv",
@@ -97,6 +100,21 @@ DATASETS: list[tuple[str, str, str]] = [
      "https://docs.google.com/spreadsheets/d/e/2PACX-1vRyEbNqi7QufuCwGCgbcdWCC3O7dFzwoZPm6tjUJ4RAI0ah12nTZLr5Gdaz-l44bTTOcIg9l2LP3GK_/pub?gid=1866794021&single=true&output=csv"),
 ]
 
+# URLs allowed to fail without aborting the run. These are supplementary
+# resources whose failure does not break the methodology (the core HRP data
+# is already in humanitarian-response-plans.csv; the live API snapshot is a
+# nice-to-have that some networks block with 406 Not Acceptable).
+NON_CRITICAL_URLS: set[str] = {
+    "http://api.hpc.tools/v2/public/plan",
+}
+
+# Per-host Accept overrides. The HPC Tools API returns 406 when no explicit
+# Accept is sent; default urllib doesn't set one. Using `application/json`
+# unblocks teammates whose network strips unusual header combinations.
+EXTRA_HEADERS: dict[str, dict[str, str]] = {
+    "api.hpc.tools": {"Accept": "application/json"},
+}
+
 
 def format_size(n: float) -> str:
     for unit in ("B", "KB", "MB", "GB"):
@@ -115,8 +133,18 @@ def download_one(category: str, filename: str, url: str, force: bool) -> tuple[s
 
     tmp = dest.with_suffix(dest.suffix + ".partial")
     t0 = time.monotonic()
+
+    # Build headers — always send UA; layer on host-specific overrides.
+    headers = {"User-Agent": USER_AGENT, "Accept": "*/*"}
     try:
-        req = Request(url, headers={"User-Agent": USER_AGENT})
+        host = url.split("//", 1)[1].split("/", 1)[0].lower()
+        if host in EXTRA_HEADERS:
+            headers.update(EXTRA_HEADERS[host])
+    except Exception:
+        pass
+
+    try:
+        req = Request(url, headers=headers)
         with urlopen(req, timeout=TIMEOUT_S) as resp, open(tmp, "wb") as f:
             while True:
                 chunk = resp.read(CHUNK)
@@ -127,7 +155,8 @@ def download_one(category: str, filename: str, url: str, force: bool) -> tuple[s
         return (f"{category}/{filename}", "ok", dest.stat().st_size, time.monotonic() - t0)
     except (HTTPError, URLError, TimeoutError, OSError) as exc:
         tmp.unlink(missing_ok=True)
-        return (f"{category}/{filename}", f"error: {exc}", 0, time.monotonic() - t0)
+        status = "warn" if url in NON_CRITICAL_URLS else "error"
+        return (f"{category}/{filename}", f"{status}: {exc}", 0, time.monotonic() - t0)
 
 
 def cmd_check() -> int:
@@ -154,17 +183,24 @@ def cmd_download(force: bool) -> int:
         futures = [pool.submit(download_one, cat, fn, url, force) for cat, fn, url in DATASETS]
         ok_bytes = 0
         errors: list[str] = []
+        warnings: list[str] = []
         for fut in as_completed(futures):
             name, status, size, dt = fut.result()
             rate = f"{format_size(size/dt)}/s" if dt > 0.1 else ""
-            print(f"  {status:<8} {format_size(size)}  {name:<60} {rate}")
+            label = status.split(":", 1)[0] if ":" in status else status
+            print(f"  {label:<8} {format_size(size)}  {name:<60} {rate}")
             if status == "ok":
                 ok_bytes += size
             elif status.startswith("error"):
-                errors.append(name)
+                errors.append(f"{name} ({status})")
+            elif status.startswith("warn"):
+                warnings.append(f"{name} ({status})")
     print(f"\nDownloaded {format_size(ok_bytes)} this run.")
+    if warnings:
+        print(f"Skipped {len(warnings)} non-critical file(s): {', '.join(warnings)}")
+        print("These are supplementary and don't block the methodology.")
     if errors:
-        print(f"Errors in {len(errors)} file(s): {', '.join(errors)}", file=sys.stderr)
+        print(f"\nErrors in {len(errors)} file(s): {', '.join(errors)}", file=sys.stderr)
         return 1
     return 0
 

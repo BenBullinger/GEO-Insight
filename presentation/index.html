@@ -5,14 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GEO-Insight — Datathon 2026</title>
 
-    <!-- reveal.js core + reset -->
     <link rel="stylesheet" href="vendor/reveal.js/dist/reset.css">
     <link rel="stylesheet" href="vendor/reveal.js/dist/reveal.css">
-    <!-- base theme (we override with theme-un.css) -->
     <link rel="stylesheet" href="vendor/reveal.js/dist/theme/white.css" id="theme">
-    <!-- custom theme -->
     <link rel="stylesheet" href="css/theme-un.css">
-    <!-- code highlighting theme -->
     <link rel="stylesheet" href="vendor/reveal.js/dist/plugin/highlight/monokai.css">
 </head>
 
@@ -20,252 +16,402 @@
 <div class="reveal">
     <div class="slides">
 
-        <!-- ===== TITLE ===== -->
+        <!-- ═══════════════════════════════════════════════════════════════
+             1 · Title
+             ═══════════════════════════════════════════════════════════════ -->
         <section class="title-slide">
-            <div class="eyebrow">Analytics Club at ETH · Datathon 2026 · FS26</div>
+            <div class="eyebrow">Cache Me if You Can · Datathon 2026 · FS26</div>
             <h1>GEO-Insight</h1>
-            <div class="subtitle">Overlookedness as disagreement.<br>
-                A multi-attribute, multi-stakeholder gap-ranking system for humanitarian crises.</div>
+            <div class="subtitle">Which humanitarian crises<br>are most overlooked?</div>
             <div class="meta">
-                <strong>Team:</strong> [Names]<br>
-                <strong>Date:</strong> [Final presentation date]<br>
-                <strong>Repository:</strong> github.com/BenBullinger/GEO-Insight
+                <strong>Date:</strong> 19 April 2026
             </div>
         </section>
 
-        <!-- ===== MOTIVATION ===== -->
-        <section>
-            <h1>The question</h1>
-            <p>Humanitarian coordinators and donor advisors need rapid, defensible answers to one recurring question:</p>
-            <blockquote>Relative to documented need, which crises are most overlooked?</blockquote>
-            <p>Typical decision-maker queries:</p>
-            <ul>
-                <li>Which crises have the highest people-in-need but the lowest fund allocations?</li>
-                <li>Which countries with active HRPs have negligible funding?</li>
-                <li>Which regions are consistently underfunded across multiple years?</li>
-                <li>Which food-security hotspots received under 10% of requirements?</li>
-            </ul>
-            <div class="footer"><span>GEO-Insight · Datathon 2026</span><span>1</span></div>
+        <!-- ═══════════════════════════════════════════════════════════════
+             2 · The question (big)
+             ═══════════════════════════════════════════════════════════════ -->
+        <section class="headline-slide">
+            <p class="eyebrow-small">The question</p>
+            <p class="headline">Relative to documented need,<br>which crises are <em>most overlooked</em>?</p>
+            <p class="subhead">Humanitarian coordinators and donor advisors need a defensible answer every cycle. No existing tool gives them one.</p>
+            <div class="footer"><span>GEO-Insight · Cache Me if You Can</span><span>1</span></div>
         </section>
 
-        <!-- ===== WHY NOW ===== -->
+        <!-- ═══════════════════════════════════════════════════════════════
+             3 · The scale (big numbers)
+             ═══════════════════════════════════════════════════════════════ -->
         <section>
-            <h1>Why this matters now</h1>
-            <div class="cols-3">
-                <div class="stat"><span class="value">$33B</span><span class="label">2026 GHO appeal</span></div>
-                <div class="stat"><span class="value">$12B</span><span class="label">Raised in 2025 (decade low)</span></div>
-                <div class="stat"><span class="value">19</span><span class="label">Severely underfunded contexts (vs. 8 in 2021)</span></div>
+            <h1>The scale of the gap</h1>
+            <div class="big-stats">
+                <div class="stat-block">
+                    <span class="val">$33B</span>
+                    <span class="desc">2026 GHO appeal<br>to reach 135M people</span>
+                </div>
+                <div class="stat-block">
+                    <span class="val">$12B</span>
+                    <span class="desc">Raised in 2025<br>the lowest in a decade</span>
+                </div>
+                <div class="stat-block">
+                    <span class="val">19</span>
+                    <span class="desc">Severely underfunded contexts<br>up from 8 in 2021</span>
+                </div>
             </div>
-            <h3 style="margin-top: 0.8em;">Headline coverage ratios</h3>
-            <table>
-                <thead><tr><th>Country</th><th>2024</th><th>2025</th><th>Change</th></tr></thead>
-                <tbody>
-                    <tr><td>Sudan</td><td>69%</td><td>35%</td><td>&minus;34 pp</td></tr>
-                    <tr><td>Yemen</td><td>~40%</td><td>~24%</td><td>&minus;16 pp</td></tr>
-                    <tr><td>Somalia</td><td>~45%</td><td>~24%</td><td>&minus;21 pp</td></tr>
-                    <tr><td>DRC</td><td>~40%</td><td>~22%</td><td>&minus;18 pp</td></tr>
-                </tbody>
-            </table>
-            <p class="sources">When almost every response is underfunded, a single coverage ratio stops being discriminative. Sources: OCHA GHO 2026; The New Humanitarian, Dec 2025.</p>
-            <div class="footer"><span>GEO-Insight · Datathon 2026</span><span>2</span></div>
+            <p style="font-size: 0.8em; color: var(--un-gray); margin-top: 18px;">
+                Sudan fell from 69 % covered (2024) to 35 % (2025). Yemen, Somalia, and DRC sit near 22–24 %.
+            </p>
+            <div class="footer"><span>GEO-Insight · Cache Me if You Can</span><span>2</span></div>
         </section>
 
-        <!-- ===== SECTION DIVIDER: APPROACH ===== -->
+        <!-- ═══════════════════════════════════════════════════════════════
+             4 · The saturation point (headline)
+             ═══════════════════════════════════════════════════════════════ -->
+        <section class="headline-slide">
+            <p class="eyebrow-small">The analytical problem</p>
+            <p class="headline">When <em>every</em> response is underfunded,<br>"underfunded" stops being useful.</p>
+            <p class="subhead">A single coverage ratio can't discriminate between 19 contexts that are all below 50 %. The interesting variation is no longer <em>whether</em> a crisis is underfunded — but <em>how</em>, and <em>for whom</em>.</p>
+            <div class="footer"><span>GEO-Insight · Cache Me if You Can</span><span>3</span></div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             Divider · Part I
+             ═══════════════════════════════════════════════════════════════ -->
         <section class="section-divider">
             <div class="eyebrow">Part I</div>
-            <h1 style="color: white; border-color: var(--un-accent-warm);">Approach</h1>
+            <h1 style="color: white; border-color: var(--un-accent-warm);">A sharper question.</h1>
         </section>
 
-        <!-- ===== CORE INSIGHT ===== -->
+        <!-- ═══════════════════════════════════════════════════════════════
+             5 · Three kinds of overlooked
+             ═══════════════════════════════════════════════════════════════ -->
         <section>
-            <h1>Core insight</h1>
-            <p>Existing tools (CERF UFE, FTS coverage ratios, Palantir Foundry/DOTS) score overlookedness as a <strong>scalar</strong> — one number per country-year.</p>
-            <div class="callout"><strong>Our contribution:</strong> a <em>joint distribution</em> view, with two new axes on top of the standard gap score:
-                <ul style="margin-top: 0.4em; margin-bottom: 0;">
-                    <li><strong>Intra-crisis equity</strong> — how unequally is coverage distributed across sector clusters within one country?</li>
-                    <li><strong>Inter-stakeholder disagreement</strong> — how much does a crisis's rank shift across plausible donor-preference profiles?</li>
-                </ul>
+            <h1>Three ways to be overlooked</h1>
+            <p>Existing tools collapse these into one number. They aren't the same crisis.</p>
+            <div class="kind-cards">
+                <div class="kind-card">
+                    <div class="traits">HIGH NEED · LOW FUNDING · LOW ATTENTION</div>
+                    <h3>Forgotten</h3>
+                    <p class="example"><strong>Angola drought, 2023</strong> — 7M affected. Just 1,049 news articles worldwide. (<em>Barbie</em>, same year: 273,279.)</p>
+                </div>
+                <div class="kind-card">
+                    <div class="traits">HIGH NEED · LOW FUNDING · HIGH ATTENTION</div>
+                    <h3>Contested</h3>
+                    <p class="example"><strong>Sudan, 2025</strong> — world's largest displacement crisis, on every front page. Coverage still dropped from 69 % to 35 %.</p>
+                </div>
+                <div class="kind-card">
+                    <div class="traits">ADEQUATE AGGREGATE · STARVED CLUSTER</div>
+                    <h3>Sector-starved</h3>
+                    <p class="example">A crisis at 60 % aggregate coverage can hide a <strong>health cluster at 20 %</strong> while food is overfunded. The total masks the starved part.</p>
+                </div>
             </div>
-            <p>Three papers <em>independently</em> flag equity-aware modelling as an explicit open gap (Abdulrashid 2026 §7.3; Sahebjamnia 2017 §6; Vargas Florez 2015 Eqs. 9–12, which provides the equation template).</p>
-            <div class="footer"><span>GEO-Insight · Datathon 2026</span><span>3</span></div>
+            <div class="footer"><span>GEO-Insight · Cache Me if You Can</span><span>4</span></div>
         </section>
 
-        <!-- ===== DATA SOURCES ===== -->
+        <!-- ═══════════════════════════════════════════════════════════════
+             6 · From one number to a distribution
+             ═══════════════════════════════════════════════════════════════ -->
         <section>
-            <h1>Data sources</h1>
-            <table>
-                <thead><tr><th>Dataset</th><th>Role</th><th>Source</th></tr></thead>
-                <tbody>
-                    <tr><td>HNO</td><td>PIN by country &amp; <strong>sector</strong></td><td>HDX / OCHA HPC</td></tr>
-                    <tr><td>HRP</td><td>Plan targets, status, requirements</td><td>HDX / OCHA</td></tr>
-                    <tr><td>FTS</td><td>Requested, pledged, received — <strong>with sector breakdown</strong></td><td>HDX / OCHA FTS</td></tr>
-                    <tr><td>CoD-PS</td><td>Population denominators</td><td>HDX</td></tr>
-                    <tr><td>CBPF</td><td>Pooled fund allocations</td><td>cbpf.data.unocha.org</td></tr>
-                    <tr><td>HDX HAPI</td><td>Unified daily-refresh API</td><td>HDX</td></tr>
-                </tbody>
-            </table>
-            <div class="callout"><strong>Two validation benchmarks:</strong> <em>CERF UFE</em> (consensus axis) and <em>CARE Breaking the Silence</em> (sector-starved axis). Never used as scoring inputs.</div>
-            <div class="footer"><span>GEO-Insight · Datathon 2026</span><span>4</span></div>
+            <h1>From one number to a joint distribution</h1>
+            <div class="before-after">
+                <div class="side before">
+                    <div class="label">Existing tools</div>
+                    <div class="big-num">0.37</div>
+                    <p class="sub">A scalar coverage ratio.<br>Cannot distinguish the three kinds.</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="side after">
+                    <div class="label">GEO-Insight</div>
+                    <div class="axis">intra-crisis equity</div>
+                    <div class="axis">× inter-stakeholder disagreement</div>
+                    <div class="axis" style="color: var(--un-gray-light); margin-top: 10px;">over a six-signal score</div>
+                    <p class="sub">A distribution that distinguishes <em>forgotten</em>, <em>contested</em>, and <em>sector-starved</em>.</p>
+                </div>
+            </div>
+            <p class="caption">Each new axis is anchored in an explicit gap in the 2015–2026 humanitarian-analytics literature (Abdulrashid 2026 §7.3; Sahebjamnia 2017 §6; Vargas Florez 2015 Eqs. 9–12).</p>
+            <div class="footer"><span>GEO-Insight · Cache Me if You Can</span><span>5</span></div>
         </section>
 
-        <!-- ===== GAP SCORE ===== -->
+        <!-- ═══════════════════════════════════════════════════════════════
+             7 · The score, approachable
+             ═══════════════════════════════════════════════════════════════ -->
         <section>
-            <h1>The gap score</h1>
-            <p>Extending the MADM/AHP/MAUT framework <em>(Rye &amp; Aktas, 2022)</em>. For each eligible crisis <code>u</code>, under profile <code>p</code>:</p>
-            <p style="text-align: center; margin: 0.6em 0;">
-                \[G_p(u) \;=\; \sum_{i=1}^{6} w_{p,i} \cdot U_i\!\left(\tilde{a}_i(u)\right)\]
+            <h1>How the score works</h1>
+            <p>For each crisis, <strong>six signals</strong> are weighted by a <strong>donor profile</strong> and aggregated over <em>observed</em> attributes:</p>
+            <div class="equation-block">
+                \[G_p(u) \;=\; \sum_{i \in \mathcal{O}(u)} w_{p,i} \cdot U_i\!\left(\tilde{a}_i(u)\right)\]
+            </div>
+            <div class="equation-legend">
+                <div><span class="tok">G<sub>p</sub>(u)</span><span class="tok-desc">gap score for crisis u under profile p</span></div>
+                <div><span class="tok">𝒪(u)</span><span class="tok-desc">indices of attributes observed for u</span></div>
+                <div><span class="tok">w<sub>p,i</sub></span><span class="tok-desc">profile p's weight on signal i</span></div>
+                <div><span class="tok">U<sub>i</sub>(·)</span><span class="tok-desc">utility transform for signal i</span></div>
+                <div><span class="tok">ã<sub>i</sub>(u)</span><span class="tok-desc">min-max normalised signal value</span></div>
+            </div>
+            <p style="font-size: 0.72em; color: var(--un-gray); margin-top: 14px;">
+                Six signals: coverage shortfall · per-PIN funding gap · need intensity · severity · donor concentration · <em>intra-crisis equity Gini</em>.
+                Four profiles: CERF-, ECHO-, USAID-, NGO-flavoured.
+                <br><strong style="color: var(--un-blue-deep);">Evidence-bounded:</strong> missing attributes contribute zero (no renormalisation). A partial-complete country's max score is bounded by its observed weight-mass — incompleteness cannot inflate rank.
+                <br><span style="color: var(--un-gray-light);">Sources: 5 OCHA datasets (HNO, HRP, FTS, CoD-PS, CBPF); severity from INFORM (EU JRC, monthly, 109 countries).</span>
             </p>
-            <div class="cols">
-                <div>
-                    <h3>Six attributes</h3>
-                    <ul style="font-size: 0.85em;">
-                        <li>Coverage shortfall</li>
-                        <li>Per-PIN funding gap</li>
-                        <li>Need intensity (PIN / population)</li>
-                        <li>Severity (HNO / IPC)</li>
-                        <li>Donor concentration (HHI)</li>
-                        <li><strong>Intra-crisis equity (Gini across clusters)</strong> — new</li>
-                    </ul>
+            <div class="footer"><span>GEO-Insight · Cache Me if You Can</span><span>6</span></div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             8 · Four-cell typology (visual)
+             ═══════════════════════════════════════════════════════════════ -->
+        <section>
+            <h1>Four kinds of overlooked, decoded</h1>
+            <p>Two axes: <strong>donor disagreement</strong> (IQR of ranks across profiles) × <strong>sector inequality within the crisis</strong> (cluster Gini).</p>
+            <div class="quadrant">
+                <div></div>
+                <div class="col-head">LOW DISAGREEMENT <span style="font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.9em; color: var(--un-gray-light);">· donors agree</span></div>
+                <div class="col-head">HIGH DISAGREEMENT <span style="font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 0.9em; color: var(--un-gray-light);">· donors disagree</span></div>
+
+                <div class="row-head">HIGH SECTOR INEQUALITY</div>
+                <div class="cell highlight">
+                    <div class="label">Consensus-sector-starved</div>
+                    <div class="desc">One sector starved, others covered; donors agree. Clearest operational target.</div>
                 </div>
-                <div>
-                    <h3>Four donor profiles</h3>
-                    <ul style="font-size: 0.85em;">
-                        <li>CERF-flavoured — severity + magnitude</li>
-                        <li>ECHO-flavoured — equity-weighted</li>
-                        <li>USAID-flavoured — donor-concentration lens</li>
-                        <li>NGO-consortium — cluster-equity dominant</li>
-                    </ul>
+                <div class="cell highlight">
+                    <div class="label">Contested <em>and</em> sector-starved</div>
+                    <div class="desc">Sector starved <em>and</em> donors disagree. Highest advocacy priority.</div>
+                </div>
+
+                <div class="row-head">LOW SECTOR INEQUALITY</div>
+                <div class="cell">
+                    <div class="label">Consensus-overlooked</div>
+                    <div class="desc">Evenly underfunded; everyone agrees. CERF UFE candidates.</div>
+                </div>
+                <div class="cell">
+                    <div class="label">Contested but balanced</div>
+                    <div class="desc">Sectors balanced; donors disagree. Reveals donor politics.</div>
                 </div>
             </div>
-            <p class="sources">Score computed under every profile; we report median rank + inter-quartile range.</p>
-            <div class="footer"><span>GEO-Insight · Datathon 2026</span><span>5</span></div>
+            <div class="footer"><span>GEO-Insight · Cache Me if You Can</span><span>7</span></div>
         </section>
 
-        <!-- ===== FOUR-CELL TYPOLOGY ===== -->
+        <!-- ═══════════════════════════════════════════════════════════════
+             9 · Chronic vs. acute (cartoon)
+             ═══════════════════════════════════════════════════════════════ -->
         <section>
-            <h1>Four-cell typology</h1>
-            <p>The joint output of <strong>disagreement band</strong> (rank IQR across profiles) × <strong>intra-crisis equity</strong> (cluster Gini):</p>
-            <table>
-                <thead><tr><th></th><th>Low disagreement</th><th>High disagreement</th></tr></thead>
-                <tbody>
-                    <tr><td><strong>High equity gap</strong></td>
-                        <td>Consensus-starved-sector<br><span style="color: var(--un-gray); font-size: 0.85em;">clearest operational target</span></td>
-                        <td>Contested <em>and</em> sector-starved<br><span style="color: var(--un-gray); font-size: 0.85em;">highest advocacy priority</span></td></tr>
-                    <tr><td><strong>Low equity gap</strong></td>
-                        <td>Consensus-overlooked, uniformly<br><span style="color: var(--un-gray); font-size: 0.85em;">CERF UFE candidates</span></td>
-                        <td>Contested but balanced<br><span style="color: var(--un-gray); font-size: 0.85em;">reveals donor politics</span></td></tr>
-                </tbody>
-            </table>
-            <div class="callout"><em>[Figure placeholder: scatter plot of eligible crises on (IQR × Gini) axes, coloured by region, sized by PIN]</em></div>
-            <div class="footer"><span>GEO-Insight · Datathon 2026</span><span>6</span></div>
+            <h1>A third axis: time</h1>
+            <p>A crisis overlooked for five years needs different policy than one that just tipped. We separate the two.</p>
+            <div class="cols" style="margin-top: 18px;">
+                <div>
+                    <h3 style="color: var(--un-blue-deep);">Chronic</h3>
+                    <svg viewBox="0 0 300 100" style="width: 100%; height: auto; margin-top: 6px;" aria-hidden="true">
+                        <line x1="20" y1="88" x2="230" y2="88" stroke="#D8DEE4" stroke-width="1"/>
+                        <line x1="20" y1="14" x2="20" y2="88" stroke="#D8DEE4" stroke-width="1"/>
+                        <polyline points="20,34 60,36 100,30 140,33 180,31 220,32" stroke="#0072BC" stroke-width="2.5" fill="none"/>
+                        <circle cx="220" cy="32" r="4" fill="#0072BC"/>
+                        <text x="232" y="36" font-size="9" fill="#0072BC" font-family="Helvetica">high gap</text>
+                    </svg>
+                    <p style="font-size: 0.78em; color: var(--un-gray); margin-top: 8px;">
+                        Persistent underfunding across years. <strong style="color: var(--un-blue-deep);">Response:</strong> multi-year pooled funding.
+                    </p>
+                </div>
+                <div>
+                    <h3 style="color: var(--un-accent-warm);">Acute</h3>
+                    <svg viewBox="0 0 300 100" style="width: 100%; height: auto; margin-top: 6px;" aria-hidden="true">
+                        <line x1="20" y1="88" x2="230" y2="88" stroke="#D8DEE4" stroke-width="1"/>
+                        <line x1="20" y1="14" x2="20" y2="88" stroke="#D8DEE4" stroke-width="1"/>
+                        <polyline points="20,78 60,74 100,68 140,42 180,25 220,18" stroke="#E99C2D" stroke-width="2.5" fill="none"/>
+                        <circle cx="220" cy="18" r="4" fill="#E99C2D"/>
+                        <text x="232" y="22" font-size="9" fill="#E99C2D" font-family="Helvetica">rising gap</text>
+                    </svg>
+                    <p style="font-size: 0.78em; color: var(--un-gray); margin-top: 8px;">
+                        Recent collapse from baseline. <strong style="color: var(--un-blue-deep);">Response:</strong> CERF rapid-response window.
+                    </p>
+                </div>
+            </div>
+            <p class="caption" style="margin-top: 16px;">Chronic = $k$-year rolling mean of the gap. Acute = deviation of this year from that rolling mean.</p>
+            <div class="footer"><span>GEO-Insight · Cache Me if You Can</span><span>8</span></div>
         </section>
 
-        <!-- ===== STRUCTURAL VS ACUTE ===== -->
+        <!-- ═══════════════════════════════════════════════════════════════
+             NEW · Robustness to incompleteness
+             ═══════════════════════════════════════════════════════════════ -->
         <section>
-            <h1>Third axis: structural vs. acute</h1>
-            <p>The typology is a point-in-time view. For the bonus task we add a temporal axis:</p>
-            <p style="text-align: center;">
-                \[\bar{G}_k(u) = \tfrac{1}{k}\!\!\sum_{t=T-k+1}^{T}\! G_t(u) \quad\quad \Delta G(u) = G_T(u) - \tfrac{1}{k-1}\!\!\sum_{t=T-k+1}^{T-1}\! G_t(u)\]
+            <h1>Robustness to incomplete data</h1>
+            <p>Most crises lack at least one of the six attributes. Three candidate handlings, one is defensible.</p>
+            <div class="kind-cards" style="margin-top: 20px;">
+                <div class="kind-card" style="border-top-color: var(--un-gray-light);">
+                    <div class="traits">HARD-DROP</div>
+                    <h3>Wasteful</h3>
+                    <p class="example">Only <strong>18 / 114</strong> eligible countries scored. The other 96 drop out silently.</p>
+                </div>
+                <div class="kind-card" style="border-top-color: var(--un-gray-light);">
+                    <div class="traits">REWEIGHT OBSERVED</div>
+                    <h3>Inflates ranks</h3>
+                    <p class="example">Dividing out missing-weight mass lets partial-complete countries with extreme observed attributes <strong>displace</strong> the true top. On our CERF UFE validation: top-5 overlap collapses <strong>100% → 0%</strong>.</p>
+                </div>
+                <div class="kind-card" style="border-top-color: var(--un-blue); border-top-width: 4px;">
+                    <div class="traits">EVIDENCE-BOUNDED · OUR CHOICE</div>
+                    <h3>Robust</h3>
+                    <p class="example">Missing ≡ 0 contribution. Max score bounded by observed weight-mass. Pool 57 preserves <strong>80%</strong> CERF overlap — within one country of the strict pool.</p>
+                </div>
+            </div>
+            <p class="caption" style="margin-top: 14px;">
+                This choice follows directly from equation (1) on the previous slide: we sum, we do not renormalise. The cost — systematic under-ranking of poorly-documented crises — is the accepted flip side of refusing to extrapolate beyond observation.
             </p>
-            <div class="cols">
-                <div>
-                    <h3>Chronic (<span style="font-style:italic;">\(\bar{G}_k\)</span>)</h3>
-                    <p style="font-size: 0.85em;">Persistent underfunding across k years. Policy response: multi-year pooled funding.</p>
-                </div>
-                <div>
-                    <h3>Acute (<span style="font-style:italic;">\(\Delta G\)</span>)</h3>
-                    <p style="font-size: 0.85em;">Recent deviation from rolling mean. Policy response: CERF rapid-response window.</p>
-                </div>
-            </div>
-            <p class="sources">Connects the policy recommendation directly to the temporal shape of the gap, addressing the bonus task explicitly.</p>
-            <div class="footer"><span>GEO-Insight · Datathon 2026</span><span>7</span></div>
+            <div class="footer"><span>GEO-Insight · Cache Me if You Can</span><span>9</span></div>
         </section>
 
-        <!-- ===== SECTION DIVIDER: RESULTS ===== -->
+        <!-- ═══════════════════════════════════════════════════════════════
+             Divider · Part II
+             ═══════════════════════════════════════════════════════════════ -->
         <section class="section-divider">
             <div class="eyebrow">Part II</div>
-            <h1 style="color: white; border-color: var(--un-accent-warm);">Results &amp; validation</h1>
+            <h1 style="color: white; border-color: var(--un-accent-warm);">Does it agree with reality?</h1>
         </section>
 
-        <!-- ===== DEMO / RESULTS ===== -->
+        <!-- ═══════════════════════════════════════════════════════════════
+             · Two independent benchmarks (setup)
+             ═══════════════════════════════════════════════════════════════ -->
         <section>
-            <h1>Top-ranked crises by typology</h1>
-            <p><em>[Placeholder — populate from implementation output]</em></p>
-            <table>
-                <thead><tr><th>#</th><th>Country</th><th>Median rank</th><th>IQR</th><th>Gini</th><th>Typology</th></tr></thead>
+            <h1>We don't validate against ourselves</h1>
+            <p>Two lists, human-curated by independent organisations, not using our method:</p>
+            <div class="cols" style="margin-top: 14px;">
+                <div class="benchmark-card blue">
+                    <div class="badge">OCHA</div>
+                    <h3>CERF Underfunded Emergencies</h3>
+                    <p style="color: var(--un-gray); margin: 0; font-size: 0.92em;">Twice-yearly allocation to <em>"protracted or neglected humanitarian crises where funding is low but vulnerability is high."</em> 17 countries selected in 2025 across both windows; 22 across 2024–25 combined.</p>
+                    <p class="map">→ validates our <em>underfunding</em> axis.</p>
+                </div>
+                <div class="benchmark-card warm">
+                    <div class="badge">CARE</div>
+                    <h3>Breaking the Silence 2024</h3>
+                    <p style="color: var(--un-gray); margin: 0; font-size: 0.92em;">Annual ranked top-10 of the most <em>under-reported</em> humanitarian crises. Measured by media attention — not by funding.</p>
+                    <p class="map">→ validates our <em>sector-starved / forgotten</em> axis (partially, by design — different signal).</p>
+                </div>
+            </div>
+            <p style="font-size: 0.72em; color: var(--un-gray); margin-top: 14px;">
+                Metrics: precision at top-K · recall of benchmark · Spearman ρ on the intersection · stability across pool sizes.
+            </p>
+            <div class="footer"><span>GEO-Insight · Cache Me if You Can</span><span>10</span></div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             · Top-ranked (REAL output, evidence-bounded)
+             ═══════════════════════════════════════════════════════════════ -->
+        <section>
+            <h1>Top-10 — evidence-bounded, All pool (n = 57)</h1>
+            <table style="font-size: 0.82em;">
+                <thead><tr><th>#</th><th>ISO3</th><th>Country</th><th>Median rank</th><th>IQR</th><th>Completeness</th><th>Typology</th></tr></thead>
                 <tbody>
-                    <tr><td>1</td><td>[—]</td><td>[n/N]</td><td>[Δ]</td><td>[0.xx]</td><td>[consensus-overlooked]</td></tr>
-                    <tr><td>2</td><td>[—]</td><td>[n/N]</td><td>[Δ]</td><td>[0.xx]</td><td>[contested-starved]</td></tr>
-                    <tr><td>3</td><td>[—]</td><td>[n/N]</td><td>[Δ]</td><td>[0.xx]</td><td>[consensus-starved-sector]</td></tr>
+                    <tr><td>1</td><td><strong>SDN</strong></td><td>Sudan</td><td>2.5</td><td>3.50</td><td>1.0</td><td>consensus-sector-starved</td></tr>
+                    <tr><td>2</td><td><strong>HND</strong></td><td>Honduras</td><td>2.5</td><td>3.25</td><td>1.0</td><td>consensus-sector-starved</td></tr>
+                    <tr><td>3</td><td><strong>AFG</strong></td><td>Afghanistan</td><td>5.0</td><td>1.00</td><td>1.0</td><td>consensus-overlooked</td></tr>
+                    <tr><td>4</td><td>ZWE</td><td>Zimbabwe</td><td>5.0</td><td>8.75</td><td><span style="color: var(--un-accent-warm);">0.67</span></td><td>contested-sector-starved</td></tr>
+                    <tr><td>5</td><td><strong>SOM</strong></td><td>Somalia</td><td>5.5</td><td>4.00</td><td>1.0</td><td>consensus-overlooked</td></tr>
+                    <tr><td>6</td><td><strong>HTI</strong></td><td>Haiti</td><td>6.0</td><td>2.50</td><td>1.0</td><td>consensus-sector-starved</td></tr>
+                    <tr><td>7</td><td><strong>MWI</strong></td><td>Malawi</td><td>7.5</td><td>12.00</td><td><span style="color: var(--un-accent-warm);">0.67</span></td><td>contested-sector-starved</td></tr>
+                    <tr><td>8</td><td><strong>MOZ</strong></td><td>Mozambique</td><td>9.0</td><td>4.50</td><td>1.0</td><td>consensus-overlooked</td></tr>
+                    <tr><td>9</td><td>SSD</td><td>South Sudan</td><td>9.0</td><td>1.75</td><td>1.0</td><td>consensus-overlooked</td></tr>
+                    <tr><td>10</td><td><strong>TCD</strong></td><td>Chad</td><td>9.5</td><td>7.75</td><td>1.0</td><td>contested-balanced</td></tr>
                 </tbody>
             </table>
-            <div class="footer"><span>GEO-Insight · Datathon 2026</span><span>8</span></div>
+            <p style="font-size: 0.72em; color: var(--un-gray); margin-top: 12px;">
+                <strong style="color: var(--un-blue-deep);">Bold</strong> = also in OCHA's CERF Underfunded Emergencies 2024–25. 8 of 10 overlap.
+                Orange completeness = partial observation (4 of 6 attributes); ranked alongside strict-complete countries under evidence-bounded scoring.
+                <br>Low IQR (AFG 1.00, SSD 1.75) ⇒ consensus across donor profiles. High IQR (MWI 12.00) ⇒ contested.
+            </p>
+            <div class="footer"><span>GEO-Insight · Cache Me if You Can</span><span>11</span></div>
         </section>
 
-        <!-- ===== VALIDATION ===== -->
+        <!-- ═══════════════════════════════════════════════════════════════
+             · Validation — the headline numbers
+             ═══════════════════════════════════════════════════════════════ -->
         <section>
-            <h1>Two independent benchmarks</h1>
-            <div class="cols">
+            <h1>Validation against external benchmarks</h1>
+            <table style="font-size: 0.82em;">
+                <thead>
+                    <tr>
+                        <th>Pool (n countries)</th>
+                        <th>CERF UFE 2024–25 (22)</th>
+                        <th>CERF UFE 2025 only (17)</th>
+                        <th>CARE BTS 2024 (10)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Strict</strong> (c=1.0, n=18)</td>
+                        <td>Overlap@5 = <strong>100 %</strong>  · @10 = 80 %</td>
+                        <td>@5 = <strong>100 %</strong> · @10 = 80 %</td>
+                        <td>@10 = 10 % · ρ = +0.40</td>
+                    </tr>
+                    <tr>
+                        <td>High (c≥2/3, n=33)</td>
+                        <td>@5 = 80 % · @10 = 80 %</td>
+                        <td>@5 = 80 % · @10 = 70 %</td>
+                        <td>@10 = 20 % · ρ = −0.11</td>
+                    </tr>
+                    <tr>
+                        <td><strong>All</strong> (c≥1/2, n=57)</td>
+                        <td>@5 = <strong>80 %</strong> · @10 = <strong>80 %</strong></td>
+                        <td>@5 = 80 % · @10 = 70 %</td>
+                        <td>@10 = 20 % · ρ = −0.43</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="callout" style="margin-top: 18px;">
+                <strong>Headline.</strong> Tripling the pool (18 → 57) by admitting partial-complete countries costs <em>one</em> country at top-5 against CERF UFE (100 % → 80 %). The methodology is robust to incompleteness.
+            </div>
+            <p style="font-size: 0.72em; color: var(--un-gray); margin-top: 10px;">
+                CARE Spearman ρ is methodologically expected to drift as pool grows: CARE ranks <em>media attention</em>, not funding. High-attention crises (Sudan) top our ranking but are by definition not "under-reported" — they drop out of CARE.
+            </p>
+            <div class="footer"><span>GEO-Insight · Cache Me if You Can</span><span>12</span></div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             · What this is NOT
+             ═══════════════════════════════════════════════════════════════ -->
+        <section>
+            <h1>What this is <em>not</em></h1>
+            <div class="cols-3" style="margin-top: 16px;">
                 <div>
-                    <h3>CERF UFE — consensus axis</h3>
-                    <p style="font-size: 0.85em;">OCHA's Underfunded Emergencies window selections. We expect overlap with the <em>consensus-overlooked</em> quadrant.</p>
-                    <p style="font-size: 0.85em;"><em>[Placeholder: Overlap@10 = xx%, ρ = 0.xx]</em></p>
+                    <h4 style="color: var(--un-gray-light); font-size: 0.62em;">NOT AUTOMATION</h4>
+                    <p style="font-size: 0.8em; color: var(--un-gray-dark); line-height: 1.5;">The tool ranks. Humans decide. A score is a hypothesis, never a verdict.</p>
                 </div>
                 <div>
-                    <h3>CARE <em>Breaking the Silence</em> — sector-starved axis</h3>
-                    <p style="font-size: 0.85em;">Annual list of most under-reported crises. We expect overlap with the high-Gini quadrants.</p>
-                    <p style="font-size: 0.85em;"><em>[Placeholder: Overlap@10 = xx%]</em></p>
+                    <h4 style="color: var(--un-gray-light); font-size: 0.62em;">NOT A SINGLE NUMBER</h4>
+                    <p style="font-size: 0.8em; color: var(--un-gray-dark); line-height: 1.5;">Four donor profiles, four ranks per crisis. We report the median <em>and</em> the IQR.</p>
+                </div>
+                <div>
+                    <h4 style="color: var(--un-gray-light); font-size: 0.62em;">NOT IMPUTED</h4>
+                    <p style="font-size: 0.8em; color: var(--un-gray-dark); line-height: 1.5;">Missing attributes contribute zero to the score, never country-specific guesses.</p>
+                </div>
+                <div>
+                    <h4 style="color: var(--un-gray-light); font-size: 0.62em;">NOT NEUTRAL</h4>
+                    <p style="font-size: 0.8em; color: var(--un-gray-dark); line-height: 1.5;">We <em>surface</em> donor disagreement as signal instead of hiding it in consensus.</p>
+                </div>
+                <div>
+                    <h4 style="color: var(--un-gray-light); font-size: 0.62em;">NOT COMPLETE</h4>
+                    <p style="font-size: 0.8em; color: var(--un-gray-dark); line-height: 1.5;">Completeness flag attached to every score. Evidence-bounded scoring cannot inflate partial-complete ranks.</p>
+                </div>
+                <div>
+                    <h4 style="color: var(--un-gray-light); font-size: 0.62em;">NOT PRECISE</h4>
+                    <p style="font-size: 0.8em; color: var(--un-gray-dark); line-height: 1.5;">Two significant figures. A score of 0.62 is not meaningfully distinct from 0.59.</p>
                 </div>
             </div>
-            <div class="callout-warn"><strong>Contested axis:</strong> no quantitative ground truth. Reported as a qualitative cross-check against crises with known donor tension (Venezuela, Ethiopia–Tigray, Myanmar), flagged as such.</div>
-            <div class="footer"><span>GEO-Insight · Datathon 2026</span><span>9</span></div>
+            <div class="footer"><span>GEO-Insight · Cache Me if You Can</span><span>13</span></div>
         </section>
 
-        <!-- ===== LIMITATIONS ===== -->
-        <section>
-            <h1>Limitations &amp; ethics</h1>
-            <ul>
-                <li><strong>Decision support, not automation.</strong> The tool ranks; humans decide.</li>
-                <li><strong>Profile weights are illustrative.</strong> The four profiles are stylised mandate emphases, not endorsed by any institution.</li>
-                <li><strong>Visibility bias.</strong> Crises with collapsed statistical systems may rank lower because HNO data is stale or missing — flagged, not corrected.</li>
-                <li><strong>Political sensitivity.</strong> Labels like "contested" carry implications. Outputs report numeric facts; never donor-shaming framing.</li>
-                <li><strong>No false precision.</strong> Two significant figures; IQR always shown alongside point estimates.</li>
-            </ul>
-            <div class="footer"><span>GEO-Insight · Datathon 2026</span><span>10</span></div>
-        </section>
-
-        <!-- ===== NEXT STEPS / CLOSING ===== -->
-        <section>
-            <h1>Next steps</h1>
-            <div class="cols">
-                <div>
-                    <h3>Short term</h3>
-                    <ul>
-                        <li>Validate cluster-Gini on current HDX HAPI plan year</li>
-                        <li>NL query layer</li>
-                        <li>Reproducible notebook + Streamlit scatter dashboard</li>
-                    </ul>
-                </div>
-                <div>
-                    <h3>Open questions</h3>
-                    <ul>
-                        <li>Are FTS sector breakdowns consistent enough to support Gini across countries?</li>
-                        <li>How to validate the <em>contested</em> axis quantitatively?</li>
-                        <li>User study with humanitarian analysts</li>
-                    </ul>
-                </div>
-            </div>
-            <p style="margin-top: 1.2em;"><strong>Thank you.</strong> Questions?</p>
-            <p class="sources">Proposal: <code>proposal/proposal.pdf</code> · Repo: <code>github.com/BenBullinger/GEO-Insight</code></p>
-            <div class="footer"><span>GEO-Insight · Datathon 2026</span><span>11</span></div>
+        <!-- ═══════════════════════════════════════════════════════════════
+             13 · Closing
+             ═══════════════════════════════════════════════════════════════ -->
+        <section class="headline-slide">
+            <p class="eyebrow-small">Thank you</p>
+            <p class="headline">Questions?</p>
+            <p class="subhead" style="margin-top: 24px;">
+                <code style="font-family: 'SF Mono', Menlo, monospace; background: var(--un-bg-alt); padding: 2px 8px; border-radius: 3px;">proposal/proposal.pdf</code>
+            </p>
         </section>
 
     </div>
 </div>
 
-<!-- reveal.js core -->
 <script src="vendor/reveal.js/dist/reveal.js"></script>
-<!-- plugins -->
 <script src="vendor/reveal.js/dist/plugin/highlight.js"></script>
 <script src="vendor/reveal.js/dist/plugin/notes.js"></script>
 <script src="vendor/reveal.js/dist/plugin/math.js"></script>

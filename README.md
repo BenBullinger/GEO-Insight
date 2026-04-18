@@ -1,7 +1,7 @@
 # GEO-Insight
 
 **Which humanitarian crises are most overlooked?**
-Analytics Club at ETH — Datathon 2026 · FS26
+Cache Me if You Can — Datathon 2026 · FS26
 
 A decision-support prototype that ranks active humanitarian crises by the mismatch between documented need (HNO/HRP) and available funding coverage (FTS/CBPF), with an intra-crisis equity term and an inter-stakeholder disagreement term. Research direction and methodology live in `proposal/proposal.pdf`; this README is the operational guide to getting everything running locally.
 
@@ -27,8 +27,9 @@ cd GEO-Insight
 
 On the very first run, `./run.sh` will:
 1. **Download ~270 MB of source data** via `Data/download.py` (HNO, HRP, CoD-PS, FTS, CBPF from the 5 official sources — see `Data/README.md`). ~2–3 minutes on broadband.
-2. **Create a dashboard virtualenv** at `dashboard/.venv/` and install requirements from `dashboard/requirements.txt` (Streamlit, pandas, plotly).
-3. **Silence Streamlit's first-run email prompt** by writing `~/.streamlit/credentials.toml`.
+2. **Create a dashboard virtualenv** at `dashboard/.venv/` and install requirements from `dashboard/requirements.txt` (Streamlit, pandas, plotly, openpyxl).
+3. **Download INFORM Severity** — 67 monthly xlsx snapshots from the EU JRC DRMKC (~130 MB, polite 1.2 s inter-request delay so 3–5 min total) and consolidate them into one CSV. This supplies global monthly severity data for attribute `a₄` and the temporal bonus.
+4. **Silence Streamlit's first-run email prompt** by writing `~/.streamlit/credentials.toml`.
 
 Subsequent runs skip all of the above and just start the three servers.
 
@@ -46,7 +47,8 @@ Opens the landing page in your default browser. `Ctrl-C` in the terminal shuts e
 |---|---|---|
 | **<http://localhost:7777>** | **Landing page** | Start here — clean page linking to everything else |
 | <http://localhost:8000> | Presentation | reveal.js deck · `S` speaker · `F` fullscreen · `?` shortcuts · `?print-pdf` for PDF export |
-| <http://localhost:8501> | Dashboard | Streamlit data-landscape explorer across the 5 sources |
+| <http://localhost:8501> | Data exploration | Streamlit landscape explorer across the 5 primary sources + INFORM Severity |
+| <http://localhost:8502> | Analysis (unsupervised) | Streamlit site: PCA, k-means, hierarchical, t-SNE, temporal archetypes, correlation |
 | `proposal/proposal.pdf` | Proposal | Also reachable from the landing page card |
 
 ## Running pieces individually
@@ -61,8 +63,11 @@ python3 Data/download.py --check       # report what's on disk, no download
 # Presentation on :8000
 python3 -m http.server 8000 --directory presentation
 
-# Dashboard on :8501 (requires one-time venv setup below)
+# Data exploration on :8501 (requires one-time venv setup below)
 dashboard/.venv/bin/streamlit run dashboard/app.py
+
+# Analysis on :8502 (shares the same venv)
+dashboard/.venv/bin/streamlit run analysis/app.py --server.port 8502
 
 # Landing page on :7777
 python3 -m http.server 7777 --directory landing
@@ -113,10 +118,14 @@ GEO-Insight/
 │   ├── index.html            localhost landing page
 │   └── proposal.pdf          symlink to ../proposal/proposal.pdf
 ├── dashboard/
-│   ├── app.py                Streamlit data-landscape dashboard
-│   ├── requirements.txt      streamlit, pandas, plotly
+│   ├── app.py                Streamlit data-exploration dashboard (9 sections)
+│   ├── requirements.txt      streamlit, pandas, plotly, openpyxl, scikit-learn, scipy
 │   ├── README.md             dashboard-specific notes
-│   └── .venv/                created by run.sh (gitignored)
+│   └── .venv/                created by run.sh (gitignored; shared with analysis/)
+├── analysis/
+│   ├── app.py                Streamlit unsupervised-analysis site (7 sections)
+│   ├── features.py           per-country feature matrix + trajectory matrix builders
+│   └── README.md
 └── src/                      implementation — to be written
 ```
 
