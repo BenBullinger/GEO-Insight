@@ -1,12 +1,8 @@
-"""Generate pedagogical figures for the methodology whitepaper.
+"""Pedagogical figures for the methodology page.
 
-Each figure illustrates one concept and is standalone. Run from the repo root:
+Each figure is standalone and rebuilds from this script. Run:
     dashboard/.venv/bin/python proposal/figures/_gen.py
-Figures are written to proposal/figures/*.png at print-quality DPI.
-
-The style matches the landing-page / deck design system: white ground,
-oxblood-red single accent, Inter-equivalent sans, strict geometric
-typography, minimal axes.
+Output: proposal/figures/*.png at print-quality DPI.
 """
 from __future__ import annotations
 
@@ -27,226 +23,209 @@ TEXT        = "#333333"
 MUTED       = "#555555"
 SUBTLE      = "#888888"
 FAINT       = "#bcbcbc"
-RULE        = "#e8e8e8"
-ACCENT      = "#7c1d1d"
-ACCENT_DIM  = "#9a2a2a"
-ACCENT_SOFT = "#c9554f"
-ACCENT_MIST = "#fcf5f5"
+PALE        = "#e8e8e8"
+SURFACE     = "#fafafa"
+ACCENT      = "#7c1d1d"   # oxblood
+ACCENT_2    = "#a13636"   # redder
+ACCENT_3    = "#c9554f"   # rose
+ACCENT_WASH = "#fcf5f5"
 
-# Shared typography + axes
+# Distinct-enough stakeholder colours: accent family + one teal counterpoint
+# used only where discriminability is essential.
+STAKE_COLS = {
+    "CERF":  "#5c1414",
+    "ECHO":  "#c9554f",
+    "USAID": "#e8a76d",
+    "NGO":   "#7a8fb8",
+}
+
 mpl.rcParams.update({
-    "font.family":        "sans-serif",
-    "font.sans-serif":    ["Helvetica Neue", "Helvetica", "Arial", "DejaVu Sans"],
-    "font.size":          10,
-    "axes.edgecolor":     RULE,
-    "axes.linewidth":     0.8,
-    "axes.labelcolor":    MUTED,
-    "axes.labelsize":     9,
-    "axes.titlecolor":    INK,
-    "axes.titlesize":     11,
-    "axes.titleweight":   "bold",
-    "axes.titlepad":      10,
-    "xtick.color":        MUTED,
-    "ytick.color":        MUTED,
-    "xtick.labelsize":    8.5,
-    "ytick.labelsize":    8.5,
-    "xtick.major.size":   2,
-    "ytick.major.size":   2,
-    "grid.color":         RULE,
-    "grid.linewidth":     0.4,
-    "legend.frameon":     False,
-    "legend.fontsize":    8.5,
-    "figure.facecolor":   "white",
-    "axes.facecolor":     "white",
-    "savefig.dpi":        180,
-    "savefig.bbox":       "tight",
-    "savefig.facecolor":  "white",
+    "font.family":       "sans-serif",
+    "font.sans-serif":   ["Helvetica Neue", "Helvetica", "Arial", "DejaVu Sans"],
+    "font.size":         10,
+    "axes.edgecolor":    PALE,
+    "axes.linewidth":    0.8,
+    "axes.labelcolor":   MUTED,
+    "axes.labelsize":    9,
+    "axes.titlecolor":   INK,
+    "axes.titlesize":    11,
+    "axes.titleweight":  "bold",
+    "axes.titlepad":     10,
+    "xtick.color":       MUTED,
+    "ytick.color":       MUTED,
+    "xtick.labelsize":   8.5,
+    "ytick.labelsize":   8.5,
+    "xtick.major.size":  2,
+    "ytick.major.size":  2,
+    "grid.color":        PALE,
+    "grid.linewidth":    0.4,
+    "legend.frameon":    False,
+    "legend.fontsize":   8.5,
+    "figure.facecolor":  "white",
+    "axes.facecolor":    "white",
+    "savefig.dpi":       180,
+    "savefig.bbox":      "tight",
+    "savefig.facecolor": "white",
 })
 
 
-def strip(ax):
-    """Minimal-chrome axes: no top/right spines, muted grid on y only."""
+def strip(ax, y_grid=True):
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
     for side in ("left", "bottom"):
-        ax.spines[side].set_color(RULE)
+        ax.spines[side].set_color(PALE)
     ax.tick_params(length=2)
-    ax.grid(axis="y", linestyle="-", alpha=0.5)
+    if y_grid:
+        ax.grid(axis="y", linestyle="-", alpha=0.5)
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# Figure 1 — "The problem"
-# Coverage ratio over years for a handful of crises, most sliding below
-# the 50 % line. Real data from FTS requirements/funding, so the chart
-# speaks the literal story the methodology motivates.
+# Figure 1 — Small-multiples of funding coverage, 2019–2025.
+# Six active crises as six little panels. Same axes. The red shaded region
+# below 50 % tells the story: most of them end in the red by 2024/25.
 # ═══════════════════════════════════════════════════════════════════════
 def fig1_coverage_collapse(out: Path) -> None:
     try:
         fts = pd.read_csv(DATA / "fts" / "fts_requirements_funding_global.csv", skiprows=[1])
     except FileNotFoundError:
-        print("fig1: FTS data not found; skipping")
-        return
+        print("fig1: FTS data not found; skipping"); return
     fts["year"] = pd.to_numeric(fts["year"], errors="coerce")
     fts = fts.dropna(subset=["year"])
     agg = fts.groupby(["countryCode", "year"], as_index=False)[["requirements", "funding"]].sum()
-    agg["coverage"] = (agg["funding"] / agg["requirements"]).clip(upper=1.5) * 100
+    agg["coverage"] = (agg["funding"] / agg["requirements"]).clip(upper=1.2) * 100
 
-    # Countries with multi-year data in 2019–2025
-    spans = agg.groupby("countryCode")["year"].agg(["min", "max", "count"])
-    active = spans[(spans["min"] <= 2020) & (spans["max"] >= 2025) & (spans["count"] >= 5)].index
-    recent = agg[agg["countryCode"].isin(active) & agg["year"].between(2019, 2025)]
+    picks = [
+        ("SDN", "Sudan"),
+        ("YEM", "Yemen"),
+        ("SOM", "Somalia"),
+        ("AFG", "Afghanistan"),
+        ("HTI", "Haiti"),
+        ("SSD", "South Sudan"),
+    ]
 
-    focus = ["SDN", "YEM", "SOM", "AFG", "HTI"]
-    focus = [c for c in focus if c in active]
-
-    fig, ax = plt.subplots(figsize=(8.5, 4.2))
-    ax.axhspan(0, 50, facecolor=ACCENT_MIST, alpha=0.55, zorder=0)
-    ax.axhline(50, color=ACCENT, linewidth=0.7, linestyle=(0, (3, 2)), zorder=1)
-    ax.text(2025.85, 48, "50 %", va="top", ha="right",
-            color=ACCENT, fontsize=8, fontweight="bold",
-            bbox=dict(facecolor="white", edgecolor="none", pad=1))
-
-    # Assign distinct shades so separate traces stay legible
-    traces = {
-        "SDN": (ACCENT,     "Sudan"),
-        "YEM": ("#8f2a2a",  "Yemen"),
-        "SOM": ("#a13636",  "Somalia"),
-        "AFG": ("#b85555",  "Afghanistan"),
-        "HTI": ("#cf7c7c",  "Haiti"),
-    }
-
-    endpoints = []  # (iso, label, last_year, last_cov, colour)
-    for iso in focus:
-        if iso not in traces:
-            continue
-        colour, label = traces[iso]
-        grp = recent[recent["countryCode"] == iso].sort_values("year")
+    fig, axes = plt.subplots(2, 3, figsize=(9.0, 4.6), sharex=True, sharey=True)
+    for ax, (iso, name) in zip(axes.flat, picks):
+        grp = agg[(agg["countryCode"] == iso) & (agg["year"].between(2019, 2025))].sort_values("year")
         if grp.empty:
             continue
-        ax.plot(grp["year"], grp["coverage"], color=colour, linewidth=1.7,
-                alpha=0.92, zorder=3)
-        last = grp.iloc[-1]
-        endpoints.append((iso, label, last["year"], last["coverage"], colour))
+        ax.axhspan(0, 50, facecolor=ACCENT_WASH, alpha=1.0, zorder=0)
+        ax.axhline(50, color=ACCENT, linewidth=0.7, linestyle=(0, (4, 3)), zorder=1)
+        ax.plot(grp["year"], grp["coverage"], color=ACCENT, linewidth=1.8, zorder=3)
+        ax.scatter([grp["year"].iloc[-1]], [grp["coverage"].iloc[-1]],
+                   s=28, color=ACCENT, zorder=4, edgecolor="white", linewidths=1.1)
+        last_cov = grp["coverage"].iloc[-1]
+        ax.set_title(name, loc="left", pad=6, fontsize=10.5, color=INK, fontweight="bold")
+        ax.text(0.97, 0.92, f"{last_cov:.0f} % in 2025",
+                transform=ax.transAxes, ha="right", va="top",
+                fontsize=8.2, color=ACCENT, fontweight="bold")
+        ax.set_xlim(2018.7, 2025.3)
+        ax.set_xticks([2019, 2021, 2023, 2025])
+        ax.set_ylim(0, 110)
+        ax.set_yticks([0, 50, 100])
+        ax.set_yticklabels(["0 %", "50 %", "100 %"])
+        strip(ax)
 
-    # Arrange right-hand labels on a vertical ladder to avoid overlap
-    endpoints.sort(key=lambda r: -r[3])
-    label_x = 2025.6
-    ladder_y = np.linspace(78, 10, len(endpoints))
-    for (iso, label, lx, ly, colour), ly_fixed in zip(endpoints, ladder_y):
-        ax.plot([lx, label_x - 0.02], [ly, ly_fixed], color=colour,
-                linewidth=0.6, alpha=0.6, zorder=2)
-        ax.text(label_x, ly_fixed, label, va="center", ha="left",
-                fontsize=8.5, color=colour, fontweight="bold")
-
-    ax.set_xlim(2018.7, 2026.8)
-    ax.set_ylim(0, 100)
-    ax.set_yticks([0, 25, 50, 75, 100])
-    ax.set_yticklabels(["0 %", "25 %", "50 %", "75 %", "100 %"])
-    ax.set_xticks(range(2019, 2026))
-    ax.set_xlabel("year")
-    ax.set_title("Funding coverage for five active crises, 2019 – 2025",
-                 loc="left", pad=14)
-    strip(ax)
+    fig.suptitle("Funding coverage has crossed into the shaded zone for most active crises",
+                 x=0.02, y=0.99, ha="left", fontsize=11, fontweight="bold", color=INK)
+    fig.text(0.02, -0.02,
+             "Shaded region: below 50 % coverage (severely underfunded). Source: OCHA FTS, country-year aggregates.",
+             fontsize=8.5, color=SUBTLE, ha="left")
+    plt.tight_layout(rect=(0, 0, 1, 0.96))
     plt.savefig(out)
     plt.close(fig)
     print(f"wrote {out.name}")
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# Figure 2 — The observation model, one panel per likelihood family
-#   (a) Beta regression (coverage shortfall, Gini, HHI, need intensity)
-#   (b) Log-normal (per-PIN gap)
-#   (c) Ordered probit (INFORM severity category)
-#   (d) Missing data → wider posterior
+# Figure 2 — The observation model, four likelihood families.
 # ═══════════════════════════════════════════════════════════════════════
 def fig2_observation_model(out: Path) -> None:
-    fig, axes = plt.subplots(1, 4, figsize=(12.5, 3.1))
-    colours_theta = {-1: FAINT, 0: ACCENT_SOFT, 1: ACCENT}
-    theta_label = {-1: r"$\theta=-1$", 0: r"$\theta=0$", 1: r"$\theta=+1$"}
+    fig, axes = plt.subplots(1, 4, figsize=(13.0, 3.0))
+    theta_colors = {-1: FAINT, 0: ACCENT_3, 1: ACCENT}
+    theta_labels = {-1: r"low $\theta$", 0: r"mid $\theta$", 1: r"high $\theta$"}
 
-    # ── (a) Beta regression: a_1 = coverage_shortfall in [0,1] ──────────
+    # (a) Beta regression
     ax = axes[0]
-    alpha = -0.5
-    beta = 1.5
-    phi = 12
+    alpha, beta, phi = -0.5, 1.5, 12
     x = np.linspace(0.001, 0.999, 400)
     for th in (-1, 0, 1):
         mu = 1 / (1 + np.exp(-(alpha + beta * th)))
         a, b = mu * phi, (1 - mu) * phi
-        density = stats.beta.pdf(x, a, b)
-        ax.plot(x, density, color=colours_theta[th], linewidth=1.6, label=theta_label[th])
-    ax.set_xlabel("observed coverage shortfall $a_1$")
-    ax.set_ylabel("likelihood density")
-    ax.set_title("(a) Beta regression", loc="left")
-    ax.legend(loc="upper center", handlelength=1.4)
-    ax.set_xlim(0, 1)
-    ax.set_ylim(bottom=0)
-    strip(ax)
+        ax.plot(x, stats.beta.pdf(x, a, b), color=theta_colors[th], linewidth=1.7, label=theta_labels[th])
+    ax.set_xlabel("observed coverage shortfall")
+    ax.set_ylabel("likelihood")
+    ax.set_title("(a) Beta regression  ·  bounded fractions", loc="left")
+    ax.legend(loc="upper left", handlelength=1.4, frameon=False)
+    ax.set_xlim(0, 1); ax.set_ylim(bottom=0); ax.set_yticks([])
+    strip(ax, y_grid=False)
 
-    # ── (b) Log-normal: a_2 = per-PIN gap in USD ────────────────────────
+    # (b) Log-normal
     ax = axes[1]
-    alpha_ln = 4.0
-    beta_ln = 0.9
-    sigma_ln = 0.7
+    alpha_ln, beta_ln, sigma_ln = 4.0, 0.9, 0.7
     x = np.linspace(1, 600, 400)
     for th in (-1, 0, 1):
         mu = alpha_ln + beta_ln * th
-        density = stats.lognorm.pdf(x, s=sigma_ln, scale=np.exp(mu))
-        ax.plot(x, density, color=colours_theta[th], linewidth=1.6, label=theta_label[th])
-    ax.set_xlabel("observed gap per PIN, USD")
-    ax.set_title("(b) Log-normal", loc="left")
-    ax.legend(loc="upper right", handlelength=1.4)
-    ax.set_xlim(0, 600)
-    ax.set_ylim(bottom=0)
-    ax.set_yticks([])
-    strip(ax)
+        ax.plot(x, stats.lognorm.pdf(x, s=sigma_ln, scale=np.exp(mu)),
+                color=theta_colors[th], linewidth=1.7, label=theta_labels[th])
+    ax.set_xlabel("observed gap per person in need  (USD)")
+    ax.set_title("(b) Log-normal  ·  positive reals", loc="left")
+    ax.legend(loc="upper right", handlelength=1.4, frameon=False)
+    ax.set_xlim(0, 600); ax.set_ylim(bottom=0); ax.set_yticks([])
+    strip(ax, y_grid=False)
 
-    # ── (c) Ordered probit: a_4 = severity ∈ {1..5} ─────────────────────
+    # (c) Ordered probit
     ax = axes[2]
     cutpoints = np.array([-1.5, -0.5, 0.5, 1.5])
     thetas = np.linspace(-2.5, 2.5, 5)
-    beta4 = 1.0
-    alpha4 = 0.0
+    beta4, alpha4 = 1.0, 0.0
     bottoms = np.zeros(len(thetas))
-    colors_cat = ["#f0d3d3", "#c97c7c", "#a85050", "#832828", "#5c1414"]
+    cat_cols = ["#f0d3d3", "#d69595", "#b75858", "#8a2f2f", "#5c1414"]
     for k in range(5):
         lo = cutpoints[k - 1] if k > 0 else -np.inf
         hi = cutpoints[k] if k < 4 else np.inf
         loc = alpha4 + beta4 * thetas
         prob = stats.norm.cdf(hi - loc) - stats.norm.cdf(lo - loc)
-        ax.bar(thetas, prob, bottom=bottoms, color=colors_cat[k], width=0.6,
-               edgecolor="white", linewidth=0.5, label=f"category {k+1}")
+        bars = ax.bar(thetas, prob, bottom=bottoms, color=cat_cols[k], width=0.55,
+                      edgecolor="white", linewidth=0.5)
         bottoms += prob
+    # Category labels to the right of the rightmost bar (stacked probabilities)
+    r_probs = []
+    loc_r = alpha4 + beta4 * thetas[-1]
+    for k in range(5):
+        lo = cutpoints[k - 1] if k > 0 else -np.inf
+        hi = cutpoints[k] if k < 4 else np.inf
+        r_probs.append(stats.norm.cdf(hi - loc_r) - stats.norm.cdf(lo - loc_r))
+    cum = 0.0
+    for k, p in enumerate(r_probs):
+        mid = cum + p / 2
+        if p >= 0.06:
+            ax.text(thetas[-1] + 0.45, mid, f"cat {k+1}",
+                    va="center", fontsize=7.8, color=cat_cols[k], fontweight="bold")
+        cum += p
     ax.set_xlabel(r"latent $\theta$")
     ax.set_ylabel("P(category)")
-    ax.set_title("(c) Ordered probit", loc="left")
+    ax.set_title("(c) Ordered probit  ·  $\{1,2,3,4,5\}$ severity", loc="left")
     ax.set_xticks(thetas)
     ax.set_xticklabels([f"{t:g}" for t in thetas])
-    ax.set_ylim(0, 1)
-    ax.legend(loc="center left", bbox_to_anchor=(1.0, 0.5), handlelength=1.0)
-    strip(ax)
+    ax.set_ylim(0, 1); ax.set_xlim(-3.2, 3.6)
+    strip(ax, y_grid=False)
 
-    # ── (d) Missingness widens the posterior ─────────────────────────────
+    # (d) Missingness widens posterior
     ax = axes[3]
     x = np.linspace(-2.5, 2.5, 400)
     narrow = stats.norm.pdf(x, loc=0.9, scale=0.35)
     wide = stats.norm.pdf(x, loc=0.7, scale=0.9)
-    ax.fill_between(x, 0, narrow, color=ACCENT, alpha=0.2, linewidth=0)
-    ax.plot(x, narrow, color=ACCENT, linewidth=1.6, label="all six observed")
+    ax.fill_between(x, 0, narrow, color=ACCENT, alpha=0.18, linewidth=0)
+    ax.plot(x, narrow, color=ACCENT, linewidth=1.7, label="6 signals observed")
     ax.fill_between(x, 0, wide, color=SUBTLE, alpha=0.15, linewidth=0)
-    ax.plot(x, wide, color=SUBTLE, linewidth=1.6, linestyle=(0, (3, 2)),
-            label="three observed")
-    ax.set_xlabel(r"posterior on $\theta$ for a country")
-    ax.set_title("(d) Missingness widens, not shifts", loc="left")
-    ax.legend(loc="upper left", handlelength=1.6)
-    ax.set_ylim(bottom=0)
-    ax.set_yticks([])
-    strip(ax)
+    ax.plot(x, wide, color=SUBTLE, linewidth=1.7, linestyle=(0, (3, 2)),
+            label="3 signals observed")
+    ax.set_xlabel(r"posterior on $\theta$ for one country")
+    ax.set_title("(d) Missingness widens posterior", loc="left")
+    ax.legend(loc="upper left", handlelength=1.6, frameon=False)
+    ax.set_ylim(bottom=0); ax.set_yticks([])
+    strip(ax, y_grid=False)
 
-    fig.suptitle(
-        r"Observation model — each attribute $a_i$ has a likelihood matched to its support, linked to $\theta$ through $(\alpha_i, \beta_i)$",
-        y=1.03, fontsize=10, color=MUTED, ha="center",
-    )
     plt.tight_layout()
     plt.savefig(out)
     plt.close(fig)
@@ -254,43 +233,52 @@ def fig2_observation_model(out: Path) -> None:
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# Figure 3 — Temporal dynamics: AR(1) with country-specific mean
-# Chronic baseline μ_u falls out; acute = θ(t) − μ_u.
+# Figure 3 — AR(1) trajectory with posterior CI band.
 # ═══════════════════════════════════════════════════════════════════════
 def fig3_ar1(out: Path) -> None:
-    rng = np.random.default_rng(3)
+    rng = np.random.default_rng(7)
     T = 60
     t = np.arange(T)
-    mu_u = 0.7
-    rho_u = 0.82
-    tau_u = 0.22
-    theta = np.zeros(T)
-    theta[0] = mu_u
+    mu_u, rho_u, tau_u = 0.7, 0.92, 0.11
+    theta = np.zeros(T); theta[0] = mu_u
     for k in range(1, T):
-        theta[k] = mu_u + rho_u * (theta[k - 1] - mu_u) + rng.normal(0, tau_u)
+        theta[k] = mu_u + rho_u * (theta[k-1] - mu_u) + rng.normal(0, tau_u)
+    ci_upper = theta + 0.22
+    ci_lower = theta - 0.22
 
-    fig, ax = plt.subplots(figsize=(8.0, 3.6))
-    ax.axhline(mu_u, color=ACCENT, linestyle=(0, (4, 2.5)), linewidth=1.1, alpha=0.8)
-    ax.text(T - 0.2, mu_u + 0.03, r"  chronic baseline $\mu_u$",
-            va="bottom", ha="right", color=ACCENT, fontsize=9, fontweight="bold")
-    ax.fill_between(t, theta, mu_u,
-                    where=(theta > mu_u), color=ACCENT, alpha=0.15, linewidth=0)
-    ax.fill_between(t, theta, mu_u,
-                    where=(theta <= mu_u), color=SUBTLE, alpha=0.12, linewidth=0)
-    ax.plot(t, theta, color=INK, linewidth=1.4)
+    fig, ax = plt.subplots(figsize=(8.4, 3.6))
+    ax.fill_between(t, ci_lower, ci_upper, color=ACCENT, alpha=0.1, linewidth=0, zorder=1)
+    ax.axhline(mu_u, color=ACCENT, linestyle=(0, (4, 2.5)), linewidth=1.0, alpha=0.75, zorder=2)
 
-    # Mark an "acute" spike
+    # Acute spike shading
+    above = theta > mu_u
+    ax.fill_between(t, theta, mu_u, where=above, color=ACCENT, alpha=0.18, linewidth=0, zorder=2)
+    ax.fill_between(t, theta, mu_u, where=~above, color=SUBTLE, alpha=0.10, linewidth=0, zorder=2)
+
+    ax.plot(t, theta, color=INK, linewidth=1.4, zorder=3)
+
+    # Chronic baseline label on left, inside plot, not overlapping the line
+    ax.text(1.5, mu_u + 0.04, r"chronic baseline $\mu_u$",
+            va="bottom", ha="left", color=ACCENT, fontsize=9, fontweight="bold")
+
+    # Acute deviation annotation on the right side spike
     peak = int(np.argmax(theta))
     ax.annotate("acute deviation",
-                xy=(peak, theta[peak]), xytext=(peak + 6, theta[peak] + 0.25),
-                arrowprops=dict(arrowstyle="-", color=SUBTLE, lw=0.8),
-                fontsize=8.5, color=MUTED)
+                xy=(peak, theta[peak]), xytext=(peak + 7, theta[peak] - 0.15),
+                arrowprops=dict(arrowstyle="->", color=MUTED, lw=0.7,
+                                connectionstyle="arc3,rad=0.2"),
+                fontsize=9, color=MUTED, fontweight="bold")
+
+    # 90% CI label
+    ax.text(T - 1.5, ci_upper[-1] + 0.05, "90 % CI",
+            va="bottom", ha="right", color=ACCENT_3, fontsize=8.5, fontweight="bold")
 
     ax.set_xlabel("month")
     ax.set_ylabel(r"latent $\theta(u, t)$")
-    ax.set_title(r"A country's posterior on $\theta(u, \cdot)$ decomposes into chronic baseline and acute deviation",
-                 loc="left", pad=16)
+    ax.set_title(r"One country's latent trajectory — chronic baseline + acute deviations",
+                 loc="left", pad=14)
     ax.set_xlim(0, T - 1)
+    ax.set_ylim(ci_lower.min() - 0.08, ci_upper.max() + 0.18)
     strip(ax)
     plt.tight_layout()
     plt.savefig(out)
@@ -299,32 +287,29 @@ def fig3_ar1(out: Path) -> None:
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# Figure 4 — Stakeholders as priors: four Gaussians over a single
-# attribute slope β_i. Overlap = agreement; separation = disagreement.
+# Figure 4 — Stakeholder priors over a single slope.
 # ═══════════════════════════════════════════════════════════════════════
 def fig4_stakeholder_priors(out: Path) -> None:
-    stakeholders = [
-        ("CERF",  1.50, 0.30, ACCENT),
-        ("ECHO",  1.25, 0.35, "#a13636"),
-        ("USAID", 1.00, 0.40, "#b85555"),
-        ("NGO",   1.00, 0.40, "#d07979"),
+    stake = [
+        ("CERF",  1.50, 0.30, STAKE_COLS["CERF"]),
+        ("ECHO",  1.25, 0.35, STAKE_COLS["ECHO"]),
+        ("USAID", 1.00, 0.40, STAKE_COLS["USAID"]),
+        ("NGO",   1.00, 0.42, STAKE_COLS["NGO"]),
     ]
     x = np.linspace(-0.5, 3.0, 400)
-    fig, ax = plt.subplots(figsize=(7.2, 3.3))
-    for name, m, s, c in stakeholders:
+    fig, ax = plt.subplots(figsize=(7.6, 3.4))
+    for name, m, s, c in stake:
         y = stats.norm.pdf(x, loc=m, scale=s)
-        ax.plot(x, y, color=c, linewidth=1.7, label=name)
+        ax.plot(x, y, color=c, linewidth=1.8, label=name)
         ax.fill_between(x, 0, y, color=c, alpha=0.08, linewidth=0)
     ax.axvline(0, color=FAINT, linewidth=0.7)
-    ax.text(0, ax.get_ylim()[1] if False else 1.22, "no effect",
-            ha="center", va="bottom", color=SUBTLE, fontsize=8.5)
-    ax.set_xlabel(r"slope $\beta_{\text{coverage}}$   (how strongly coverage shortfall reflects $\theta$)")
+    ax.text(0, 1.3, "no effect", ha="center", va="bottom", color=SUBTLE, fontsize=8.5)
+    ax.set_xlabel(r"slope $\beta_{\text{coverage}}$  —  how strongly coverage shortfall reflects $\theta$")
     ax.set_ylabel("prior density")
     ax.set_title(r"Each stakeholder is a prior over the attribute slopes",
                  loc="left", pad=14)
-    ax.legend(loc="upper right", handlelength=1.6)
-    ax.set_xlim(-0.5, 3.0)
-    ax.set_ylim(bottom=0)
+    ax.legend(loc="upper right", handlelength=1.6, frameon=False)
+    ax.set_xlim(-0.5, 3.0); ax.set_ylim(bottom=0)
     strip(ax)
     plt.tight_layout()
     plt.savefig(out)
@@ -333,44 +318,31 @@ def fig4_stakeholder_priors(out: Path) -> None:
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# Figure 5 — Consensus vs contested: four stakeholder posteriors on
-# θ for two different countries.
+# Figure 5 — Consensus vs contested posteriors.
 # ═══════════════════════════════════════════════════════════════════════
 def fig5_consensus_contested(out: Path) -> None:
-    rng = np.random.default_rng(7)
-    fig, axes = plt.subplots(1, 2, figsize=(10.8, 3.6), sharey=True)
+    fig, axes = plt.subplots(1, 2, figsize=(11.0, 3.4), sharey=True)
 
     names = ["CERF", "ECHO", "USAID", "NGO"]
-    colours = [ACCENT, "#a13636", "#b85555", "#d07979"]
+    cols = [STAKE_COLS[n] for n in names]
 
-    # Consensus example (tight overlap)
-    ax = axes[0]
-    means = [1.9, 2.1, 2.0, 2.05]
-    scales = [0.28, 0.30, 0.30, 0.32]
-    x = np.linspace(0.5, 3.5, 400)
-    for m, s, c, n in zip(means, scales, colours, names):
-        y = stats.norm.pdf(x, loc=m, scale=s)
-        ax.plot(x, y, color=c, linewidth=1.5, label=n)
-        ax.fill_between(x, 0, y, color=c, alpha=0.08, linewidth=0)
-    ax.set_title("Consensus country — all four posteriors overlap", loc="left", pad=12)
-    ax.set_xlabel(r"posterior on $\theta$")
-    ax.set_ylabel("density")
-    ax.legend(loc="upper right", handlelength=1.4)
-    strip(ax)
+    def panel(ax, title, means, scales):
+        x = np.linspace(means[3] - 3*scales[3] - 0.2,
+                        means[0] + 3*scales[0] + 0.2, 400)
+        for m, s, c, n in zip(means, scales, cols, names):
+            y = stats.norm.pdf(x, loc=m, scale=s)
+            ax.plot(x, y, color=c, linewidth=1.6, label=n)
+            ax.fill_between(x, 0, y, color=c, alpha=0.08, linewidth=0)
+        ax.set_title(title, loc="left", pad=12)
+        ax.set_xlabel(r"posterior on $\theta$")
+        ax.legend(loc="upper right", handlelength=1.4, frameon=False)
+        strip(ax)
 
-    # Contested example (wide spread)
-    ax = axes[1]
-    means = [2.5, 1.7, 2.2, 0.9]
-    scales = [0.30, 0.32, 0.28, 0.33]
-    x = np.linspace(-0.5, 3.5, 400)
-    for m, s, c, n in zip(means, scales, colours, names):
-        y = stats.norm.pdf(x, loc=m, scale=s)
-        ax.plot(x, y, color=c, linewidth=1.5, label=n)
-        ax.fill_between(x, 0, y, color=c, alpha=0.08, linewidth=0)
-    ax.set_title("Contested country — they separate", loc="left", pad=12)
-    ax.set_xlabel(r"posterior on $\theta$")
-    ax.legend(loc="upper right", handlelength=1.4)
-    strip(ax)
+    panel(axes[0], "Consensus  ·  SDN — all four posteriors overlap",
+          means=[2.05, 2.00, 2.05, 1.95], scales=[0.28, 0.30, 0.30, 0.30])
+    axes[0].set_ylabel("density")
+    panel(axes[1], "Contested  ·  MWI — the four posteriors separate",
+          means=[2.6, 1.8, 2.2, 0.9],  scales=[0.32, 0.35, 0.30, 0.35])
     plt.tight_layout()
     plt.savefig(out)
     plt.close(fig)
@@ -378,63 +350,57 @@ def fig5_consensus_contested(out: Path) -> None:
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# Figure 6 — Rank forest plot: each country's posterior rank with a
-# 90 % credible interval. The honest output shape.
+# Figure 6 — Rank forest with CIs, note below the axis.
 # ═══════════════════════════════════════════════════════════════════════
 def fig6_rank_forest(out: Path) -> None:
-    rng = np.random.default_rng(11)
     countries = [
-        ("Sudan",        2.5, (1,  5)),
-        ("Honduras",     2.5, (1,  5)),
-        ("Afghanistan",  5.0, (3,  7)),
-        ("Zimbabwe",     5.0, (2, 12)),   # partial completeness → wider
-        ("Somalia",      5.5, (3,  8)),
-        ("Haiti",        6.0, (4,  9)),
-        ("Malawi",       7.5, (3, 15)),   # partial completeness → wider
-        ("Mozambique",   9.0, (6, 12)),
-        ("South Sudan",  9.0, (7, 11)),
-        ("Chad",         9.5, (6, 14)),
+        ("Sudan",        2.5, (1,  5), False),
+        ("Honduras",     2.5, (1,  5), False),
+        ("Afghanistan",  5.0, (3,  7), False),
+        ("Zimbabwe",     5.0, (2, 12), True),
+        ("Somalia",      5.5, (3,  8), False),
+        ("Haiti",        6.0, (4,  9), False),
+        ("Malawi",       7.5, (3, 15), True),
+        ("Mozambique",   9.0, (6, 12), False),
+        ("South Sudan",  9.0, (7, 11), False),
+        ("Chad",         9.5, (6, 14), False),
     ]
-    countries = list(reversed(countries))  # top at top
+    countries = list(reversed(countries))
     ys = np.arange(len(countries))
-    medians = np.array([c[1] for c in countries])
-    lo = np.array([c[2][0] for c in countries])
-    hi = np.array([c[2][1] for c in countries])
 
-    fig, ax = plt.subplots(figsize=(7.8, 4.8))
-    ax.hlines(ys, lo, hi, color=ACCENT_SOFT, linewidth=4, alpha=0.45)
-    ax.plot(medians, ys, "o", color=ACCENT, markersize=7, markeredgecolor="white",
-            markeredgewidth=1.2, zorder=3)
-
-    for y, (name, med, (l, h)) in zip(ys, countries):
-        partial = " *" if name in ("Zimbabwe", "Malawi") else ""
-        ax.text(-0.3, y, name + partial, va="center", ha="right",
-                fontsize=9, color=INK)
-        ax.text(h + 0.4, y, f"{med:.1f}", va="center", ha="left",
+    fig, ax = plt.subplots(figsize=(7.8, 5.0))
+    for y, (name, med, (lo, hi), partial) in zip(ys, countries):
+        colour = ACCENT_3 if partial else ACCENT
+        alpha_fill = 0.55 if partial else 0.45
+        ax.hlines(y, lo, hi, color=colour, linewidth=4.2, alpha=alpha_fill)
+        ax.plot(med, y, "o", color=ACCENT, markersize=7,
+                markeredgecolor="white", markeredgewidth=1.2, zorder=3)
+        label = name + (" *" if partial else "")
+        ax.text(-0.5, y, label, va="center", ha="right", fontsize=9.2, color=INK)
+        ax.text(hi + 0.4, y, f"{med:.1f}", va="center", ha="left",
                 fontsize=8.5, color=MUTED)
 
-    ax.set_xlim(-5, 18)
+    ax.set_xlim(-6, 18)
     ax.set_ylim(-0.6, len(countries) - 0.4)
     ax.set_yticks([])
     ax.set_xticks([1, 5, 10, 15])
-    ax.set_xlabel("rank within the 57-country pool   (1 = most overlooked)")
+    ax.set_xlabel("rank within the 57-country pool  (1 = most overlooked)")
     ax.set_title("Posterior rank with 90 % credible interval, per country",
                  loc="left", pad=14)
-    fig.text(0.02, 0.01, "*  partial completeness — wider credible interval",
-             fontsize=8, color=SUBTLE, ha="left", va="bottom")
     for spine in ("top", "right", "left"):
         ax.spines[spine].set_visible(False)
-    ax.spines["bottom"].set_color(RULE)
+    ax.spines["bottom"].set_color(PALE)
     ax.tick_params(axis="y", length=0)
-    plt.tight_layout()
+
+    fig.text(0.02, -0.03,
+             "*  partial-completeness countries — their credible intervals are visibly wider.",
+             fontsize=8, color=SUBTLE, ha="left")
+    plt.tight_layout(rect=(0, 0.02, 1, 1))
     plt.savefig(out)
     plt.close(fig)
     print(f"wrote {out.name}")
 
 
-# ═══════════════════════════════════════════════════════════════════════
-# Entry
-# ═══════════════════════════════════════════════════════════════════════
 def main() -> None:
     HERE.mkdir(parents=True, exist_ok=True)
     fig1_coverage_collapse(HERE / "fig1_coverage_collapse.png")

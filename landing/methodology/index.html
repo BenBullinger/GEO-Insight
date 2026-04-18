@@ -331,131 +331,166 @@
         <h2><span class="section-number">§ 1</span>The problem</h2>
 
         <p class="lede">
-            When nearly every active humanitarian response is underfunded, a single
-            coverage ratio no longer separates the worst-off from the rest. We need a
-            way to distinguish <em>how</em> a crisis is overlooked, and <em>for whom</em>.
+            Sorting humanitarian crises by funding coverage used to work. In 2026 it
+            doesn't — not because the idea is wrong, but because almost every active
+            response is now in the failure zone together.
         </p>
 
         <p>
-            The 2026 Global Humanitarian Overview asks $\$33$ billion to reach 135 million
-            people. The 2025 appeal raised $\$12$ billion — the lowest in a decade.
-            Nineteen country contexts now sit below fifty per cent coverage. The analytical
-            consequence is direct: if most active responses are underfunded, sorting them by
-            coverage ratio puts them all in a dense band together and tells you nothing
-            useful about where to direct the next dollar.
+            The numbers are stark. The 2026 Global Humanitarian Overview asks $\$33$ billion
+            to reach 135 million people. The 2025 appeal raised $\$12$ billion, the lowest
+            in a decade, and OCHA now flags nineteen country contexts as severely
+            underfunded — up from eight in 2021. Sorting them by coverage ratio places
+            them all in a dense band near the floor. The ranking tells you a crisis is
+            underfunded. It tells you almost nothing about where additional attention
+            would do the most good.
         </p>
 
         <figure>
             <img src="figures/fig1_coverage_collapse.png"
-                 alt="Funding coverage trajectories 2019–2025 for seven active crises, most ending below 50 %">
+                 alt="Small-multiples of funding coverage 2019–2025 for six active crises, each ending below 50 %">
             <figcaption>
                 <span class="fig-tag">Fig 1.</span>
-                Funding coverage for five active crises, 2019 – 2025. Five of five end
-                the period below fifty per cent. When the pool of underfunded crises is
-                this crowded, a single coverage ratio has stopped being discriminative.
+                The same pattern across six active crises. The shaded region is below
+                fifty per cent coverage — severely underfunded. By 2025 every trajectory
+                has crossed into it. The crowded band at the bottom is exactly the
+                regime in which a single coverage ratio stops being discriminative.
             </figcaption>
         </figure>
 
         <p>
-            Three kinds of overlookedness become distinguishable once scoring moves from a
-            scalar to a joint distribution. A crisis can be <em>forgotten</em> — low funding,
-            low attention, as with the 2023 Angola drought. It can be <em>contested</em> —
-            high attention, persistent funding decline, as with Sudan in 2025. And it can
-            be <em>sector-starved</em> — adequate aggregate coverage masking one sector at
-            twenty per cent while another is overfunded. Each warrants a different
-            operational response. Current tools collapse all three into one number.
+            If one number is not enough, what is? Think about how a crisis can be
+            overlooked and the answers separate into at least three categories. A crisis
+            can be <em>forgotten</em> — underfunded, and hardly noticed, like the 2023
+            Angola drought. It can be <em>contested</em> — underfunded despite global
+            attention, like Sudan in 2025. And it can be <em>sector-starved</em> —
+            adequately funded in aggregate while one sector of the response sits at
+            twenty per cent coverage. These are different problems. They deserve
+            different responses. A scalar coverage ratio conflates them all.
+        </p>
+
+        <p>
+            The rest of this document describes a model that does not conflate them.
         </p>
     </section>
 
     <!-- ══════════════════════════════════════════════════════════ -->
     <section id="s2" class="doc-section" data-label="A latent we cannot see">
-        <h2><span class="section-number">§ 2</span>A latent we cannot see</h2>
+        <h2><span class="section-number">§ 2</span>A quantity we cannot see</h2>
 
         <p class="lede">
-            For each country $u$ at time $t$ there is a single unobserved quantity
-            $\theta(u, t)$ we call <em>overlookedness</em>. We never observe it directly.
-            We observe six attributes that are noisy, possibly missing, functions of it.
+            To make progress, we have to name the thing we are trying to measure —
+            and then admit that we cannot observe it directly.
         </p>
 
         <p>
-            This is a statistical inference problem, not a scoring problem. The quantity
-            of interest is latent. Our job is to infer its posterior distribution given the
-            available evidence, and to be honest about how much we know when the evidence
-            is sparse. We make four commitments about the nature of $\theta$.
+            Call it <em>overlookedness</em>, and write it $\theta(u, t)$: one real number per
+            country $u$ per month $t$. This quantity is a fiction in the sense that no one
+            has ever written it down. But it is a <em>useful</em> fiction. It lets us ask a
+            sharper question than "which crisis has the lowest coverage ratio". It lets us
+            ask: <em>given everything we can observe about a crisis, what does the evidence
+            say about $\theta$?</em> And crucially: <em>how confident are we about that
+            answer?</em>
+        </p>
+
+        <p>
+            Four small choices about the nature of $\theta$ shape everything that follows.
+            We state them up front because they have consequences.
         </p>
 
         <ul>
             <li>
-                <strong>$\theta$ is scalar, not vector.</strong> A country has one overlookedness
-                value at a given time. A vector-valued latent is more expressive but requires a
-                combination rule to obtain a scalar ranking, which re-introduces the weighted-sum
-                problem we are trying to dissolve.
+                <strong>$\theta$ is a single scalar.</strong> One number per country per
+                month. We considered letting it be a vector — with separate dimensions for
+                "financially neglected" and "structurally neglected", for instance — but
+                that quickly forces us back into a weighted-sum problem to get a ranking.
+                A scalar commits to one notion of overlookedness; different stakeholders
+                can still differ on <em>how attributes project onto it</em>.
             </li>
             <li>
-                <strong>$\theta$ is unbounded.</strong> There is no finite maximum overlookedness;
-                we do not impose one. The numerical scale is book-keeping. Everything operationally
-                useful is a rank, or a credible interval on a rank.
+                <strong>$\theta$ is unbounded.</strong> There is no natural "maximum
+                overlookedness". We do not impose one. The numerical scale is
+                book-keeping; everything operationally useful is a rank, or a credible
+                interval on a rank.
             </li>
             <li>
                 <strong>$\theta$ is not identified in absolute terms.</strong> The model is
-                invariant under location shifts and sign flips. We fix location by centring
-                $\mathbb{E}_u[\theta(u, t)] = 0$ and sign by requiring the coverage-shortfall
-                slope to be positive (higher shortfall should correspond to greater overlookedness).
+                unchanged if we shift every $\theta$ by a constant or flip all signs.
+                We pin down the ambiguity with two small conventions: centre
+                $\mathbb{E}_u[\theta(u, t)] = 0$ on the latest snapshot, and require the
+                coverage-shortfall slope to be positive (more shortfall means more
+                overlooked — a direction we are willing to assume a priori).
             </li>
             <li>
-                <strong>$\theta$ describes the present and the past, not a prediction.</strong>
-                Forecasting is the subject of a separate learning layer, described in §&nbsp;10.
+                <strong>$\theta$ is descriptive, not predictive.</strong> We infer it from
+                observed data. We do not extrapolate forward. Forecasting comes later,
+                as a separate learned layer (§&nbsp;10).
             </li>
         </ul>
 
         <div class="callout-note">
-            <div class="callout-label">What this frames away from</div>
-            We do not try to produce a single definitive "overlookedness score". We
-            produce a posterior distribution over the latent per country, and let the
-            width of that posterior do the work of expressing uncertainty. A single
-            number, however clever the aggregation, cannot.
+            <div class="callout-label">What we are refusing to do</div>
+            We are not going to produce a definitive "overlookedness score" and stop
+            there. We are going to produce a posterior <em>distribution</em> per country,
+            and let the width of that distribution say what the evidence can and cannot
+            tell us. A single number, no matter how cleverly aggregated, cannot honestly
+            carry that uncertainty.
         </div>
     </section>
 
     <!-- ══════════════════════════════════════════════════════════ -->
-    <section id="s3" class="doc-section" data-label="Observation model">
-        <h2><span class="section-number">§ 3</span>How attributes project onto $\theta$</h2>
+    <section id="s3" class="doc-section" data-label="The clues">
+        <h2><span class="section-number">§ 3</span>The clues we do see</h2>
 
         <p class="lede">
-            Each observed attribute has its own likelihood — matched to its support, linked
-            to $\theta$ through a slope and an intercept. Missing observations contribute no
-            likelihood term at all.
+            Everything we observe about a crisis is a clue about $\theta$. The clues come
+            in four different shapes, and each shape needs its own kind of equation to
+            respect what it is.
         </p>
 
         <p>
-            The six attributes live on four different kinds of support: bounded fractions,
-            positive reals, ordinal categories, and sparsely-observed cells. We do not
-            squash them onto a common scale. Each gets the generalised-linear-model
-            parameterisation it deserves.
+            We work with six clues — the funding coverage shortfall, the unmet amount per
+            person in need, the fraction of the population that is in need, the
+            INFORM severity category, a measure of donor concentration, and a measure of
+            how evenly funding is split across sectors within the country. Three of them
+            live on the unit interval. One of them lives on the positive reals and spans
+            orders of magnitude. One is a $\{1, 2, 3, 4, 5\}$ ordinal. And in a real panel
+            of countries and months, any of them can be missing.
+        </p>
+
+        <p>
+            Four shapes, four families of equations. The figure below shows what each
+            family does: the coloured curves are how the probability of an observation
+            changes as $\theta$ moves.
         </p>
 
         <figure>
             <img src="figures/fig2_observation_model.png"
-                 alt="Four panels: Beta regression, log-normal, ordered probit, posterior widening under missingness">
+                 alt="Four panels showing Beta regression, log-normal, ordered probit likelihoods, and a wider posterior when data are missing">
             <figcaption>
                 <span class="fig-tag">Fig 2.</span>
-                The four likelihood families, illustrated. (a) Beta regression for bounded
-                fractions — the mean of the observed attribute shifts smoothly with $\theta$
-                while staying in $[0, 1]$. (b) Log-normal for the positive per-person gap —
-                multiplicative shifts in $\theta$ move the distribution by additive amounts on
-                the log scale. (c) Ordered probit for the 1 – 5 INFORM severity — the probability
-                of each category changes with $\theta$; cut-points are inferred, not assumed
-                equally spaced. (d) Missingness widens, rather than shifts, the posterior on
-                $\theta$ for a country with fewer observations.
+                The four families of observation. <strong>(a)</strong> Coverage shortfall,
+                Gini, HHI and need intensity live in $[0, 1]$, so we use beta regression.
+                <strong>(b)</strong> The per-person funding gap spans orders of magnitude,
+                so we use a log-normal. <strong>(c)</strong> The severity category is an
+                ordered label $\{1, \ldots, 5\}$, so we use an ordered probit — and let
+                the data tell us how the cut-points are spaced, rather than assuming they
+                are uniform. <strong>(d)</strong> When a signal is missing for a country,
+                the posterior on $\theta$ widens rather than shifting — the machinery that
+                makes this happen is the quietest but most important piece of the whole
+                story.
             </figcaption>
         </figure>
 
-        <h3>Beta regression for bounded fractions</h3>
+        <h3>Beta regression — for bounded fractions</h3>
 
         <p>
-            Four attributes — coverage shortfall, need intensity, donor concentration, and
-            sector-coverage Gini — live on the unit interval. We give them a beta regression
-            with a logit link:
+            The coverage shortfall is a fraction between zero and one. So is the Gini. So
+            is the HHI. So is need intensity. Their likelihoods should respect that: a
+            model that can predict "negative shortfall" or "120 % need intensity" has
+            already gone wrong. Beta regression handles this directly by parameterising
+            the distribution's mean $\mu$ with a logit link and keeping its support in
+            $[0, 1]$:
         </p>
 
         <p>
@@ -467,57 +502,83 @@
         </p>
 
         <p>
-            The slope $\beta_i$ is the sensitivity of attribute $i$ to overlookedness on the
-            logit scale; the precision $\phi_i$ controls dispersion. The logit link keeps
-            predicted means strictly inside $(0, 1)$, as the attribute's support demands.
+            The slope $\beta_i$ says how strongly this attribute responds to $\theta$; the
+            precision $\phi_i$ says how tightly observations cluster around the predicted
+            mean. Panel (a) of Fig 2 shows the same beta distribution shifting as $\theta$
+            moves — always still in $[0, 1]$, as the real data is.
         </p>
 
-        <h3>Log-normal for the per-PIN gap</h3>
+        <h3>Log-normal — for positive-real quantities</h3>
 
         <p>
-            The unmet funding per person in need is positive and spans orders of magnitude
-            across crises. The natural model is multiplicative:
+            The per-person funding gap is a few dollars in some crises and a few thousand
+            in others. Logarithms are the natural way to compare things that span orders
+            of magnitude. We model the log of $a_2$ as Gaussian:
             $\log a_2 \sim \mathcal{N}(\alpha_2 + \beta_2\,\theta,\; \sigma_2^2)$.
+            A multiplicative change in $\theta$ produces an additive shift on the log
+            scale, which is exactly how financial gaps empirically scale.
         </p>
 
-        <h3>Ordered probit for severity</h3>
+        <h3>Ordered probit — for the severity category</h3>
 
         <p>
-            INFORM severity is a $\{1, \ldots, 5\}$ ordinal — Very Low through Very High.
-            Treating it as a continuous 1 – 5 would imply the steps are equally spaced,
-            which the qualitative descriptions suggest is false. An ordered probit lets the
-            data recover the spacing. Introduce a latent continuous $y = \alpha_4 + \beta_4\,\theta + \varepsilon$
-            with $\varepsilon \sim \mathcal{N}(0, 1)$, and four cut-points
-            $\kappa_1 < \kappa_2 < \kappa_3 < \kappa_4$. The observed category $a_4 = k$
-            whenever $y$ lies in $(\kappa_{k-1}, \kappa_k]$, with $\kappa_0 = -\infty$ and
-            $\kappa_5 = +\infty$. Cut-points are parameters we infer.
+            INFORM's severity is 1 through 5, labelled Very Low through Very High. These
+            labels are <em>ordered</em>, but there is no reason to believe they are
+            equally spaced — the step from High to Very High is almost certainly larger
+            than Low to Moderate. Treating the label as a continuous number 1–5 builds
+            that false assumption in. Ordered probit handles it properly. It places four
+            cut-points $\kappa_1 < \kappa_2 < \kappa_3 < \kappa_4$ on a latent continuous
+            scale:
         </p>
 
-        <h3>Missing observations</h3>
+        <p>
+            $$
+            y(u, t) \;=\; \alpha_4 + \beta_4\,\theta(u, t) + \varepsilon,
+            \qquad
+            \varepsilon \sim \mathcal{N}(0, 1),
+            $$
+        </p>
 
         <p>
-            If an attribute is not observed for a given country-month, no likelihood term
-            is contributed for that cell. No imputation is performed, no default value
-            substituted. The posterior on $\theta(u, t)$ for a country-month with only two
-            attributes observed will be <em>wider</em> than for one with six — as panel (d)
-            above illustrates. This is not a procedural choice; it is a direct consequence
-            of conditional probability. Incompleteness cannot produce a misleadingly narrow
-            posterior.
+            and declares the category observed whenever $y$ falls in the interval
+            $(\kappa_{k-1}, \kappa_k]$. The cut-points are parameters we infer alongside
+            everything else — we let the data tell us how INFORM actually spaces its
+            qualitative labels.
+        </p>
+
+        <h3>Missing observations — structural, not procedural</h3>
+
+        <p>
+            Here is the quiet piece that does a surprising amount of work. If the Gini
+            is not observed for a country-month, the likelihood contribution for that
+            $(u, t)$ pair is simply zero. We do not fill it in. We do not guess. The
+            posterior on $\theta(u, t)$ gets whatever sharpness the observed likelihoods
+            can give it, no more. Fewer observations ⇒ wider posterior. Panel (d) of
+            Fig 2 shows exactly this.
+        </p>
+
+        <p>
+            This is not a rule we impose. It falls out of the axioms of conditional
+            probability. And it has a consequence: a country with sparse data cannot
+            accidentally produce a confidently-extreme rank, because the evidence for that
+            rank isn't there. The honest answer shows up automatically as a wider
+            credible interval.
         </p>
     </section>
 
     <!-- ══════════════════════════════════════════════════════════ -->
     <section id="s4" class="doc-section" data-label="Time and drift">
-        <h2><span class="section-number">§ 4</span>Time and drift</h2>
+        <h2><span class="section-number">§ 4</span>Crises have memory</h2>
 
         <p class="lede">
-            A crisis does not reshuffle itself every month. Overlookedness has a stable
-            country baseline with transient deviations around it. We model both explicitly.
+            Sudan's overlookedness in April 2025 is not independent of March 2025. The
+            model needs to know this, and needs to turn it into something useful.
         </p>
 
         <p>
-            For each country $u$, the trajectory $\theta(u, \cdot)$ is an AR(1) process
-            with country-specific mean, persistence, and innovation scale:
+            A crisis has a personality — a long-run baseline it tends to sit at — and
+            episodes — deviations from that baseline. The simplest honest way to write
+            this down is as an AR(1) process with country-specific parameters:
         </p>
 
         <p>
@@ -530,50 +591,60 @@
         </p>
 
         <p>
-            Three things fall out. $\mu_u$ is the country's <em>chronic</em> overlookedness
-            — its long-run baseline. The quantity $\theta(u, t) - \mu_u$ is the <em>acute</em>
-            component — how the current month diverges from that baseline. And $\rho_u$ says
-            how quickly shocks decay toward the baseline: near 1, drift persists; near 0,
-            every month is a fresh draw.
+            Three quantities fall out of this equation, and all three are operationally
+            meaningful. $\mu_u$ is the country's long-run baseline — the <em>chronic</em>
+            component of overlookedness. The deviation $\theta(u, t) - \mu_u$ is the
+            <em>acute</em> component — how this month compares to the country's typical
+            level. And $\rho_u$ says how long shocks persist: close to 1 means drift
+            accumulates, close to 0 means each month is a fresh draw.
         </p>
 
         <figure>
             <img src="figures/fig3_temporal_dynamics.png"
-                 alt="Simulated AR(1) trajectory with chronic baseline and acute deviations shaded">
+                 alt="Smoothed AR(1) trajectory over five years with chronic baseline dashed and a 90 percent credible interval band">
             <figcaption>
                 <span class="fig-tag">Fig 3.</span>
-                A single country's posterior trajectory over five years. The horizontal
-                red line is the chronic baseline $\mu_u$; the shaded deviations are acute.
-                Chronic and acute are not separately computed — both fall out of the same
-                AR(1) posterior.
+                One country's posterior trajectory across five years. The dashed line is
+                the chronic baseline $\mu_u$. The shaded band is the 90 % credible
+                interval on $\theta$ itself — wider when the evidence is thinner, tighter
+                when it is abundant. The chronic/acute split is not a separate computation;
+                both fall out of the same AR(1) posterior automatically.
             </figcaption>
         </figure>
 
         <div class="callout-note">
-            <div class="callout-label">A known weakness</div>
-            AR(1) with constant $\mu_u$ assumes a stable baseline. Countries in sustained
-            decline (Venezuela post-2018, Sudan post-2023) have a rising $\mu_u$; the AR(1)
-            residual absorbs that drift rather than representing it. If this becomes
-            visible in diagnostics, the fix is to let $\mu_u$ carry a linear trend or
-            replace AR(1) with a local-level state-space model.
+            <div class="callout-label">A weakness, stated honestly</div>
+            AR(1) assumes the baseline $\mu_u$ is stable. Countries in sustained decline
+            (Venezuela post-2018, Sudan post-2023) have a <em>rising</em> $\mu_u$, and the
+            AR(1) residual ends up absorbing that drift rather than representing it. If
+            residual diagnostics show this, the fix is to let $\mu_u$ carry a linear
+            trend, or to switch to a local-level state-space model. We'll watch for it.
         </div>
     </section>
 
     <!-- ══════════════════════════════════════════════════════════ -->
     <section id="s5" class="doc-section" data-label="Stakeholders as priors">
-        <h2><span class="section-number">§ 5</span>Stakeholders as priors</h2>
+        <h2><span class="section-number">§ 5</span>Stakeholders, as priors</h2>
 
         <p class="lede">
-            A stakeholder is not a weight vector. A stakeholder is a prior over how the
-            six attributes project onto overlookedness. Four stakeholder priors, four
-            posteriors, four views of the same latent.
+            This is the move that makes the whole thing work. Most tools ask what weight
+            each attribute should have. We ask what each stakeholder <em>believes</em>
+            about each attribute, and let that belief be tested.
         </p>
 
         <p>
-            Here the model acquires its novelty. Instead of asking "what weight should
-            severity have in a weighted sum?", we ask "what does this stakeholder believe
-            about the relationship between severity and overlookedness, a priori?". A
-            stakeholder $s$ is a prior on the six slopes:
+            Different humanitarian actors emphasise different signals. CERF leans on
+            severity and coverage shortfall. ECHO leans on equity within a crisis. USAID
+            looks at donor concentration. An NGO consortium might weight sector-equity
+            most heavily. In the old machinery this was a disagreement about numbers in a
+            weighted sum. We can do better: treat each stakeholder's emphasis as a
+            Bayesian <em>prior</em> over the attribute slopes, and then let the data tell
+            us whether the emphasis was warranted.
+        </p>
+
+        <p>
+            Formally, each stakeholder $s$ is a prior on the six slopes of our observation
+            model:
         </p>
 
         <p>
@@ -584,134 +655,149 @@
         </p>
 
         <p>
-            Four pre-registered prior tables are given to the model, one per stakeholder.
-            The mean vector $m^{(s)}$ encodes what the stakeholder cares most about; the
-            variance vector $v^{(s)}$ encodes how strongly they hold that belief.
+            The mean $m_i^{(s)}$ says what stakeholder $s$ thinks the slope is likely to
+            be, a priori. The variance $v_i^{(s)}$ says how tightly they hold that belief —
+            small variance means "I'm confident", large variance means "I'm guessing".
+            Different stakeholders give different $(m, v)$. Fig 4 shows four such priors
+            for a single slope — the sensitivity of coverage shortfall to overlookedness.
         </p>
 
         <figure>
             <img src="figures/fig4_stakeholder_priors.png"
-                 alt="Four overlapping Gaussian prior densities on the coverage-shortfall slope">
+                 alt="Four distinct prior densities for the coverage-shortfall slope, one per stakeholder">
             <figcaption>
                 <span class="fig-tag">Fig 4.</span>
-                Four stakeholder priors on a single attribute slope —
-                $\beta_{\text{coverage}}$, how strongly coverage shortfall reflects
-                overlookedness. Tighter priors (CERF) encode a more confident belief;
-                broader priors (NGO) admit more uncertainty. Each is a pre-registered
-                statistical claim.
+                Four stakeholder priors on a single slope — $\beta_{\text{coverage}}$,
+                how strongly the coverage shortfall signal reflects $\theta$. CERF (dark)
+                places tight mass near 1.5; NGO (blue-grey) is broader and centred lower.
+                Each curve is a pre-registered statistical claim.
             </figcaption>
         </figure>
 
-        <h3>What this buys that weight vectors do not</h3>
-
         <p>
-            <strong>Falsifiability.</strong> Each prior is a statistical claim. The posterior
-            either corroborates it or moves away from it. If CERF's prior on the coverage
-            slope is centred at $1.5$ but the data pool the posterior toward $0.8$, we have
-            learned something concrete about CERF's stated-versus-effective preference. No
-            weighted-sum method can produce a finding of that shape.
+            There are three payoffs to this framing, and they are worth separating
+            carefully.
         </p>
 
-        <p>
-            <strong>Uncertainty quantification.</strong> Stakeholder disagreement is no longer
-            a four-point spread across fixed weights. It is four overlapping — or
-            non-overlapping — posterior distributions over $\theta$.
-        </p>
+        <h3>The priors are falsifiable</h3>
 
         <p>
-            <strong>Data-density sensitivity.</strong> When a country has rich data, the
-            posterior on $\theta$ is dominated by the likelihood and all four stakeholder
-            posteriors tend to converge. When a country has sparse data, the prior has more
-            influence, and the stakeholders' disagreement shows up more sharply. The method
-            is honestly context-sensitive.
+            Every prior is a statistical claim. After we fit the model, the posterior on
+            $\beta$ either corroborates that claim or moves away from it. If CERF's prior
+            centres the coverage slope at 1.5 but the posterior concentrates at 0.8, we
+            have learned something concrete about CERF's stated-versus-effective
+            preference. A weighted-sum method cannot produce a finding of that shape —
+            because it has no prior to move away from.
+        </p>
+
+        <h3>Disagreement becomes a measurement</h3>
+
+        <p>
+            Instead of four fixed weight vectors producing four ranks, we have four
+            posteriors producing four <em>distributions</em> over $\theta$. Stakeholder
+            disagreement is no longer a heuristic spread — it is the overlap of those four
+            posteriors, which we can measure.
+        </p>
+
+        <h3>The method is honestly context-sensitive</h3>
+
+        <p>
+            When a country has rich data, the likelihood dominates and all four
+            stakeholder posteriors converge — the data is speaking loudly enough that
+            everyone agrees. When a country has sparse data, the priors have more weight,
+            and stakeholders' disagreements show up more sharply. The system adapts to how
+            much evidence it actually has, automatically.
         </p>
     </section>
 
     <!-- ══════════════════════════════════════════════════════════ -->
     <section id="s6" class="doc-section" data-label="Consensus vs contested">
-        <h2><span class="section-number">§ 6</span>Consensus vs contested</h2>
+        <h2><span class="section-number">§ 6</span>Consensus versus contested</h2>
 
         <p class="lede">
             Having four posteriors turns "how much do stakeholders disagree?" from a
-            heuristic into a measurement.
+            heuristic into a measurement. Two pictures carry the whole story.
         </p>
 
         <p>
-            With one posterior $p(\theta(u, t) \mid D, s)$ per stakeholder, we can measure
-            overlap directly. A country is a <em>consensus</em> case when all four posteriors
-            concentrate on the same region; it is <em>contested</em> when they separate. Two
-            simple scalar measures suffice.
+            With one posterior per stakeholder, we can literally measure how much they
+            overlap. A country is a <em>consensus</em> case when all four posteriors
+            concentrate on the same region — everyone agrees, roughly, on how overlooked
+            it is. It is a <em>contested</em> case when they separate — the answer to
+            "how overlooked?" depends sharply on whose preferences you ask. Fig 5 shows
+            one of each.
+        </p>
+
+        <figure>
+            <img src="figures/fig5_consensus_contested.png"
+                 alt="Left: four posteriors tightly overlapping for a consensus country. Right: four posteriors clearly separated for a contested country">
+            <figcaption>
+                <span class="fig-tag">Fig 5.</span>
+                Left, a consensus country — all four stakeholder posteriors land on roughly
+                the same range. Right, a contested country — each stakeholder places the
+                posterior somewhere different. In the old weighted-sum world this was an
+                intuition. Here it is a direct reading off the data.
+            </figcaption>
+        </figure>
+
+        <p>
+            Two scalar summaries suffice for downstream use:
         </p>
 
         <ul>
             <li>
-                <strong>Consensus score.</strong> The fraction of posterior samples in which the
-                country is in the top-$K$ <em>under all four</em> stakeholder posteriors. High
-                consensus score: no stakeholder disagrees this country is badly overlooked.
+                <strong>Consensus score.</strong> The fraction of posterior samples in
+                which the country sits in the top-$K$ <em>under all four stakeholder
+                posteriors simultaneously</em>. High consensus means every stakeholder
+                considers the country highly overlooked.
             </li>
             <li>
-                <strong>Contested score.</strong> The maximum of the posterior medians across
-                stakeholders minus the minimum, or equivalently the Bhattacharyya distance between
-                the most and least concordant posteriors. High contested score: the answer depends
-                sharply on whose preferences you apply.
+                <strong>Contested score.</strong> The spread of posterior medians across
+                stakeholders — or, more rigorously, the Bhattacharyya distance between
+                the two most disagreeing posteriors. High contested means the rank depends
+                on whose preferences you apply.
             </li>
         </ul>
-
-        <figure>
-            <img src="figures/fig5_consensus_contested.png"
-                 alt="Left: four overlapping posteriors (consensus); right: four separated posteriors (contested)">
-            <figcaption>
-                <span class="fig-tag">Fig 5.</span>
-                Two country examples, four stakeholder posteriors each. On the left, all four
-                posteriors overlap tightly — stakeholders agree, and the consensus score is
-                high. On the right, the four posteriors separate — stakeholders disagree, and
-                the contested score is high. This shape was a heuristic in the weighted-sum
-                setting; it is now a measurement.
-            </figcaption>
-        </figure>
     </section>
 
     <!-- ══════════════════════════════════════════════════════════ -->
     <section id="s7" class="doc-section" data-label="What the system reports">
-        <h2><span class="section-number">§ 7</span>What the system reports</h2>
+        <h2><span class="section-number">§ 7</span>What a coordinator actually sees</h2>
 
         <p class="lede">
-            Every ranking carries its uncertainty. Coordinators see medians, 90&nbsp;% credible
-            intervals, and the attribute contributions that moved each posterior.
+            Ranks are what get used. But behind each rank is a posterior, and we refuse
+            to hide it.
         </p>
 
         <p>
-            From $S$ posterior samples of $\theta(u, t)$ under a given stakeholder,
-            the dashboard produces:
+            For each country, each month, and each stakeholder, we take $S$ samples from
+            the posterior on $\theta$ and read off four things: the <em>posterior median</em>
+            as the point estimate that drives sorting; the <em>90 % credible interval</em>
+            on both $\theta$ and the country's rank within the scored pool, as the
+            honest statement of uncertainty; a per-attribute <em>contribution decomposition</em>
+            $\beta_i\,\tilde a_i(u, t)$, so a reader can see <em>which signals</em> moved
+            the posterior; and the cross-stakeholder <em>consensus and contested scores</em>
+            from §&nbsp;6.
         </p>
 
-        <ul>
-            <li>
-                <strong>Posterior median $\widehat{\theta}(u, t)$</strong> — the point estimate
-                used for sorting.
-            </li>
-            <li>
-                <strong>90 % credible interval</strong> on $\theta$ and on the rank within the
-                scored pool — the honest statement of uncertainty.
-            </li>
-            <li>
-                <strong>Attribute contribution</strong> $\beta_i \cdot \tilde{a}_i(u, t)$ at the
-                posterior medians, per attribute — the interpretable decomposition of what
-                drove the rank.
-            </li>
-            <li>
-                <strong>Consensus and contested scores</strong> aggregated across stakeholders.
-            </li>
-        </ul>
+        <p>
+            Fig 6 shows what this looks like in practice — a forest plot of the top-ten
+            most overlooked countries in 2025, under the widest evidence-bounded pool.
+            Each red dot is a posterior median rank; each pink bar is a 90 % credible
+            interval. The two partial-completeness countries (marked with an asterisk)
+            have visibly wider intervals. That is the model being honest about what it
+            does and does not know.
+        </p>
 
         <figure>
             <img src="figures/fig6_rank_forest.png"
-                 alt="Forest plot of posterior ranks with 90 % credible intervals for ten countries">
+                 alt="Forest plot of ten countries with their median ranks and 90 percent credible intervals">
             <figcaption>
                 <span class="fig-tag">Fig 6.</span>
-                Top-ten posterior ranks under the widest evidence-bound pool, with 90 % credible
-                intervals. Countries marked with an asterisk have partial completeness — their
-                credible intervals are visibly wider, as the model should produce.
+                Ten most-overlooked countries in 2025, under the all-pool evidence-bounded
+                ranking. Dot: posterior median rank. Bar: 90 % credible interval. The two
+                partial-completeness countries (Zimbabwe, Malawi) show wider bars — the
+                expected consequence of fewer observed signals.
             </figcaption>
         </figure>
     </section>
@@ -721,35 +807,37 @@
         <h2><span class="section-number">§ 8</span>Validation</h2>
 
         <p class="lede">
-            Three tests, stated in advance: temporal held-out, attribute masking, and
-            consistency with the simpler method we shipped before.
+            A model's job is not to feel right. It is to agree with reality, or fail
+            noisily. We validate in three ways, pre-registered before any fit.
         </p>
 
         <ol>
             <li>
-                <strong>Temporal held-out.</strong> Fit on data through December 2024, predict
-                posterior ranks for 2025, compare against OCHA's CERF Underfunded Emergencies
-                selections for 2025. Top-$K$ overlap and rank correlation, each reported with
-                a 90&nbsp;% credible interval derived from the posterior samples.
+                <strong>Temporal held-out.</strong> Fit the full model on data through
+                December 2024. Predict posterior ranks for 2025. Compare those ranks
+                against OCHA's CERF Underfunded Emergencies selections for 2025. Report
+                top-$K$ overlap and rank correlation, each with a 90 % credible interval
+                drawn directly from the posterior samples — no bootstrap needed.
             </li>
             <li>
-                <strong>Attribute masking.</strong> For a country with full six-attribute
-                observation, mask each attribute in turn and refit. The credible interval on the
-                posterior rank should widen predictably. If masking an attribute narrows the
-                interval, the model is miscalibrated.
+                <strong>Attribute masking.</strong> Take a country with all six attributes
+                observed. Mask each attribute in turn, refit, and check that the credible
+                interval on the posterior rank <em>widens</em> — by an amount predictable
+                from the information content of the masked signal. If masking narrows the
+                interval, the model is miscalibrated and we investigate.
             </li>
             <li>
-                <strong>MAUT consistency.</strong> Under a deliberately diffuse stakeholder prior
-                — large variance on all slopes — the posterior median ranking should
-                approximately reproduce the weighted-sum ranking we shipped in the first version
-                of the system. If it does not, at least one of them is wrong; we investigate
-                before trusting either.
+                <strong>Consistency with the simpler method.</strong> Under a deliberately
+                diffuse stakeholder prior, the posterior median ranking should
+                approximately reproduce the weighted-sum ranking we shipped in the first
+                version of the system. If it doesn't, at least one of the two is wrong and
+                we need to find out which before trusting either.
             </li>
         </ol>
 
         <p>
-            Validation is reported in the dashboard as a dedicated view and repeated in the
-            formal paper for the record.
+            Validation lives in the dashboard as a dedicated view, and is repeated in the
+            formal paper so the numbers are on record.
         </p>
     </section>
 
@@ -758,79 +846,86 @@
         <h2><span class="section-number">§ 9</span>What we are not claiming</h2>
 
         <p class="lede">
-            The system produces a ranked posterior, traceable to source data, with declared
-            uncertainty. It does not do more than that.
+            The system produces ranked posteriors, traceable to source data, with declared
+            uncertainty. That is all it does. It is worth saying what it deliberately
+            does <em>not</em> do.
         </p>
 
         <ul>
             <li>
-                <strong>Not forecasting.</strong> The model describes $\theta(u, t)$ at observed
-                $t$. Forward prediction is the subject of the separate learning phase.
+                <strong>No forecasting.</strong> The model describes $\theta(u, t)$ at times
+                we have data for. It does not extrapolate forward. Forecasting is a
+                separate job for a separate layer (§&nbsp;10).
             </li>
             <li>
-                <strong>Not causal.</strong> The observation model is a statistical association.
-                It does not support counterfactual claims of the form "if this country had more
-                donors, it would be less overlooked".
+                <strong>No causal claims.</strong> The observation model is statistical
+                association, not intervention. The model will not tell you what <em>would
+                happen</em> if a country got more donors — only what the posterior looks
+                like given the observed data.
             </li>
             <li>
-                <strong>Not a replacement for judgement.</strong> The system ranks; humans decide.
-                Every displayed posterior carries the attribute contributions that produced it,
-                so a coordinator can see exactly what drove a given answer.
+                <strong>No replacement for judgement.</strong> The system produces a ranked
+                list with credible intervals and an attribute-level decomposition of what
+                moved each posterior. Humans decide what to do with it.
             </li>
             <li>
-                <strong>Benchmarks are imperfect proxies.</strong> CERF Underfunded Emergencies
-                selections reflect both genuine overlookedness and a human political process.
-                CARE's <em>Breaking the Silence</em> reflects media attention. Agreement with
-                either is informative, not conclusive.
+                <strong>Benchmarks are imperfect.</strong> CERF UFE selections reflect both
+                genuine overlookedness and political process. CARE's <em>Breaking the
+                Silence</em> reflects media attention, not funding. Agreement with either
+                is evidence. It is not proof.
             </li>
             <li>
-                <strong>Stakeholder priors are judgement, not calibration.</strong> The tables
-                encode what we believe CERF, ECHO, USAID, and NGO consortia broadly care about.
+                <strong>Stakeholder priors are judgement.</strong> The four prior tables
+                encode what we believe CERF, ECHO, USAID, and NGO consortia broadly emphasise.
                 They are a starting point. Calibrating each prior against actual observed
-                selections is a follow-on project.
+                behaviour — regressing CERF UFE membership on the attributes, for instance —
+                is a natural extension we have not done yet.
             </li>
             <li>
-                <strong>Never directly observed.</strong> $\theta$ is latent. All posterior
-                statements are contingent on the observation model being approximately correct.
-                The validation tests above are the main evidence that it is; they are not proof.
+                <strong>$\theta$ is never directly observed.</strong> Every posterior
+                statement is contingent on the observation model being approximately correct.
+                The validation tests above are evidence that it is. They are not proof.
             </li>
         </ul>
     </section>
 
     <!-- ══════════════════════════════════════════════════════════ -->
     <section id="s10" class="doc-section" data-label="Where this goes next">
-        <h2><span class="section-number">§ 10</span>Where this goes next</h2>
+        <h2><span class="section-number">§ 10</span>The learned layer</h2>
 
         <p class="lede">
-            The typed semantic layer is a feature store. The next step is a learned
-            representation of the raw monthly panel, slotted under the latent-variable
-            model without disturbing it.
+            The six signals we use are themselves aggregates — summaries of a much richer
+            raw panel. There is information in the raw data that our six clues cannot
+            capture. The next step is to let a learned representation carry it.
         </p>
 
         <p>
-            The six attributes we condition on are aggregates of a richer raw signal —
-            eighteen INFORM sub-indicators on displacement, casualties, access, phase-level
-            need, plus the monthly reporting on funding flows. A learned encoder over the raw
-            monthly panels — a sequence model such as Mamba, or a masked-attention encoder
-            trained by self-supervision — can compress that history into a low-dimensional
-            $z(u, t) \in \mathbb{R}^d$ that carries information the aggregates do not.
+            Under each of our six aggregate attributes sits a richer underlying signal:
+            eighteen INFORM sub-indicators on displacement, casualties, access, and
+            phase-level need; the monthly reporting on funding flows, donor by donor;
+            sector-level breakdowns with their own missingness structure. A sequence model
+            trained on the full monthly panel — Mamba, a masked-attention encoder,
+            something of that family — can compress that history into a low-dimensional
+            embedding $z(u, t) \in \mathbb{R}^d$ that carries information the six
+            aggregates throw away.
         </p>
 
         <p>
-            The extension is architecturally straightforward. Replace the current observation
-            model $a_i \mid \theta$ by $\{a, z\} \mid \theta$, with $z$ produced by the
-            learned encoder. The latent $\theta$ stays scalar and interpretable. The learned
-            encoder has a crisp, measurable training objective — reduce the posterior variance
-            on $\theta$ given the available data. And the typed ontology carries through: every
-            learned dimension of $z$ is registered as a new property at a dedicated level, with
-            its training data, its checkpoint, and its known failure modes declared alongside
-            everything else.
+            The extension slots in cleanly. Replace the current observation model
+            $a_i \mid \theta$ with $\{a, z\} \mid \theta$. The latent $\theta$ stays
+            scalar, stays interpretable, stays the same object it is in this document.
+            The learned encoder has a crisp objective — reduce posterior variance on
+            $\theta$ given the available evidence — and an explicit place in the
+            typed ontology: every dimension of $z$ becomes a registered property with its
+            training data, its checkpoint, and its known failure modes declared alongside
+            every other property.
         </p>
 
         <p>
-            When that layer is in place, the system will produce posterior ranks conditioned on
-            both structured attributes and learned representations, both provenance-traceable,
-            both uncertainty-quantified, and both honest about what they do not know.
+            When that layer is in place, the system will produce posterior ranks conditioned
+            on both structured attributes <em>and</em> learned representations —
+            provenance-traceable, uncertainty-quantified, honest about what the evidence
+            does and does not support.
         </p>
     </section>
 
