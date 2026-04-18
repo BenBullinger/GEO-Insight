@@ -20,10 +20,20 @@ def _norm_cluster(s: str) -> str:
 
 
 def build_sector_coverage(year: int = 2025) -> pd.DataFrame:
-    """Per-country × sector view joining FTS cluster funding/requirements with HNO PIN.
+    """Per-country × sector long-form frame joining FTS cluster funding/requirements with HNO PIN.
+
+    Surfaces the four multi-row L1/L2 properties from spec.yaml that don't fit
+    the country-indexed enriched frame:
+
+        pin_by_sector            (L1, HNO)
+        requirements_by_sector   (L1, FTS cluster)
+        funding_by_sector        (L1, FTS cluster)
+        coverage_by_sector       (L2, derived = funding / requirements per sector)
 
     Returns a DataFrame with columns:
-        iso3, cluster, cluster_norm, requirements, funding, coverage, pin
+        iso3, cluster, cluster_norm,
+        requirements_by_sector, funding_by_sector,
+        pin_by_sector, coverage_by_sector
     """
     fts = pd.read_csv(
         DATA / "fts" / "fts_requirements_funding_cluster_global.csv", skiprows=[1]
@@ -32,7 +42,13 @@ def build_sector_coverage(year: int = 2025) -> pd.DataFrame:
     fts_y = fts[fts["year"] == year][
         ["countryCode", "cluster", "requirements", "funding"]
     ].dropna(subset=["countryCode", "cluster"])
-    fts_y = fts_y.rename(columns={"countryCode": "iso3"}).copy()
+    fts_y = fts_y.rename(
+        columns={
+            "countryCode": "iso3",
+            "requirements": "requirements_by_sector",
+            "funding": "funding_by_sector",
+        }
+    ).copy()
     fts_y["cluster_norm"] = fts_y["cluster"].astype(str).apply(_norm_cluster)
 
     hno = pd.read_csv(
@@ -49,17 +65,23 @@ def build_sector_coverage(year: int = 2025) -> pd.DataFrame:
             columns={
                 "Country ISO3": "iso3",
                 "Cluster": "cluster_hno",
-                "In Need": "pin",
+                "In Need": "pin_by_sector",
             }
         )
     )
     pin["cluster_norm"] = pin["cluster_hno"].astype(str).apply(_norm_cluster)
 
     merged = pd.merge(
-        fts_y[["iso3", "cluster", "cluster_norm", "requirements", "funding"]],
-        pin[["iso3", "cluster_norm", "pin"]],
+        fts_y[["iso3", "cluster", "cluster_norm", "requirements_by_sector", "funding_by_sector"]],
+        pin[["iso3", "cluster_norm", "pin_by_sector"]],
         on=["iso3", "cluster_norm"],
-        how="left",
+        how="outer",
     )
-    merged["coverage"] = (merged["funding"] / merged["requirements"]).clip(upper=1.5)
+    # Fill missing sector names where the join came only from the HNO side.
+    missing_cluster = merged["cluster"].isna()
+    if missing_cluster.any():
+        merged.loc[missing_cluster, "cluster"] = merged.loc[missing_cluster, "cluster_norm"].str.replace("_", " ").str.title()
+    merged["coverage_by_sector"] = (
+        merged["funding_by_sector"] / merged["requirements_by_sector"]
+    ).clip(upper=1.5)
     return merged

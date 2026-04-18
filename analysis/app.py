@@ -34,8 +34,13 @@ def get_registry() -> Registry:
     return Registry.load()
 
 
-@st.cache_data(show_spinner="Building enriched frame (Level 1-3)…")
+@st.cache_data(show_spinner="Assembling enriched frame (L1–L5)…")
 def get_enriched():
+    # Prefer the on-disk parquet snapshot when fresh; fall back to a full
+    # re-derivation otherwise. See `scripts/refresh_enriched.py` to materialise.
+    cached = features.load_cached_enriched_frame()
+    if cached is not None:
+        return cached
     return features.build_enriched_frame()
 
 

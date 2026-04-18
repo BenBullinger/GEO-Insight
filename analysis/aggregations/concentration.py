@@ -92,14 +92,14 @@ def _weighted_gini(values: np.ndarray, weights: np.ndarray) -> float:
 
 def cluster_inequality(year: int = 2025) -> pd.DataFrame:
     sc = sectoral.build_sector_coverage(year=year)
-    sc = sc.dropna(subset=["coverage"])
-    sc = sc[sc["requirements"] > 0]
+    sc = sc.dropna(subset=["coverage_by_sector"])
+    sc = sc[sc["requirements_by_sector"] > 0]
     rows = []
     for iso3, grp in sc.groupby("iso3"):
         if len(grp) < 2:
             continue
-        cov = grp["coverage"].to_numpy()
-        pin_w = grp["pin"].fillna(0).to_numpy()
+        cov = grp["coverage_by_sector"].to_numpy()
+        pin_w = grp["pin_by_sector"].fillna(0).to_numpy()
         if pin_w.sum() == 0:
             pin_w = np.ones_like(cov)
         gini = _weighted_gini(cov, pin_w)
@@ -141,15 +141,19 @@ def phase_gini_latest() -> pd.DataFrame:
     return pd.DataFrame(rows).set_index("iso3")
 
 
-# ─── CBPF reliance ─────────────────────────────────────────────────────────
+# ─── CBPF allocation and reliance ──────────────────────────────────────────
 def cbpf_reliance_latest(year: int = 2025) -> pd.DataFrame:
-    """Share of a country's humanitarian funding that flows via CBPF.
+    """CBPF allocation (L1) and CBPF reliance (L3) per country-year.
 
     Maps CBPF projects to ISO3 by matching `PooledFundName` prefix. The
     PooledFundName takes forms like "Sudan Humanitarian Fund" or
     "Afghanistan Humanitarian Fund"; we match against a small hand-curated
     dictionary of fund → ISO3 for the recognised fund names. Funds we can't
     match are excluded.
+
+    Returns a DataFrame indexed by iso3 with columns:
+        - cbpf_allocation: raw USD allocated via CBPF (L1 primitive)
+        - cbpf_reliance: cbpf_allocation / funding_received (L3 ratio)
     """
     fund_to_iso3 = {
         "Afghanistan": "AFG",
@@ -179,7 +183,7 @@ def cbpf_reliance_latest(year: int = 2025) -> pd.DataFrame:
     try:
         cbpf = pd.read_csv(DATA / "cbpf" / "cbpf_project_summary.csv", low_memory=False)
     except FileNotFoundError:
-        return pd.DataFrame(columns=["cbpf_reliance"])
+        return pd.DataFrame(columns=["cbpf_allocation", "cbpf_reliance"])
     cbpf["AllocationYear"] = pd.to_numeric(cbpf["AllocationYear"], errors="coerce")
     cbpf_y = cbpf[cbpf["AllocationYear"] == year].copy()
     cbpf_y["Budget"] = pd.to_numeric(cbpf_y["Budget"], errors="coerce").fillna(0)
@@ -208,5 +212,7 @@ def cbpf_reliance_latest(year: int = 2025) -> pd.DataFrame:
     joined["cbpf_reliance"] = (
         joined["cbpf_allocation"] / joined["funding_received"].replace({0: np.nan})
     ).clip(upper=1.0)
-    return joined[["cbpf_reliance"]].dropna()
+    # Keep cbpf_allocation as a first-class L1 column; drop only the helper
+    # funding_received column (already present in the enriched frame).
+    return joined[["cbpf_allocation", "cbpf_reliance"]].dropna(subset=["cbpf_allocation"])
 
