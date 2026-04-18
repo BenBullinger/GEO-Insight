@@ -18,6 +18,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
+PORT_LAND=7777
 PORT_PRES=8000
 PORT_DASH=8501
 
@@ -43,18 +44,20 @@ fi
 
 # ─── 3. Port checks ──────────────────────────────────────────────────────────
 port_busy() { lsof -nP -iTCP:"$1" -sTCP:LISTEN >/dev/null 2>&1; }
-if port_busy "$PORT_PRES"; then
-    echo "✗ Port $PORT_PRES already in use. Stop the process using it or edit run.sh." >&2
-    exit 1
-fi
-if port_busy "$PORT_DASH"; then
-    echo "✗ Port $PORT_DASH already in use. Stop the process using it or edit run.sh." >&2
-    exit 1
-fi
+for p in "$PORT_LAND" "$PORT_PRES" "$PORT_DASH"; do
+    if port_busy "$p"; then
+        echo "✗ Port $p already in use. Stop the process using it or edit run.sh." >&2
+        exit 1
+    fi
+done
 
 # ─── 4. Launch servers ───────────────────────────────────────────────────────
 LOG_DIR="$(mktemp -d)"
 echo "→ Logs: $LOG_DIR"
+
+python3 -m http.server "$PORT_LAND" --directory landing \
+    >"$LOG_DIR/landing.log" 2>&1 &
+LAND_PID=$!
 
 python3 -m http.server "$PORT_PRES" --directory presentation \
     >"$LOG_DIR/presentation.log" 2>&1 &
@@ -71,7 +74,7 @@ DASH_PID=$!
 cleanup() {
     echo ""
     echo "→ Shutting down…"
-    kill "$PRES_PID" "$DASH_PID" 2>/dev/null || true
+    kill "$LAND_PID" "$PRES_PID" "$DASH_PID" 2>/dev/null || true
     wait 2>/dev/null || true
     echo "  Done."
     exit 0
@@ -85,9 +88,10 @@ cat <<EOF
 
   ┌──────────────────────────────────────────────────────────────────┐
   │                                                                  │
-  │   Presentation   http://localhost:$PORT_PRES                           │
-  │   Dashboard      http://localhost:$PORT_DASH                           │
-  │   Proposal PDF   proposal/proposal.pdf                           │
+  │   ▸ Landing      http://localhost:$PORT_LAND  (start here)             │
+  │     Presentation http://localhost:$PORT_PRES                           │
+  │     Dashboard    http://localhost:$PORT_DASH                           │
+  │     Proposal PDF proposal/proposal.pdf                           │
   │                                                                  │
   │   Logs:          $LOG_DIR
   │                                                                  │
@@ -97,11 +101,10 @@ cat <<EOF
 
 EOF
 
-# Open URLs in the default browser on macOS (harmless on Linux; 'open'
-# may not exist elsewhere — failures are swallowed).
+# Open landing page in the default browser on macOS (others can open
+# manually). Individual surface URLs are one click away from landing.
 if command -v open >/dev/null 2>&1; then
-    ( sleep 1 && open "http://localhost:$PORT_PRES" >/dev/null 2>&1 || true ) &
-    ( sleep 2 && open "http://localhost:$PORT_DASH" >/dev/null 2>&1 || true ) &
+    ( sleep 1 && open "http://localhost:$PORT_LAND" >/dev/null 2>&1 || true ) &
 fi
 
 wait

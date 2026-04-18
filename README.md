@@ -15,11 +15,12 @@ cd GEO-Insight
 
 That's it. `run.sh` is idempotent: on first run it downloads the ~270 MB of source data, creates the dashboard virtualenv, and installs Streamlit; on subsequent runs it just starts the servers. Ctrl-C shuts everything down cleanly.
 
-Once it's running:
+Once it's running, the landing page opens in your default browser and links to everything:
 
-- **Presentation** — <http://localhost:8000> (reveal.js deck · `S` speaker view · `F` fullscreen · `?` shortcuts)
+- **Landing page** — <http://localhost:7777> (start here)
+- **Presentation** — <http://localhost:8000> (reveal.js deck · `S` speaker · `F` fullscreen · `?` shortcuts)
 - **Dashboard** — <http://localhost:8501> (data-landscape explorer across the 5 sources)
-- **Proposal** — `proposal/proposal.pdf`
+- **Proposal** — `proposal/proposal.pdf` (also reachable from the landing page)
 
 Nothing is hosted publicly. Everything is localhost-only.
 
@@ -68,7 +69,10 @@ When almost every response is underfunded, a single coverage ratio stops being d
 ```
 GEO-Insight/
 ├── README.md                 this file
-├── run.sh                    single-command launcher (presentation + dashboard)
+├── run.sh                    single-command launcher (landing + presentation + dashboard)
+├── landing/
+│   ├── index.html            clean landing page linking to all surfaces
+│   └── proposal.pdf          symlink to ../proposal/proposal.pdf
 ├── .gitignore
 ├── task/
 │   └── challenge.md          official challenge brief

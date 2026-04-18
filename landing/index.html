@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GEO-Insight — Local</title>
+    <style>
+        :root {
+            --un-blue: #009EDB;
+            --un-blue-dark: #0072BC;
+            --un-blue-deep: #1F4E79;
+            --un-gray-dark: #2C3E50;
+            --un-gray: #595959;
+            --un-gray-light: #8A8A8A;
+            --un-bg: #FFFFFF;
+            --un-bg-alt: #F4F7FA;
+            --un-rule: #D8DEE4;
+            --un-green: #16A34A;
+            --un-amber: #E99C2D;
+        }
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; }
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif;
+            background: var(--un-bg-alt);
+            color: var(--un-gray-dark);
+            font-weight: 300;
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 56px 24px;
+        }
+        .page { max-width: 920px; width: 100%; }
+        header {
+            border-left: 4px solid var(--un-blue);
+            padding-left: 22px;
+            margin-bottom: 44px;
+        }
+        .eyebrow {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--un-gray);
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+        h1 {
+            font-size: 2.4rem;
+            font-weight: 300;
+            color: var(--un-blue-deep);
+            margin: 0 0 10px 0;
+            line-height: 1.05;
+            letter-spacing: -0.01em;
+        }
+        .tagline {
+            font-size: 1.05rem;
+            color: var(--un-gray);
+            margin: 0;
+            max-width: 56ch;
+        }
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 14px;
+            margin-bottom: 36px;
+        }
+        .card {
+            display: block;
+            background: white;
+            border: 1px solid var(--un-rule);
+            border-radius: 6px;
+            padding: 22px 24px;
+            text-decoration: none;
+            color: inherit;
+            transition: border-color .15s, box-shadow .15s, transform .15s;
+            position: relative;
+        }
+        .card:hover {
+            border-color: var(--un-blue);
+            box-shadow: 0 8px 22px rgba(0, 114, 188, 0.09);
+            transform: translateY(-1px);
+        }
+        .card .label {
+            font-size: 0.68rem;
+            color: var(--un-gray-light);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+        .card h2 {
+            font-size: 1.15rem;
+            font-weight: 500;
+            color: var(--un-blue-deep);
+            margin: 0 0 8px 0;
+        }
+        .card .desc {
+            font-size: 0.88rem;
+            color: var(--un-gray);
+            margin: 0;
+            line-height: 1.45;
+        }
+        .card .url {
+            font-size: 0.72rem;
+            color: var(--un-gray-light);
+            margin-top: 12px;
+            font-family: "SF Mono", Menlo, Consolas, monospace;
+        }
+        .card .arrow {
+            position: absolute;
+            top: 22px;
+            right: 22px;
+            color: var(--un-blue);
+            opacity: 0;
+            transition: opacity .15s, transform .15s;
+            font-size: 1.1rem;
+        }
+        .card:hover .arrow { opacity: 1; transform: translateX(2px); }
+        .ctx {
+            background: white;
+            border: 1px solid var(--un-rule);
+            border-left: 4px solid var(--un-blue);
+            border-radius: 4px;
+            padding: 16px 22px;
+            font-size: 0.88rem;
+            color: var(--un-gray-dark);
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+        .ctx strong { color: var(--un-blue-deep); font-weight: 500; }
+        footer {
+            border-top: 1px solid var(--un-rule);
+            padding-top: 16px;
+            font-size: 0.78rem;
+            color: var(--un-gray-light);
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        footer code {
+            background: var(--un-bg-alt);
+            padding: 1px 6px;
+            border-radius: 3px;
+            color: var(--un-gray-dark);
+            font-size: 0.9em;
+        }
+        .status-dot {
+            display: inline-block;
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--un-green);
+            margin-right: 7px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <header>
+        <div class="eyebrow">Datathon 2026 · ETH Zürich · FS26</div>
+        <h1>GEO-Insight</h1>
+        <p class="tagline">Which humanitarian crises are most overlooked? A multi-attribute, multi-stakeholder gap-ranking system.</p>
+    </header>
+
+    <div class="ctx">
+        <strong>Core idea.</strong> Overlookedness as a <em>joint distribution</em> across donor-preference profiles, with an intra-crisis equity correction — not a scalar gap ratio. Four-cell typology distinguishes <em>consensus-overlooked</em>, <em>contested</em>, and <em>sector-starved</em> crises that existing tools conflate. See proposal for details.
+    </div>
+
+    <section class="cards">
+        <a class="card" href="http://localhost:8501" target="_blank" rel="noopener">
+            <span class="arrow">→</span>
+            <div class="label">Interactive</div>
+            <h2>Dashboard</h2>
+            <p class="desc">Data-landscape explorer across HNO, HRP, FTS, CoD-PS, CBPF. Maps, cross-dataset coverage, cluster-equity preview.</p>
+            <div class="url">localhost:8501</div>
+        </a>
+
+        <a class="card" href="http://localhost:8000" target="_blank" rel="noopener">
+            <span class="arrow">→</span>
+            <div class="label">Slides</div>
+            <h2>Presentation</h2>
+            <p class="desc">reveal.js deck mirroring the proposal: motivation, core insight, four-cell typology, validation, limitations.</p>
+            <div class="url">localhost:8000</div>
+        </a>
+
+        <a class="card" href="proposal.pdf" target="_blank">
+            <span class="arrow">→</span>
+            <div class="label">PDF · ~9 pages</div>
+            <h2>Proposal</h2>
+            <p class="desc">Research framing, methodology, data-availability audit (§4), validation strategy, limitations.</p>
+            <div class="url">proposal/proposal.pdf</div>
+        </a>
+    </section>
+
+    <footer>
+        <span><span class="status-dot"></span>Local only — no public hosting</span>
+        <span>Run <code>./run.sh</code> · Ctrl-C to stop</span>
+    </footer>
+</div>
+</body>
+</html>
