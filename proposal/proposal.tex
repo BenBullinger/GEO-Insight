@@ -1,0 +1,309 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=black,
+  urlcolor=blue!60!black
+}
+\usepackage{titlesec}
+\titleformat*{\section}{\large\bfseries}
+\titleformat*{\subsection}{\normalsize\bfseries}
+
+\title{\textbf{GEO-Insight}\\[0.3em]\large A Multi-Attribute Gap-Ranking System for Overlooked Humanitarian Crises}
+\author{Datathon 2026 --- ETH Z\"urich}
+\date{April 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Humanitarian coordinators and donor advisors need rapid, defensible answers to a recurring question: \emph{where does documented need most outpace available funding?} The 2026 Global Humanitarian Overview asks \$33B for 135M people, yet the 2025 appeal raised only \$12B --- the lowest in a decade. Nineteen country contexts are now severely underfunded, up from eight in 2021. GEO-Insight proposes a multi-attribute decision-support system that ranks active crises by the mismatch between need (from HNO/HRP) and coverage (from FTS and CBPF), producing an auditable gap score with an attribute-level explanation per ranked crisis. The scoring framework is adapted from multi-attribute decision-making (MADM) literature and extended with a temporal decomposition to distinguish chronic (structural) neglect from acute (recent) deterioration. Validation targets OCHA's own CERF Underfunded Emergencies list as a ground-truth benchmark. The deliverable is a decision-support prototype --- not an automated allocation engine --- with explicit surfacing of data quality, missingness, and weight sensitivity.
+\end{abstract}
+
+\section{Motivation}
+
+The humanitarian system in 2026 is operating under unprecedented fiscal strain. According to OCHA's Global Humanitarian Overview 2026,\footnote{\url{https://www.unocha.org/publications/report/world/global-humanitarian-overview-2026-enesfr}} agencies are asking \$33B to reach 135 million people, with a hyper-prioritised \$23B floor targeting 87 million lives. The 2025 appeal raised only \$12B, and headline coverage ratios are collapsing: DRC at $\sim$22\%, Yemen and Somalia at $\sim$24\%, Sudan dropping from 69\% in 2024 to 35\% in 2025.\footnote{\url{https://www.thenewhumanitarian.org/news/2025/12/08/five-takeaways-uns-aid-plans-2026}} OCHA now flags 19 contexts as severely underfunded (below 50\% coverage), up from eight in 2021 --- severe underfunding has become the norm rather than the exception.
+
+When \emph{everything} is underfunded, the relevant question shifts from ``which crises are funded?'' to ``relative to documented need, which crises are most overlooked?'' This is precisely the analytical question GEO-Insight addresses. The output is intended for decision support --- informing donor advisors, humanitarian coordinators, and CERF allocation committees --- not for automating allocation decisions, which remain necessarily political and contextual.
+
+\section{Problem Definition}
+
+Given a query or geographic scope (country, region, sector, or natural-language prompt), GEO-Insight returns a ranked list of crises ordered by a \emph{gap score} $G(u) \in [0,1]$, where larger values indicate a larger mismatch between documented need and available coverage. For each ranked entry the system also returns:
+\begin{itemize}[leftmargin=1.2em,itemsep=2pt,topsep=2pt]
+    \item the coverage ratio and per-capita funding shortfall in absolute units;
+    \item an attribute-level decomposition of the score, indicating which signals are dominant;
+    \item data-quality flags (stale HNO, incomplete funding data, no active HRP);
+    \item a brief natural-language explanation suitable for inclusion in a briefing note.
+\end{itemize}
+
+The system must handle ambiguous queries gracefully, must not fabricate figures absent from the source data, and must surface uncertainty rather than hide it behind false precision.
+
+\section{Related Work}
+
+We draw methodology primarily from three streams in the disaster operations and decision-support literature.
+
+\paragraph{Multi-attribute decision-making for humanitarian allocation.}
+Rye and Aktas~\cite{rye2022} propose EDIS, a decision-support framework for humanitarian cluster resource allocation in the first 72 hours after disaster onset, when real-time assessments are unavailable. Their method combines multi-attribute decision making (MADM), the Analytical Hierarchy Process (AHP) for preference elicitation, and multi-attribute utility theory (MAUT) for aggregation. The architecture is transferable to our setting: need (people in need, severity) and coverage (funding ratios, per-capita allocations) are the attributes; AHP elicits transparent weights; MAUT composes them into an explainable aggregate. The explicit, auditable weight vector directly addresses the ``defensibility'' requirement of the challenge brief.
+
+\paragraph{AI-DSS failure modes in humanitarian logistics.}
+Abdulrashid et al.~\cite{abdulrashid2026}, in a 2026 systematic review of AI-driven decision support for disaster management, catalogue the dominant failure modes: fragmented and incomplete datasets, limited explainability of AI models, siloed data pipelines, and equity concerns in resource distribution. The review concludes that the field needs ``interoperable, interpretable, and context-sensitive AI-DSS frameworks.'' We treat these as design constraints rather than aspirations.
+
+\paragraph{Hybrid DSS and trade-off surfacing.}
+Sahebjamnia et al.~\cite{sahebjamnia2017} design a hybrid DSS for humanitarian relief chains combining a stochastic simulator, a rule-based inference engine, and a knowledge base. Their key methodological contribution for our purposes is the \emph{trade-off framing}: they do not collapse multiple performance measures (coverage, cost, response time) into a single scalar but instead surface the trade-off frontier. We adopt the same design principle --- our ranking is a default view, but the system exposes a frontier of coverage-gap vs. need-magnitude vs. per-capita shortfall.
+
+\paragraph{Robustness under uncertainty.}
+Vargas Florez et al.~\cite{vargasflorez2015} model humanitarian facility location as a stochastic multi-scenario programme, optimising for resilience when some infrastructure may fail. We do not replicate their optimisation, but we borrow the framing: a crisis consistently underfunded across scenarios (years) should rank differently from one volatile but occasionally well-resourced. This directly motivates the chronic/acute decomposition in Section~\ref{sec:bonus}.
+
+\paragraph{Embedded analytics.}
+Griffith et al.~\cite{griffith2017} argue that during time-constrained humanitarian operations, simple and interpretable analytics (decision trees, basic descriptive statistics) operationalised in accessible open-source tools outperform complex black-box methods. They also emphasise that \emph{data integration is the practical bottleneck}, not algorithm choice. We align with this philosophy: the scoring engine is deliberately transparent, and we budget engineering time accordingly, with data ingestion and harmonisation as the primary risk.
+
+\section{Data Sources}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\linewidth}{@{}lXl@{}}
+\toprule
+\textbf{Dataset} & \textbf{Role} & \textbf{Source}\\
+\midrule
+HNO (Humanitarian Needs Overview) & People in need by country and sector & HDX / OCHA HPC Tools \\
+HRP (Humanitarian Response Plans) & Plan targets, status, requirements & HDX / OCHA \\
+FTS Requirements \& Funding & Requested, pledged, received funding & HDX / OCHA FTS \\
+CoD-PS (Global population) & Denominator for per-capita normalisation & HDX \\
+CBPF Pooled Funds Data Hub & Country-based pooled fund allocations & cbpf.data.unocha.org \\
+HDX HAPI & Unified daily-refresh API over above sources & HDX \\
+\midrule
+CERF Underfunded Emergencies & \textbf{Validation benchmark} (not scoring input) & cerf.un.org \\
+\midrule
+ACLED, IPC, UNHCR (optional) & Conflict events, food security phase, displacement & External, declared \\
+\bottomrule
+\end{tabularx}
+\caption{Primary data sources. FTS figures are encoded UTF-8 with HXL tags on the second CSV row.}
+\end{table}
+
+All core datasets are publicly available on HDX. We treat them as the authoritative source of truth for need and funding figures and do not impute missing values without explicit flagging. External enrichment datasets (ACLED, IPC, UNHCR) are used only for the bonus task and are declared in outputs.
+
+\section{Methodology}
+
+\subsection{Unit of analysis}
+
+The primary unit of analysis is the \emph{country-level crisis response} for an active HRP cycle. A secondary, optional unit is \emph{country $\times$ sector} (e.g., Sudan $\times$ Health, Sudan $\times$ WASH), which addresses the failure mode called out in the challenge brief: a crisis that is well-funded in aggregate but has starved sector clusters. Sector-level analysis is conditional on HNO sector breakdowns being available and recent.
+
+\subsection{Eligibility filtering}
+
+A crisis $u$ enters the ranking pool only if it satisfies all of:
+\begin{enumerate}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+    \item An active HRP \emph{or} documented PIN above a magnitude threshold $\tau_{\text{PIN}}$ (default $10^6$).
+    \item HNO figures not older than $\tau_{\text{stale}}$ months (default 24; configurable).
+    \item At least one funding record in FTS for the current or prior plan year.
+\end{enumerate}
+Crises failing criterion~(1) are still reported in a secondary ``possible blind-spot'' list, because the absence of a formal HRP is itself a signal of institutional overlooking --- but they are not ranked against HRP-backed crises, which would be a category error.
+
+\subsection{Attributes}
+
+For each eligible crisis $u$ we compute five attributes. Let $P(u)$ denote people in need, $R(u)$ funding requirements, $F(u)$ funding received, $N(u)$ country population, and $D(u)$ the vector of per-donor contributions to $u$.
+
+\begin{equation}
+\begin{aligned}
+a_1(u) &= 1 - \min\!\left(1,\; F(u)/R(u)\right) && \text{coverage shortfall}\\
+a_2(u) &= \max\!\left(0,\; R(u)-F(u)\right) / P(u) && \text{per-PIN funding gap (USD)}\\
+a_3(u) &= P(u) / N(u) && \text{need intensity (PIN as share of population)}\\
+a_4(u) &= \text{severity}(u) \in [1,5] && \text{HNO severity / IPC phase}\\
+a_5(u) &= \text{HHI}\!\left(D(u)\right) && \text{donor concentration, Herfindahl index}
+\end{aligned}
+\end{equation}
+
+Each attribute is oriented so that larger values indicate ``more overlooked.'' Attribute $a_5$ encodes fragility: a crisis funded by one or two donors is one policy change away from collapse even at nominally adequate coverage today.
+
+\subsection{Normalisation and utility}
+
+Each attribute is min-max normalised over the eligible pool to $\tilde{a}_i(u) \in [0,1]$. A per-attribute utility function $U_i:[0,1]\to[0,1]$ is then applied. The default is linear, $U_i(x)=x$; for coverage shortfall ($a_1$) we use a concave utility
+\[
+U_1(x) = 1 - (1-x)^\gamma, \quad \gamma \in [1.5,\,2.5]
+\]
+which amplifies the signal in the low-coverage tail (a crisis moving from 10\% to 5\% coverage is worse than one moving from 60\% to 55\%). The concavity parameter is exposed to the user.
+
+\subsection{Weight elicitation (AHP)}
+
+The weight vector $w \in \Delta^4$ is obtained either from (i) a default expert-calibrated profile or (ii) pairwise AHP elicitation from the user. Consistency of pairwise comparisons is checked via the consistency ratio CR; if $\text{CR} > 0.1$ the user is prompted to revise. Three default profiles are shipped:
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{0.85\linewidth}{@{}lXXXXX@{}}
+\toprule
+\textbf{Profile} & \textbf{Coverage} & \textbf{Per-PIN gap} & \textbf{Intensity} & \textbf{Severity} & \textbf{Donor HHI}\\
+\midrule
+Balanced default & 0.30 & 0.25 & 0.15 & 0.20 & 0.10\\
+Equity-weighted & 0.20 & 0.35 & 0.20 & 0.15 & 0.10\\
+Donor-advisory & 0.25 & 0.20 & 0.10 & 0.20 & 0.25\\
+\bottomrule
+\end{tabularx}
+\caption{Default weight profiles. The donor-advisory profile emphasises funder fragility.}
+\end{table}
+
+\subsection{Composite gap score (MAUT additive form)}
+
+\begin{equation}
+G(u) \;=\; \sum_{i=1}^{5} w_i \cdot U_i\!\left(\tilde{a}_i(u)\right)
+\label{eq:gap}
+\end{equation}
+
+This aggregation follows Rye and Aktas~\cite{rye2022}. The additive form is justified under mutual utility independence of attributes, which we do not strictly verify; we instead note the assumption transparently and offer a multiplicative alternative (geometric mean) as a sensitivity check.
+
+\subsection{Explanation layer}
+
+The per-attribute contribution $c_i(u) = w_i \cdot U_i(\tilde{a}_i(u))$ decomposes the final score. For each top-$K$ crisis we report:
+\begin{itemize}[leftmargin=1.2em,itemsep=2pt,topsep=2pt]
+    \item the two largest $c_i(u)$ values, expressed in plain language (``ranked high because coverage is 18\% \emph{and} per-PIN gap is in the 95th percentile'');
+    \item absolute reference figures (PIN, requirements, received, coverage \%);
+    \item data-quality caveats (``HNO figures dated 2023; treat as lower bound'').
+\end{itemize}
+
+\subsection{Query layer}
+
+Natural-language queries are parsed into a structured filter over the scoring schema via a lightweight LLM call with a fixed prompt and a JSON schema. Example: \emph{``acute food insecurity hotspots with below 10\% funding''} $\Rightarrow$ \texttt{\{sector: "food", severity: $\geq 4$, coverage\_max: 0.10\}}. The LLM is not involved in scoring itself. If the LLM output fails schema validation, the system falls back to keyword-based filtering and flags the degradation in the response.
+
+\section{Structural vs. Acute Neglect (Bonus Task)}\label{sec:bonus}
+
+The challenge brief asks how ranking should differ between crises chronically overlooked for years and those newly deteriorating. We decompose the gap score temporally.
+
+Let $G_t(u)$ be the gap score computed using data available at year $t$. Define:
+\begin{align}
+\bar{G}_k(u) &= \frac{1}{k}\sum_{t=T-k+1}^{T} G_t(u) && \text{chronic (rolling $k$-year mean)}\\
+\Delta G(u) &= G_T(u) - \frac{1}{k-1}\sum_{t=T-k+1}^{T-1} G_t(u) && \text{acute (recent deviation)}
+\end{align}
+
+We present these as a 2-D view (chronic axis, acute axis) rather than a single scalar, following the trade-off surfacing principle from Sahebjamnia et al.~\cite{sahebjamnia2017}. Four quadrants emerge with distinct policy implications:
+
+\begin{itemize}[leftmargin=1.2em,itemsep=2pt,topsep=2pt]
+    \item \textbf{Chronic + stable} (high $\bar{G}$, low $\Delta G$): persistent structural neglect, candidate for multi-year pooled funding.
+    \item \textbf{Chronic + deteriorating} (high $\bar{G}$, high $\Delta G$): compounding emergency, highest-priority intervention.
+    \item \textbf{Newly underfunded} (low $\bar{G}$, high $\Delta G$): acute shock, candidate for CERF rapid-response window.
+    \item \textbf{Stable adequate} (low on both): background pool, monitored but not flagged.
+\end{itemize}
+
+For a single scalar when required (e.g., a ranked export), we use $G^\star(u) = \alpha\, \bar{G}_k(u) + (1-\alpha)\max(0,\Delta G(u))$ with $\alpha = 0.6$ by default, favouring the chronic signal.
+
+\section{System Architecture}
+
+\begin{enumerate}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
+    \item \textbf{Ingestion} --- HDX HAPI client (preferred) with fallback to direct CSV pulls. Pandas dataframes cached locally with dataset version and fetch timestamp.
+    \item \textbf{Harmonisation} --- country ISO-3 canonicalisation, sector taxonomy mapping (HNO clusters $\leftrightarrow$ FTS sector codes), plan-year alignment.
+    \item \textbf{Scoring engine} --- pure-Python computation of Equations (1)--(2); deterministic, fully unit-testable.
+    \item \textbf{Query layer} --- Pydantic schema + LLM-assisted parser for natural-language queries, fallback to keyword routing.
+    \item \textbf{Presentation} --- Jupyter notebook for development; Streamlit dashboard for the demo; JSON export for programmatic consumers.
+\end{enumerate}
+
+\section{Validation Strategy}
+
+We validate against OCHA's own list of overlooked crises --- the CERF Underfunded Emergencies window --- which allocates roughly one-third of CERF funds twice yearly to ``protracted or neglected humanitarian crises where funding is low but vulnerability and risk levels are high.''\footnote{\url{https://cerf.un.org/apply-for-a-grant/underfunded-emergencies}} This gives us an independent, authoritative, human-curated benchmark.
+
+Metrics:
+\begin{itemize}[leftmargin=1.2em,itemsep=2pt,topsep=2pt]
+    \item \textbf{Overlap@K}: fraction of our top-$K$ ranking that appears on the contemporaneous CERF UFE list.
+    \item \textbf{Spearman $\rho$}: rank correlation between our score and CERF inclusion order (where available).
+    \item \textbf{Sensitivity band}: how much does the top-$K$ set shift as weights vary across the three default profiles? A low-sensitivity top-$K$ indicates robustness.
+    \item \textbf{Stress tests}: deliberate removal of sectors, years, or donor data from inputs to confirm graceful degradation and appropriate data-quality flagging.
+\end{itemize}
+
+A strong submission will show that the ranking agrees substantially with CERF UFE for the obvious cases (DRC, Sudan, Yemen) while producing defensible, explainable differences elsewhere.
+
+\section{Handling Uncertainty and Data Quality}
+
+Following Abdulrashid et al.~\cite{abdulrashid2026}, we treat data-quality transparency as a first-class output.
+
+\begin{itemize}[leftmargin=1.2em,itemsep=2pt,topsep=2pt]
+    \item \textbf{Stale HNO figures.} Each country's HNO vintage is carried through scoring; rankings include an ``evidence age'' field. Where PIN is more than 24 months old the crisis is flagged amber.
+    \item \textbf{Funding definition.} We commit to \emph{funding received} as the denominator of coverage, not pledged or requested, and report all three in the per-crisis detail view.
+    \item \textbf{Missing sector data.} Sector-level scoring degrades gracefully to country level rather than imputing.
+    \item \textbf{Plan-less active crises.} Reported in a separate ``possible blind-spot'' list (Section~5.2) rather than merged into the main ranking.
+    \item \textbf{Donor concentration with sparse donor count.} HHI is undefined below two donors; we report ``single-donor risk'' as a categorical flag rather than a numeric score.
+\end{itemize}
+
+\section{Limitations and Ethical Considerations}
+
+\paragraph{Decision support, not automation.} The brief is explicit: good humanitarian data work ``respects context.'' GEO-Insight produces rankings, not allocations. Any downstream user should treat a gap score as a hypothesis to investigate, not a verdict.
+
+\paragraph{Visibility bias.} Datasets overrepresent crises with functioning information architectures. A country with a collapsed statistical system (e.g., due to active conflict) may appear lower-ranked purely because its HNO figures are missing or stale. The system surfaces this via evidence-age flags but cannot fully correct for it.
+
+\paragraph{Political sensitivity.} Declaring a crisis ``overlooked'' is a claim with political implications. The system avoids editorial framing in outputs; explanations report numeric facts and attribute contributions, not donor-shaming narratives.
+
+\paragraph{False precision.} Gap scores are reported with at most two significant figures. Confidence intervals from weight-profile sensitivity are always shown alongside point values. Outputs avoid implying that a score of 0.84 is meaningfully distinct from 0.82.
+
+\paragraph{Reproducibility.} All data fetches are timestamped and versioned. External LLM calls are logged with prompts and responses. Random seeds (if any) are fixed.
+
+\section{Deliverables and Timeline}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\linewidth}{@{}lXl@{}}
+\toprule
+\textbf{Phase} & \textbf{Deliverable} & \textbf{Scope}\\
+\midrule
+Phase 1 (MVP) & Country-level ranking notebook with static default weights, Overlap@10 against CERF UFE, explanation strings. & Core task.\\
+Phase 2 (Differentiation) & Sector decomposition; AHP weight elicitation; Streamlit dashboard with map view; NL query layer. & Core + partial bonus.\\
+Phase 3 (Bonus) & Temporal chronic/acute decomposition across 3--5 plan years; donor-concentration signal; quadrant visualisation. & Full bonus.\\
+\midrule
+Final deliverable & Working prototype, technical write-up, demo, gap-scoring logic description, failure-mode discussion. & Per challenge brief.\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Engineering risk is concentrated in Phase 1 data harmonisation (HDX HAPI coverage of HNO, FTS plan-year alignment, sector taxonomy reconciliation) rather than in scoring logic. We budget accordingly.
+
+\begin{thebibliography}{9}
+
+\bibitem{rye2022}
+Rye, S. and Aktas, E. (2022).
+\textit{A Multi-Attribute Decision Support System for Allocation of Humanitarian Cluster Resources Based on Decision Makers' Perspective.}
+Sustainability, 14(20), 13423.
+\url{https://doi.org/10.3390/su142013423}
+
+\bibitem{abdulrashid2026}
+Abdulrashid, I., Khalafalla, M., Kadiyala, N.S.\ and Chiang, W.-C. (2026).
+\textit{AI-driven decision support for disaster management and humanitarian logistics: Models, applications, and research challenges.}
+Transportation Research Part E, 210, 104821.
+
+\bibitem{sahebjamnia2017}
+Sahebjamnia, N., Torabi, S.A.\ and Mansouri, S.A. (2017).
+\textit{A hybrid decision support system for managing humanitarian relief chains.}
+Decision Support Systems, 95, 12--26.
+
+\bibitem{vargasflorez2015}
+Vargas Florez, J., Lauras, M., Okongwu, U. and Dupont, L. (2015).
+\textit{A decision support system for robust humanitarian facility location.}
+Engineering Applications of Artificial Intelligence, 46, 326--335.
+
+\bibitem{griffith2017}
+Griffith, D.A., Boehmke, B., Bradley, R.V., Hazen, B.T.\ and Johnson, A.W. (2017).
+\textit{Embedded analytics: improving decision support for humanitarian logistics operations.}
+Annals of Operations Research, 283, 247--265.
+
+\bibitem{gho2026}
+OCHA (2025).
+\textit{Global Humanitarian Overview 2026.}
+\url{https://www.unocha.org/publications/report/world/global-humanitarian-overview-2026-enesfr}
+
+\bibitem{cerfufe}
+OCHA CERF.
+\textit{Underfunded Emergencies window.}
+\url{https://cerf.un.org/apply-for-a-grant/underfunded-emergencies}
+
+\end{thebibliography}
+
+\end{document}
