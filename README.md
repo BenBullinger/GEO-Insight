@@ -24,9 +24,14 @@ cd presentation && python3 -m http.server 8000
 #    open http://localhost:8000 in any browser
 #    keyboard: Space/→ next · S speaker · F fullscreen · ? shortcuts
 #    PDF export: append ?print-pdf and Cmd/Ctrl-P → Save as PDF
+
+# 5. Run the data-landscape dashboard (for team orientation / discussion)
+cd dashboard && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # one-time
+.venv/bin/streamlit run app.py
+#    opens http://localhost:8501 — see dashboard/README.md for sections
 ```
 
-No other toolchain needed. Python 3 and a browser — that's it.
+Toolchain: Python 3 stdlib covers everything except the dashboard, which needs `streamlit + pandas + plotly` in a venv.
 
 ## Research direction
 
@@ -73,6 +78,10 @@ GEO-Insight/
 │   ├── css/theme-un.css      UN-adjacent custom theme, no UN branding
 │   ├── README.md             how to run / export / edit slides
 │   └── vendor/reveal.js/     vendored reveal.js 6.0.1 — do not edit
+├── dashboard/
+│   ├── app.py                Streamlit data-landscape dashboard (8 sections)
+│   ├── requirements.txt      streamlit, pandas, plotly
+│   └── README.md             run instructions + per-page notes
 └── src/                      implementation (empty — to be written)
 ```
 
