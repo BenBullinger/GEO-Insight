@@ -21,6 +21,13 @@ venv/
 *.parquet.tmp
 .cache/
 
+# Downloaded source data — too large for GitHub, reproduced via Data/download.py
+Data/hno/
+Data/hrp/
+Data/cod-ps/
+Data/fts/
+Data/cbpf/
+
 # OS
 .DS_Store
 Thumbs.db

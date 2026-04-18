@@ -1,83 +1,113 @@
 # GEO-Insight
 
 **Which humanitarian crises are most overlooked?**
+Datathon 2026 · ETH Zürich · FS26
 
-GEO-Insight is a decision-support prototype developed for the ETH Zürich Datathon 2026. Given a query or geographic scope, the system is intended to rank active humanitarian crises by the mismatch between documented need (from HNO / HRP data) and available funding coverage (from OCHA FTS and CBPF pooled funds), with an explanation of why each top-ranked crisis appears overlooked.
+A decision-support prototype that ranks active humanitarian crises by the mismatch between documented need (HNO/HRP) and available funding coverage (FTS/CBPF). Our framing (see §[Research direction](#research-direction)) goes beyond a scalar gap ratio: we report a *distribution* of ranks across donor-preference profiles plus an intra-crisis equity correction, producing a four-cell typology (consensus-overlooked / contested / sector-starved / combinations) that existing tools conflate.
 
-This repository is work in progress. The current contents scope the problem, curate relevant literature, and sketch a provisional methodology. An implementation will follow; nothing here is final.
+## Quick start
 
-## The problem
+```bash
+# 1. Clone
+git clone git@github.com:BenBullinger/GEO-Insight.git
+cd GEO-Insight
 
-Humanitarian coordinators and donor advisors need to answer questions like:
+# 2. Download source data (~270 MB, Python stdlib only, no pip install)
+python3 Data/download.py            # ~2–3 min on broadband
+python3 Data/download.py --check    # verify
 
-- Which crises have the highest people-in-need but the lowest fund allocations?
-- Are there countries with active HRPs where funding is absent or negligible?
-- Which regions are consistently underfunded relative to need across multiple years?
-- Show me acute food insecurity hotspots that have received less than 10% of their requested funding.
+# 3. Read the proposal
+open proposal/proposal.pdf          # or the .tex if you want to edit
 
-The analytical challenge is that humanitarian data blends two very different signals: *objective severity* (the scale and urgency of a crisis) and *funding coverage* (what has actually been resourced). A defensible ranking has to separate these layers and then recombine them with weights that can be audited.
+# 4. Run the presentation
+cd presentation && python3 -m http.server 8000
+#    open http://localhost:8000 in any browser
+#    keyboard: Space/→ next · S speaker · F fullscreen · ? shortcuts
+#    PDF export: append ?print-pdf and Cmd/Ctrl-P → Save as PDF
+```
 
-The full task brief is in [`task/challenge.md`](task/challenge.md).
+No other toolchain needed. Python 3 and a browser — that's it.
 
-## Why this matters now (April 2026)
+## Research direction
 
-- The 2026 Global Humanitarian Overview asks **$33B to reach 135M people**, with a hyper-prioritised floor of $23B for 87M lives.
-- The 2025 appeal raised only **$12B** — the lowest in a decade.
-- Headline coverage ratios: DRC ~22%, Yemen ~24%, Somalia ~24%, Sudan dropped from 69% (2024) to 35% (2025).
-- **19 country contexts** are now severely underfunded (<50% coverage) — up from 8 in 2021.
+Existing tools (CERF UFE, FTS coverage ratios, Palantir-Foundry–based systems like WFP's DOTS) score overlookedness as a **scalar**. We treat it as a **joint distribution** over stakeholder preferences, extending the MADM/AHP/MAUT framework of Rye & Aktas (2022) with two new axes — each anchored in an explicit gap in the 2015–2026 literature:
 
-When nearly everything is underfunded, the useful question is no longer *which crises are funded?* but *relative to documented need, which crises are most overlooked?*
+1. **Intra-crisis equity** — cluster-coverage Gini within a single country's HRP, following the fair-distribution formulation of Vargas Florez et al. (2015, Eqs. 9–12). Unmasks aggregate-coverage blindness.
+2. **Inter-stakeholder disagreement** — rank variance across four donor-preference profiles (CERF-, ECHO-, USAID-, NGO-consortium-flavoured). Low variance = *consensus-overlooked*; high variance = *contested*.
 
-## Primary data sources
+Chronic/acute temporal decomposition remains the bonus task (third axis). Validated against **two independent benchmarks**: CERF Underfunded Emergencies (consensus axis) and CARE *Breaking the Silence* (sector-starved axis).
 
-| Dataset | Role |
-|---|---|
-| [HNO — Humanitarian Needs Overview](https://data.humdata.org/dataset/global-hpc-hno) | People in need by country and sector |
-| [HRP — Humanitarian Response Plans](https://data.humdata.org/dataset/humanitarian-response-plans) | Plan targets, status, requirements |
-| [FTS — Requirements & Funding](https://data.humdata.org/dataset/global-requirements-and-funding-data) | Requested, pledged, received funding |
-| [CoD-PS — Global population](https://data.humdata.org/dataset/cod-ps-global) | Denominator for per-capita normalisation |
-| [CBPF Pooled Funds](https://cbpf.data.unocha.org/) | Country-based pooled fund allocations |
-| [HDX HAPI](https://data.humdata.org/dataset/hdx-hapi-funding) | Unified, daily-refresh API over the above |
+Literature convergence: Abdulrashid et al. 2026 (§7.3 + Table 12), Sahebjamnia et al. 2017 (§6), Vargas Florez et al. 2015 (Eqs. 9–12) all name equity-aware modelling as open.
 
-**Validation benchmark:** OCHA's own [CERF Underfunded Emergencies](https://cerf.un.org/apply-for-a-grant/underfunded-emergencies) list — an independent, human-curated source for which crises are considered neglected.
+Full write-up with equations and validation strategy: [`proposal/proposal.pdf`](proposal/proposal.pdf).
 
-Optional enrichment (declared in outputs if used): ACLED (conflict events), IPC (food security phases), UNHCR (displacement).
+## Why it matters now (April 2026)
+
+- 2026 GHO asks **$33B** for 135M people; 2025 raised only **$12B** — the lowest in a decade.
+- Coverage: DRC ~22%, Yemen ~24%, Somalia ~24%, Sudan 69%→35% year-on-year.
+- **19 contexts** severely underfunded (<50%), up from 8 in 2021.
+
+When almost every response is underfunded, a single coverage ratio stops being discriminative.
 
 ## Repository layout
 
 ```
 GEO-Insight/
-├── task/          Challenge brief
-├── literature/    Curated reading
-│   ├── applicable/   Directly applicable methods
-│   └── adjacent/     Adjacent / partial relevance
-├── proposal/      Methodology proposal (LaTeX + compiled PDF)
-├── src/           Implementation — to be written
-└── README.md
+├── README.md                 this file
+├── .gitignore
+├── task/
+│   └── challenge.md          official challenge brief
+├── Data/
+│   ├── sources.txt           the 5 official source URLs
+│   ├── download.py           reproducible downloader (stdlib only)
+│   ├── README.md             per-dataset details, sizes, which files the methodology needs
+│   └── {hno, hrp, cod-ps, fts, cbpf}/      downloaded CSVs/JSONs (gitignored)
+├── literature/
+│   ├── applicable/           3 directly applicable papers (MADM, AI-DSS review, hybrid DSS)
+│   └── adjacent/             2 adjacent papers (robust facility location, embedded analytics)
+├── proposal/
+│   ├── proposal.tex          LaTeX source
+│   └── proposal.pdf          compiled (committed for preview convenience)
+├── presentation/
+│   ├── index.html            reveal.js deck (slide content lives here)
+│   ├── css/theme-un.css      UN-adjacent custom theme, no UN branding
+│   ├── README.md             how to run / export / edit slides
+│   └── vendor/reveal.js/     vendored reveal.js 6.0.1 — do not edit
+└── src/                      implementation (empty — to be written)
 ```
 
-## Research framing: overlookedness as disagreement
+## Data sources
 
-A full write-up is in [`proposal/proposal.pdf`](proposal/proposal.pdf). The core insight: existing tools (CERF UFE rankings, FTS coverage ratios, Palantir-Foundry-based systems like WFP's DOTS) score overlookedness as a *scalar* — one number per country-year. We extend the MADM/AHP/MAUT framework of Rye & Aktas (2022) with two new axes, each anchored in an explicit gap in the 2015–2026 literature:
+| # | Dataset | Role | Local path |
+|---|---|---|---|
+| 1 | [HNO](https://data.humdata.org/dataset/global-hpc-hno) | People in need by country × sector | `Data/hno/` |
+| 2 | [HRP](https://data.humdata.org/dataset/humanitarian-response-plans) | Plan targets, status, requirements | `Data/hrp/` |
+| 3 | [CoD-PS](https://data.humdata.org/dataset/cod-ps-global) | Population denominators (admin0–4) | `Data/cod-ps/` |
+| 4 | [FTS](https://data.humdata.org/dataset/global-requirements-and-funding-data) | Funding requested/pledged/received (incl. cluster breakdown — load-bearing for the Gini) | `Data/fts/` |
+| 5 | [CBPF](https://cbpf.data.unocha.org) | Pooled-fund allocations (resolved to the HDX dataset `cbpf-allocations-and-contributions`) | `Data/cbpf/` |
 
-1. **Intra-crisis equity** — a cluster-coverage Gini within a single country's HRP, following the fair-distribution formulation of Vargas Florez et al. (2015, Eqs. 9–12). Unmasks aggregate-coverage blindness: an 80%-covered crisis with a starved health cluster is arguably worse than a 40%-covered crisis with uniform allocation.
-2. **Inter-stakeholder disagreement** — rank variance across four donor-preference profiles (CERF-, ECHO-, USAID-, NGO-consortium-flavoured). Low variance = *consensus-overlooked*; high variance = *contested*.
+Validation benchmarks (fetched separately, not via `download.py`): [CERF Underfunded Emergencies](https://cerf.un.org/apply-for-a-grant/underfunded-emergencies) and [CARE Breaking the Silence](https://reliefweb.int/report/angola/breaking-silence-10-most-under-reported-humanitarian-crises-2023).
 
-The joint output is a four-cell typology (consensus-overlooked, contested, sector-starved, combinations) that current tools conflate. Literature convergence: Abdulrashid et al. (2026, §7.3), Sahebjamnia et al. (2017, §6), Vargas Florez et al. (2015) all name equity-aware modelling as open. Validated against **two independent benchmarks** — CERF UFE (consensus axis) and CARE *Breaking the Silence* (sector-starved axis).
+Per-dataset sizes and which specific files the methodology needs: see [`Data/README.md`](Data/README.md).
 
-Design principles:
+## What's in git, what isn't
 
-- **Decision support, not automation.** The tool produces rankings; humans decide.
-- **Explainable by construction.** Every weight is inspectable; every score decomposes into per-attribute contributions per profile.
-- **Honest about data quality.** Stale HNO figures, missing sector breakdowns, and plan-less crises are flagged, not imputed.
+**Tracked**: source code, the proposal, the deck, the 5 source URLs, the download script, literature PDFs (private repo so paywalled PDFs are OK).
+**Not tracked** (reproduced locally): everything under `Data/hno/`, `Data/hrp/`, `Data/cod-ps/`, `Data/fts/`, `Data/cbpf/` (~270 MB). LaTeX build artefacts, `__pycache__`, `.DS_Store`.
+
+## Status & next steps
+
+Phase 1 (MVP) not yet started — `src/` is empty. Immediate work:
+
+1. Country-level ingestion of HNO 2025 + FTS requirements/funding + cluster-level FTS
+2. Six-attribute score vector (incl. cluster-coverage Gini), single balanced profile
+3. Validation: Overlap@10 against CERF UFE
+4. Then: four-profile driver + disagreement IQR + four-cell typology (Phase 2)
+5. Then: temporal chronic/acute + NL query layer (Phase 3 / bonus)
+
+## Conventions
+
+- **Commits** go to `main` directly for now (small team, fast iteration). Branch/PR if a change is substantive or risky.
+- **Honest-about-data-quality** is a first-class design principle. Stale HNO, missing sector data, plan-less crises are flagged — never silently imputed.
 - **No false precision.** Scores to two significant figures; inter-profile IQR always shown alongside point estimates.
-
-Details, validation strategy, failure modes, and phased delivery plan are in the proposal.
-
-## Status
-
-Work in progress. Core implementation (`src/`) has not yet started. Next step is a Phase 1 MVP: country-level ranking notebook validated against CERF UFE overlap on the current plan year.
-
-## Team
-
-ETH Zürich — Datathon 2026 (FS26).
+- **Decision support, not automation.** The tool ranks; humans decide.
