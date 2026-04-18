@@ -344,45 +344,46 @@
 
 /* ── Popular-science slide patterns ───────────────────────────────────── */
 
-/* Big headline slide — one sentence, lots of whitespace */
-.reveal .headline-slide {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-height: 520px;
-    padding: 40px 20px;
+/* Big headline slide — applied DIRECTLY to <section class="headline-slide">
+ * so the flex centering fills the full slide viewport. */
+.reveal section.headline-slide {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    height: 100%;
+    padding: 60px 80px;
 }
 
-.reveal .headline-slide .eyebrow-small {
-    font-size: 0.55em;
+.reveal section.headline-slide .eyebrow-small {
+    font-size: 0.5em;
     text-transform: uppercase;
     letter-spacing: 0.18em;
     color: var(--un-gray);
     font-weight: 500;
-    margin-bottom: 20px;
+    margin: 0 0 28px 0;
 }
 
-.reveal .headline {
-    font-size: 1.9em;
+.reveal section.headline-slide .headline {
+    font-size: 1.8em;
     font-weight: 300;
     color: var(--un-blue-deep);
-    line-height: 1.12;
+    line-height: 1.15;
     letter-spacing: -0.01em;
-    margin: 0 0 22px 0;
+    margin: 0 0 40px 0;
     max-width: 28ch;
 }
 
-.reveal .headline em {
+.reveal section.headline-slide .headline em {
     color: var(--un-blue);
     font-style: italic;
 }
 
-.reveal .subhead {
-    font-size: 0.72em;
+.reveal section.headline-slide .subhead {
+    font-size: 0.66em;
     color: var(--un-gray);
     max-width: 62ch;
     margin: 0;
-    line-height: 1.55;
+    line-height: 1.6;
     font-weight: 300;
 }
 
@@ -494,18 +495,17 @@
     background: linear-gradient(180deg, rgba(0,158,219,0.05), white);
 }
 
-/* Oversized stat trio */
+/* Oversized stat trio — grid is more robust than flex against print.css */
 .reveal .big-stats {
-    display: flex;
-    gap: 60px;
-    justify-content: flex-start;
-    align-items: flex-start;
-    margin: 22px 0 26px 0;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+    margin: 28px 0 32px 0;
+    align-items: start;
 }
 
 .reveal .big-stats .stat-block .val {
-    font-size: 2.8em;
+    font-size: 2.6em;
     font-weight: 200;
     color: var(--un-blue-deep);
     line-height: 1;
@@ -514,12 +514,11 @@
 }
 
 .reveal .big-stats .stat-block .desc {
-    font-size: 0.62em;
+    font-size: 0.58em;
     color: var(--un-gray);
-    margin-top: 10px;
-    line-height: 1.35;
+    margin-top: 12px;
+    line-height: 1.4;
     display: block;
-    max-width: 22ch;
 }
 
 /* Equation block with inline legend */
@@ -665,7 +664,50 @@
     font-size: 0.95em;
 }
 
-/* Print / PDF export — let reveal handle pagination */
+/* ── Print-mode overrides ────────────────────────────────────────────────
+ * reveal.js adds `html.reveal-print .reveal .slides section { padding:0
+ * !important; display:block !important; position:absolute !important }` with
+ * specificity (0,3,1). These rules match with specificity (0,4,1) so they
+ * win, restoring our padding and letting headline slides flex-center. */
+
+/* Every print-mode slide needs padding, especially a bottom safety margin
+ * so the absolute-positioned footer doesn't overlap content. */
+html.reveal-print .reveal .slides section {
+    padding: 40px 60px 64px 60px !important;
+}
+
+/* Section dividers keep the full-bleed blue bg but still need bottom padding. */
+html.reveal-print .reveal .slides section.section-divider {
+    padding: 60px 60px 64px 60px !important;
+}
+
+/* Headline slides: vertically centered content; fill the whole pdf-page. */
+html.reveal-print .reveal .slides section.headline-slide {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    padding: 60px 80px !important;
+}
+
+/* Title slide: same centering treatment for consistency. */
+html.reveal-print .reveal .slides section.title-slide {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    padding: 60px 80px !important;
+}
+
+/* Print-mode CSS reset doesn't apply our existing slide padding, so the
+ * on-screen rule stays identical but is re-asserted in print mode with
+ * higher specificity. */
 @media print {
     .reveal .slides section {
         page-break-after: always;
