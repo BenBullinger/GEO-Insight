@@ -1,7 +1,7 @@
 # GEO-Insight
 
 **Which humanitarian crises are most overlooked?**
-Cache Me if You Can — Datathon 2026 · FS26
+Datathon 2026
 
 A decision-support prototype that ranks active humanitarian crises by the mismatch between documented need (HNO/HRP) and available funding coverage (FTS/CBPF), with an intra-crisis equity term and a cross-stakeholder disagreement term. A typed five-level semantic layer (71 properties, declared formulas, declared failure modes) makes every score traceable to its source.
 
