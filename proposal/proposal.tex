@@ -132,8 +132,8 @@ $a_3$ need intensity &
 \path{hpc_hno_2025.csv} / \path{cod_population_admin0.csv}.
 & Ready \\
 $a_4$ severity &
-INFORM Severity Index (1--10 + 1--5 category), monthly, from EU JRC DRMKC. 67 snapshots (2020-09 to 2026-03) consolidated into \path{Data/Third-Party/DRMKC-INFORM/inform_severity_long.csv}. IPC xlsx kept as a single-country backup.
-& Ready: 5{,}298 country\,$\times$\,month rows, 109 countries \\
+\textbf{INFORM Severity 1--5 \emph{category}} (stable across scale change) as primary; optional continuous index 1--10 as secondary. From EU JRC DRMKC, monthly, 67 snapshots (2020-09 to 2026-03). Consolidated by \path{consolidate.py} into \path{inform_severity_long.csv}, plus granular sub-indicators (Phase 1--5 PIN, displaced, access constraints) by \path{consolidate_indicators.py} into \path{inform_indicators_long.csv}.
+& Ready: 5{,}298 severity rows + 9{,}590 sub-indicator rows, 109 countries \\
 $a_5$ donor HHI &
 FTS incoming flows: \path{fts_incoming_funding_global.csv}.\newline
 Cols: \path{amountUSD}, \path{srcOrganization}, \path{destLocations}.
@@ -161,7 +161,12 @@ CARE \emph{Breaking the Silence} &
 Three items needed by the methodology are not on disk. All three are openly available online.
 
 \begin{itemize}[leftmargin=1.2em,itemsep=3pt,topsep=3pt]
-    \item \textbf{Severity ($a_4$) --- solved at global scale via INFORM Severity.} HNO 2024/2025 CSVs do not carry a structured severity score. We therefore fold in the EU JRC's INFORM Severity Index from \url{https://drmkc.jrc.ec.europa.eu/inform-index/INFORM-Severity/Results-and-data}: a 1--10 composite assessed monthly for every active humanitarian crisis worldwide. All 67 monthly snapshots (2020-09 to 2026-03) are downloaded by \texttt{Data/Third-Party/DRMKC-INFORM/download.py} and consolidated by \texttt{consolidate.py} into a single long-format CSV with 5,298 (country\,$\times$\,month) rows covering 109 countries; every full-stack priority country has $\geq$60 months of history. This is load-bearing in two ways: it resolves the $a_4$ attribute globally, and it supplies the panel-data backbone that makes the temporal bonus task tractable (state-space filtering, hierarchical baselines). An earlier IPC export remains at \texttt{Data/Third-Party/IPCInfo/} as a richer single-country backup (Afghanistan, 17 analyses 2017--2025) for demo purposes.
+    \item \textbf{Severity ($a_4$) --- via INFORM, used with discipline.} HNO 2024/2025 CSVs carry no structured severity score, so we fold in the EU JRC's INFORM Severity from \url{https://drmkc.jrc.ec.europa.eu/inform-index/INFORM-Severity/Results-and-data}. All 67 monthly snapshots (2020-09 to 2026-03) are downloaded and consolidated into long-format CSVs covering 109 countries; every full-stack priority country has $\geq$60 months of history. Two important caveats drive our handling:
+    \begin{itemize}[leftmargin=1em,itemsep=1pt,topsep=2pt]
+        \item \textbf{Feb 2026 methodology rescaling.} INFORM rescaled the continuous severity index from 1--5 to 0--10 in its Feb 2026 release. In our panel this shows as a mean jump from $\approx$3.07 to $\approx$6.34 --- simultaneously for every country. The 1--5 ordinal \emph{category} is stable across this break. We therefore use the category as the primary $a_4$ input and the continuous index only for intra-snapshot rankings. See Metric Cards (\texttt{proposal/metric\_cards.md}) §§1--2.
+        \item \textbf{Prefer primitives to composite.} A second consolidator, \path{consolidate_indicators.py}, extracts the auditable sub-indicators (Phase 1--5 PIN, displaced, access-constrained populations, fatalities) from the same xlsx snapshots into \path{inform_indicators_long.csv} (9,590 rows). When the analytical question is answered better by a primitive (e.g.\ ``share of PIN in Phase 4+5''), we use the primitive and cite it.
+    \end{itemize}
+    This is load-bearing in two ways: it resolves the $a_4$ attribute globally, and it supplies the panel-data backbone that makes the temporal bonus task tractable (state-space filtering, hierarchical baselines). The earlier IPC export at \path{Data/Third-Party/IPCInfo/} is retained as an Afghanistan-focused backup for demo purposes.
     \item \textbf{CERF UFE benchmark.} Annual list published on CERF's website; scraped manually once per cycle. $\sim$30 entries per year, trivial to transcribe.
     \item \textbf{CARE \emph{Breaking the Silence}.} Annual PDF on CARE and ReliefWeb; top-10 list is extracted manually.
 \end{itemize}
@@ -175,9 +180,13 @@ Two concrete engineering steps are required before the scoring pipeline can run.
     \item \textbf{Multi-country FTS allocation for HHI.} Some FTS incoming records have pipe-delimited \texttt{destLocations} spanning multiple countries (regional plans). We apply the following rule: if the destination plan code unambiguously identifies a lead country (e.g.\ \texttt{HAFG25} $\to$ AFG) the funding is attributed to that country; otherwise the amount is split equally across listed destinations and the resulting $a_5$ is flagged ``estimated.''
 \end{itemize}
 
+\subsection{Metric provenance discipline}
+
+Every aggregate the pipeline touches --- whether consumed from source data (INFORM severity, FTS coverage ratio, HHI) or produced by us (cluster Gini, the composite score $G_p$) --- has a card in \path{proposal/metric_cards.md} capturing its formal definition, authoritative source, known discontinuities, failure modes, and our specific handling. The discipline is a direct response to the INFORM Feb-2026 rescaling: any composite can silently change meaning under weight or scale revisions, so we treat each one as a commitment we must defend. Aggregates are never the primary output; they appear alongside the primitives that justify them.
+
 \subsection{Verdict}
 
-All six score attributes and both validation benchmarks are recoverable from public sources. Severity is the only attribute requiring an external fetch; IPC provides it. No attribute is non-computable. \textbf{The methodology is feasible under the available data} --- the binding constraint is engineering time on the two pre-processing tasks above plus one IPC fetch, not data existence.
+All six score attributes and both validation benchmarks are recoverable from public sources. INFORM + its sub-indicators now cover severity globally at monthly granularity with disciplined handling of the Feb-2026 discontinuity. No attribute is non-computable. \textbf{The methodology is feasible under the available data} --- the binding constraint is engineering time on the two pre-processing tasks above, not data existence.
 
 \section{Methodology}
 

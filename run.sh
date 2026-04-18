@@ -41,8 +41,15 @@ fi
 if [ ! -f Data/Third-Party/DRMKC-INFORM/inform_severity_long.csv ]; then
     echo "→ Downloading INFORM Severity snapshots (one-time, ~3–5 min, polite rate-limited)…"
     python3 Data/Third-Party/DRMKC-INFORM/download.py
-    echo "→ Consolidating INFORM snapshots into long-format CSV…"
+    echo "→ Consolidating INFORM snapshots into long-format CSVs…"
     dashboard/.venv/bin/python Data/Third-Party/DRMKC-INFORM/consolidate.py
+    dashboard/.venv/bin/python Data/Third-Party/DRMKC-INFORM/consolidate_indicators.py
+fi
+# Back-fill the sub-indicator CSV on installs that predate it.
+if [ ! -f Data/Third-Party/DRMKC-INFORM/inform_indicators_long.csv ] && \
+   [ -d Data/Third-Party/DRMKC-INFORM/snapshots ]; then
+    echo "→ Extracting INFORM sub-indicators (one-time)…"
+    dashboard/.venv/bin/python Data/Third-Party/DRMKC-INFORM/consolidate_indicators.py
 fi
 
 # Ensure Streamlit's first-run email prompt is pre-silenced

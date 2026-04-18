@@ -122,6 +122,23 @@ def load_inform() -> pd.DataFrame:
     return df.dropna(subset=["severity", "ISO3", "date"])
 
 
+@st.cache_data(show_spinner="Loading INFORM sub-indicators…")
+def load_inform_indicators() -> pd.DataFrame:
+    path = DATA / "Third-Party" / "DRMKC-INFORM" / "inform_indicators_long.csv"
+    if not path.exists():
+        return pd.DataFrame()
+    df = pd.read_csv(path)
+    for col in ("affected", "displaced", "injured", "fatalities",
+                "pin_level_1", "pin_level_2", "pin_level_3", "pin_level_4", "pin_level_5",
+                "access_limited", "access_restricted", "impediments_bureaucratic"):
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+    df["date"] = pd.to_datetime(
+        df["year"].astype(str) + "-" + df["month"].astype(str).str.zfill(2) + "-01",
+        errors="coerce",
+    )
+    return df.dropna(subset=["ISO3", "date"])
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers
 # ─────────────────────────────────────────────────────────────────────────────
@@ -548,9 +565,9 @@ def page_cbpf() -> None:
 def page_inform() -> None:
     st.title("Severity — INFORM (monthly panel)")
     st.caption(
-        "EU JRC DRMKC Index for Risk Management. Per-crisis severity on a 1–10 scale, "
-        "assessed every month. This is the source for attribute $a_4$ and the panel-data "
-        "backbone for the temporal bonus task."
+        "EU JRC DRMKC Index for Risk Management. Per-crisis severity (1–5 ordinal "
+        "category + 1–10 continuous index) assessed every month. Source for "
+        "attribute $a_4$ and the panel-data backbone for the temporal task."
     )
 
     df = load_inform()
@@ -563,81 +580,140 @@ def page_inform() -> None:
         )
         return
 
+    st.warning(
+        "**Scale discontinuity — February 2026.** INFORM rescaled the continuous "
+        "index from 1–5 to 0–10 in its Feb 2026 release. Pre-/post-Feb-2026 *index* "
+        "values are **not directly comparable**. The 1–5 **category** is stable "
+        "across the break and is this page's default time-series. See the "
+        "[DRMKC page](https://drmkc.jrc.ec.europa.eu/inform-index/INFORM-Severity/) "
+        "and `proposal/metric_cards.md` for the formal definition."
+    )
+
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Observations", f"{len(df):,}")
     c2.metric("Countries", df["ISO3"].nunique())
     c3.metric("Crises", df["CRISIS ID"].nunique() if "CRISIS ID" in df.columns else "—")
-    c4.metric(
-        "Months spanned",
-        f"{df['snapshot'].min()} → {df['snapshot'].max()}",
-    )
+    c4.metric("Months", f"{df['snapshot'].min()} → {df['snapshot'].max()}")
 
-    # Snapshot choropleth
+    # Snapshot choropleth — always on category (stable across rescaling)
     snapshots = sorted(df["snapshot"].unique())
     snap = st.select_slider("Snapshot", options=snapshots, value=snapshots[-1])
     snap_df = df[df["snapshot"] == snap]
 
-    st.markdown(f"#### Severity choropleth — {snap}")
+    st.markdown(f"#### Severity category — {snap}")
     fig = px.choropleth(
         snap_df,
         locations="ISO3",
         locationmode="ISO-3",
-        color="severity",
+        color="category",
         color_continuous_scale="OrRd",
-        range_color=(1, 10),
+        range_color=(1, 5),
         hover_name="COUNTRY",
         hover_data={"severity": ":.1f", "category": True, "ISO3": False},
     )
-    fig.update_layout(margin={"l": 0, "r": 0, "t": 10, "b": 0}, height=460)
+    fig.update_layout(margin={"l": 0, "r": 0, "t": 10, "b": 0}, height=440)
     st.plotly_chart(fig, use_container_width=True)
 
-    # Time-series for selected countries
-    st.markdown("#### Severity trajectories")
+    # Time-series — category by default, index with explicit warning
+    st.markdown("#### Trajectories")
+    metric_choice = st.radio(
+        "Time-series metric",
+        ["Category (1–5, stable)", "Index (1–10, NOT comparable across 2026-02)"],
+        horizontal=True,
+    )
     iso_choices = sorted(df["ISO3"].unique())
     defaults = [c for c in ("SDN", "YEM", "SOM", "COD", "UKR", "AFG") if c in iso_choices]
-    picks = st.multiselect("Countries", iso_choices, default=defaults)
+    picks = st.multiselect("Countries", iso_choices, default=defaults, key="sev_picks")
     if picks:
         sub = df[df["ISO3"].isin(picks)].sort_values("date")
-        fig2 = px.line(
-            sub,
-            x="date",
-            y="severity",
-            color="ISO3",
-            markers=True,
-            hover_data=["COUNTRY", "snapshot"],
-        )
+        y = "category" if metric_choice.startswith("Category") else "severity"
+        y_range = [1, 5] if y == "category" else [1, 10]
+        y_label = ("INFORM Severity category (1–5)" if y == "category"
+                   else "INFORM Severity index (1–10, rescaled Feb 2026)")
+        fig2 = px.line(sub, x="date", y=y, color="ISO3", markers=True,
+                       hover_data=["COUNTRY", "snapshot"])
         fig2.update_layout(
-            yaxis={"range": [1, 10], "title": "INFORM Severity (1–10)"},
-            margin={"l": 0, "r": 0, "t": 10, "b": 0},
-            height=460,
+            yaxis={"range": y_range, "title": y_label},
+            margin={"l": 0, "r": 0, "t": 10, "b": 0}, height=420,
         )
+        # Mark the Feb 2026 methodology break on both plots for context
+        fig2.add_vline(x="2026-02-01", line_dash="dash", line_color="#E99C2D")
+        fig2.add_annotation(x="2026-02-01", y=y_range[1], yref="y",
+                            text="methodology rescaling", showarrow=False,
+                            font=dict(size=10, color="#E99C2D"), yshift=-6)
         st.plotly_chart(fig2, use_container_width=True)
 
-    # Category distribution (snapshot-level)
-    st.markdown(f"#### Category distribution — {snap}")
-    cat_counts = (
-        snap_df.dropna(subset=["category"])
-        .groupby("category", as_index=False)
-        .size()
-        .rename(columns={"size": "count"})
+    st.markdown("---")
+    st.markdown("#### Sub-indicators — granular, auditable alternatives to the composite")
+    st.caption(
+        "Extracted from the `Crisis Indicator Data` sheet of each monthly xlsx. "
+        "Use these primitives to avoid the composite-index failure modes."
     )
-    cat_labels = {1: "1 Very Low", 2: "2 Low", 3: "3 Medium", 4: "4 High", 5: "5 Very High"}
-    cat_counts["label"] = cat_counts["category"].map(cat_labels)
-    fig3 = px.bar(cat_counts, x="label", y="count", color="category",
-                  color_continuous_scale="OrRd")
-    fig3.update_layout(
-        xaxis_title=None, yaxis_title="countries",
-        margin={"l": 0, "r": 0, "t": 10, "b": 0}, height=320, showlegend=False,
-    )
-    st.plotly_chart(fig3, use_container_width=True)
+    ind = load_inform_indicators()
+    if ind.empty:
+        st.info("Sub-indicator CSV not present. Run `consolidate_indicators.py` to generate.")
+        return
 
-    with st.expander("Raw snapshot data"):
+    indicator_choice = st.selectbox(
+        "Indicator",
+        [
+            "pin_level_5 (PIN in level 5 — catastrophic conditions)",
+            "pin_level_4 (PIN in level 4 — severe)",
+            "displaced",
+            "access_restricted",
+            "access_limited",
+            "impediments_bureaucratic",
+            "fatalities",
+            "affected",
+        ],
+    )
+    col = indicator_choice.split(" ", 1)[0]
+    picks2 = st.multiselect(
+        "Countries", iso_choices, default=defaults, key="ind_picks"
+    )
+    if picks2:
+        sub = ind[ind["ISO3"].isin(picks2)].sort_values("date")
+        fig4 = px.line(sub, x="date", y=col, color="ISO3", markers=True,
+                       hover_data=["COUNTRY", "snapshot"])
+        fig4.update_layout(
+            yaxis_title=col, margin={"l": 0, "r": 0, "t": 10, "b": 0}, height=420,
+        )
+        # Same methodology-rescaling annotation — indicators themselves don't jump,
+        # but consistent markup helps when comparing across views.
+        fig4.add_vline(x="2026-02-01", line_dash="dot", line_color="#8A8A8A")
+        st.plotly_chart(fig4, use_container_width=True)
+
+    # PIN-composition view for a single country
+    st.markdown("#### PIN composition by humanitarian-conditions level — single country")
+    ccol1, ccol2 = st.columns([1, 3])
+    iso_pick = ccol1.selectbox("Country", iso_choices, index=iso_choices.index("SDN") if "SDN" in iso_choices else 0)
+    levels = ["pin_level_1", "pin_level_2", "pin_level_3", "pin_level_4", "pin_level_5"]
+    sub_country = ind[ind["ISO3"] == iso_pick].sort_values("date")[["date"] + levels]
+    sub_country = sub_country.melt(id_vars="date", var_name="level", value_name="pin")
+    sub_country["level"] = sub_country["level"].str.replace("pin_level_", "Phase ", regex=False)
+    fig5 = px.area(
+        sub_country, x="date", y="pin", color="level",
+        color_discrete_map={
+            "Phase 1": "#FEF7E8", "Phase 2": "#FCDD8C",
+            "Phase 3": "#F4A462", "Phase 4": "#E76F51", "Phase 5": "#96281B",
+        },
+    )
+    fig5.update_layout(
+        yaxis_title="People (stacked)", margin={"l": 0, "r": 0, "t": 10, "b": 0}, height=360,
+    )
+    ccol2.plotly_chart(fig5, use_container_width=True)
+
+    with st.expander("Raw snapshot data (category + index + sub-indicator joins)"):
+        show = snap_df.merge(
+            ind[ind["snapshot"] == snap][["CRISIS ID"] + levels + ["displaced", "access_restricted"]],
+            on="CRISIS ID", how="left",
+        )
         st.dataframe(
-            snap_df.sort_values("severity", ascending=False)[
-                ["ISO3", "COUNTRY", "CRISIS ID", "severity", "category"]
+            show.sort_values("category", ascending=False)[
+                ["ISO3", "COUNTRY", "CRISIS ID", "category", "severity",
+                 "pin_level_4", "pin_level_5", "displaced", "access_restricted"]
             ],
-            use_container_width=True,
-            height=420,
+            use_container_width=True, height=420,
         )
 
 
