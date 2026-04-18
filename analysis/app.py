@@ -1,4 +1,4 @@
-"""Facet — Semantic Analysis.
+"""Geo-Insight — Semantic Analysis.
 
 Thin orchestrator. Reads sidebar (lens × mode) or a "Featured views" shortcut
 bar at the top of the page, loads the enriched frame from disk cache if
@@ -27,7 +27,7 @@ from views import atlas, pca as pca_view, cluster, profile, cross_lens, validati
 from _theme import apply_theme, COLORS  # noqa: E402
 
 st.set_page_config(
-    page_title="Facet — Semantic Analysis",
+    page_title="Geo-Insight — Semantic Analysis",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -60,7 +60,7 @@ st.session_state.setdefault("mode_id", "atlas")
 
 
 # ─── Sidebar ───────────────────────────────────────────────────────────────
-st.sidebar.title("Facet")
+st.sidebar.title("Geo-Insight")
 st.sidebar.caption("Semantic analysis · eight lenses × six modes")
 
 lens_order = sorted(REGISTRY.lenses.keys(), key=lambda lid: (lid != "geo_insight_score", lid))

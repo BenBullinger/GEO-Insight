@@ -22,7 +22,7 @@
 \titleformat*{\section}{\large\bfseries}
 \titleformat*{\subsection}{\normalsize\bfseries}
 
-\title{\textbf{Facet}\\[0.3em]\large Overlookedness as Disagreement: A Multi-Attribute, Multi-Stakeholder Gap-Ranking System for Humanitarian Crises}
+\title{\textbf{Geo-Insight}\\[0.3em]\large Overlookedness as Disagreement: A Multi-Attribute, Multi-Stakeholder Gap-Ranking System for Humanitarian Crises}
 \author{Cache Me if You Can --- Datathon 2026}
 \date{April 2026}
 
@@ -47,7 +47,7 @@ The analytical implication: scoring overlookedness with a single coverage ratio 
 
 \section{Problem Definition}
 
-Given a query or geographic scope (country, region, sector, or natural-language prompt), Facet returns a ranked list of crises. Each ranked entry carries:
+Given a query or geographic scope (country, region, sector, or natural-language prompt), Geo-Insight returns a ranked list of crises. Each ranked entry carries:
 
 \begin{itemize}[leftmargin=1.2em,itemsep=2pt,topsep=2pt]
     \item a \textbf{median gap score} across four donor-preference profiles;
@@ -78,7 +78,7 @@ Vargas Florez et al.~\cite{vargasflorez2015} give the equation template. Their E
 \paragraph{Embedded, interpretable analytics.}
 Griffith et al.~\cite{griffith2017} argue that during time-constrained humanitarian operations, simple and interpretable analytics outperform complex black-box methods, and characterise the field as ``data rich, information poor'' with data integration (not algorithm choice) as the operational bottleneck. We take this as a constraint on any method that adds to the score vector: every new term must decompose cleanly and be explainable to a non-technical analyst.
 
-\paragraph{What Facet adds that is not in this literature.}
+\paragraph{What Geo-Insight adds that is not in this literature.}
 No paper in our review aggregates per-decision-maker rank divergence into an operational ``disagreement'' meta-score. No paper operationalises intra-crisis equity as a Gini-type inequality on cluster coverage ratios within a single country HRP. Both are small, defensible extensions of existing frameworks. Neither is addressed by Palantir-Foundry-based systems such as WFP's DOTS~\cite{wfppalantir}, which unify an organisation's operational data toward a single source of truth --- the opposite of surfacing inter-stakeholder disagreement.
 
 \section{Data Sources}

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Facet — launch all local surfaces with one command.
+# Geo-Insight — launch all local surfaces with one command.
 #
 # Brings up the reveal.js presentation (http://localhost:8000) and the Streamlit
 # data-landscape dashboard (http://localhost:8501), and points you at the
