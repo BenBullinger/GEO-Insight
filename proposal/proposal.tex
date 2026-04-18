@@ -120,7 +120,7 @@ An audit of the five downloaded HDX datasets (run 2026-04-18) maps each score at
 $a_1$ coverage shortfall & \texttt{fts\_requirements\_funding\_global.csv}\newline \texttt{countryCode, year, requirements, funding} & Ready \\
 $a_2$ per-PIN gap     & above + \texttt{hpc\_hno\_2025.csv} (\texttt{In Need}) + \texttt{cod\_population\_admin0.csv} (\texttt{Population}) & Ready \\
 $a_3$ need intensity  & \texttt{hpc\_hno\_2025.csv} / \texttt{cod\_population\_admin0.csv} & Ready \\
-$a_4$ severity        & \textbf{IPC phase 1--5 by country $\times$ year} (external) & \textbf{External fetch} \\
+$a_4$ severity        & IPC Population Tracking Tool export (xlsx) in \texttt{Data/Third-Party/IPCInfo/} --- per-unit Phase 1--5 populations and overall phase & Partial on disk (AF dense 2017--2025; AO sparse); expand via same tool \\
 $a_5$ donor HHI       & \texttt{fts\_incoming\_funding\_global.csv}\newline \texttt{amountUSD, srcOrganization, destLocations} & Ready; multi-country rule needed \\
 $a_6$ cluster Gini    & \texttt{fts\_requirements\_funding\_cluster\_global.csv} $\times$ \texttt{hpc\_hno\_2025.csv} & Ready; cluster-taxonomy map needed \\
 \midrule
@@ -137,7 +137,7 @@ CARE \emph{Breaking the Silence} & \url{https://www.care.org/our-work/other-work
 Three items needed by the methodology are not on disk. All three are openly available online.
 
 \begin{itemize}[leftmargin=1.2em,itemsep=3pt,topsep=3pt]
-    \item \textbf{Severity ($a_4$).} HNO 2024/2025 CSVs do not carry a structured severity score --- only a free-text \texttt{Description} field. We therefore fetch the IPC food-security phase classification (1--5) from \url{https://www.ipcinfo.org/} via its free registered API. Where IPC coverage is absent (non-food-driven crises such as Ukraine or Syria earthquakes), we degrade $a_4$ to a binary plan-typology flag (Flash Appeal vs. HRP) and expose the degradation via a data-quality annotation rather than imputing a numeric severity.
+    \item \textbf{Severity ($a_4$).} HNO 2024/2025 CSVs do not carry a structured severity score --- only a free-text \texttt{Description} field. We use the IPC Population Tracking Tool (\url{https://www.ipcinfo.org/ipc-country-analysis/population-tracking-tool/en/}) which returns per-unit Phase 1--5 populations and an overall phase. An initial export is present in \texttt{Data/Third-Party/IPCInfo/} covering Afghanistan densely (17 analyses 2017--2025) and Angola sparsely; this is a \emph{format sample}, not global coverage. Expanding coverage to the $\sim$20 full-stack countries (AF, SYR, YEM, SSD, COD, SOM, SDN, \ldots) requires repeated exports from the same tool, one per country-region selection. Where IPC coverage is absent (non-food-driven crises), we degrade $a_4$ to a binary plan-typology flag (Flash Appeal vs.\ HRP) and expose the degradation via a data-quality annotation rather than imputing a numeric severity.
     \item \textbf{CERF UFE benchmark.} Annual list published on CERF's website; scraped manually once per cycle. $\sim$30 entries per year, trivial to transcribe.
     \item \textbf{CARE \emph{Breaking the Silence}.} Annual PDF on CARE and ReliefWeb; top-10 list is extracted manually.
 \end{itemize}
