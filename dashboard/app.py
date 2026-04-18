@@ -25,7 +25,7 @@ from _theme import apply_theme, page_header, COLORS  # noqa: E402
 DATA = Path(__file__).resolve().parent.parent / "Data"
 
 st.set_page_config(
-    page_title="GEO-Insight — Data Landscape",
+    page_title="GEO-Insight — Data Sources",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -217,10 +217,11 @@ def countries_per_dataset(year: int) -> dict[str, set[str]]:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def page_overview() -> None:
-    st.title("Data landscape")
+    st.title("Data sources")
     st.caption(
-        "Five official sources from `task/challenge.md`, downloaded into `Data/`. "
-        "This view orients us before committing to a methodology."
+        "Six upstream datasets — HNO, HRP, FTS, CoD-PS, CBPF, INFORM — "
+        "audited for shape, country coverage, and top-line figures. This is "
+        "the provenance layer underneath the semantic-analysis surface on :8502."
     )
 
     hno25 = load_hno(2025)
@@ -252,15 +253,19 @@ def page_overview() -> None:
     m3.metric("Global funding received 2025", f"${fund/1e9:,.1f} B")
     m4.metric("Global coverage 2025", f"{cov:.1f} %", help="Σ funding ÷ Σ requirements")
 
-    st.markdown("### Orienting questions this dashboard helps answer")
+    st.markdown("### What each tab answers")
     st.markdown(
         """
         - **Cross-dataset coverage** — which countries appear in HNO, HRP, FTS, CBPF simultaneously?
-        - **Needs** — where is PIN concentrated, and across which sectors?
-        - **Funding** — where is the coverage ratio lowest?
-        - **Sector equity** — for a given country, is the intra-crisis coverage spread tight or lopsided? (preview of the Gini term in §5.4 of the proposal)
-        - **Donors** — how concentrated is the donor set for each crisis? (HHI preview)
-        - **Pooled funds / plans** — what are the CBPF allocations and HRP plan targets look like on the ground?
+        - **Needs (HNO)** — where is PIN concentrated, at what admin level, across which sectors?
+        - **Funding (FTS)** — country-year requirements and receipts; coverage distribution.
+        - **Severity (INFORM)** — monthly severity panels; sub-indicator availability.
+        - **Pooled funds (CBPF)** — project-level allocations and donor contributions.
+        - **Plans (HRP)** — plan metadata, year range, scope.
+
+        Analytic views (sector-coverage inequality, donor concentration, gap scores,
+        four-cell typology, external-benchmark validation) live on the
+        **semantic-analysis** surface at http://localhost:8502.
         """
     )
 
@@ -417,114 +422,9 @@ def page_fts() -> None:
             )
 
 
-def page_equity_preview() -> None:
-    st.title("Sector-equity preview")
-    st.caption(
-        "For a given country/year, cluster-level coverage ratios. If these spread widely, "
-        "the intra-crisis Gini (proposal §5.4) flags the crisis as sector-starved."
-    )
-
-    fts_cl = load_fts_cluster()
-    year = st.slider("Year", 2018, 2026, value=2025, step=1, key="eq_year")
-
-    sub = fts_cl[fts_cl["year"] == year].copy()
-    iso_choices = sorted(sub["countryCode"].dropna().unique())
-    iso = st.selectbox("Country", iso_choices, key="eq_iso")
-
-    crisis = sub[sub["countryCode"] == iso].copy()
-    crisis["coverage"] = (crisis["funding"] / crisis["requirements"]).clip(upper=1.5)
-    crisis = crisis.sort_values("coverage")
-
-    # Simple unweighted Gini on cluster coverage ratios (PIN-weighted version in pipeline)
-    cov = crisis["coverage"].dropna().values
-    if len(cov) >= 2 and cov.sum() > 0:
-        cov_sorted = sorted(cov)
-        n = len(cov_sorted)
-        cum = sum((i + 1) * x for i, x in enumerate(cov_sorted))
-        gini = (2 * cum) / (n * sum(cov_sorted)) - (n + 1) / n
-    else:
-        gini = float("nan")
-
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Clusters", len(crisis))
-    m2.metric("Total requirements", f"${crisis['requirements'].sum()/1e6:,.0f}M")
-    m3.metric("Aggregate coverage", f"{(crisis['funding'].sum()/max(crisis['requirements'].sum(),1))*100:.1f}%")
-    m4.metric("Unweighted cluster Gini", f"{gini:.3f}" if pd.notna(gini) else "n/a",
-              help="Illustrative — full methodology uses PIN-weighted Gini (proposal Eq. 2).")
-
-    st.plotly_chart(
-        px.bar(
-            crisis,
-            x="coverage",
-            y="cluster",
-            orientation="h",
-            color="coverage",
-            color_continuous_scale="RdYlGn",
-            range_color=(0, 1),
-            hover_data=["requirements", "funding"],
-            title=f"Cluster coverage ratios — {iso} {year}",
-        ).update_layout(yaxis={"categoryorder": "total ascending"}, height=520),
-        use_container_width=True,
-    )
-    st.dataframe(crisis[["cluster", "requirements", "funding", "coverage"]], use_container_width=True)
-
-
-def page_donors() -> None:
-    st.title("Donors — FTS incoming")
-    st.caption("Donor flows from `fts_incoming_funding_global.csv`. Preview of HHI computation.")
-
-    inc = load_fts_incoming()
-    year = st.slider("Budget year", 2018, 2026, value=2025, step=1, key="donor_year")
-    sub = inc[inc["budgetYear"] == year].copy()
-
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Transactions", len(sub))
-    c2.metric("Donors (srcOrganization)", sub["srcOrganization"].nunique())
-    c3.metric("Total received", f"${sub['amountUSD'].sum()/1e9:,.1f}B")
-
-    st.markdown("#### Top-20 donors globally")
-    top_donors = (
-        sub.groupby("srcOrganization", as_index=False)["amountUSD"]
-        .sum()
-        .sort_values("amountUSD", ascending=False)
-        .head(20)
-    )
-    st.plotly_chart(
-        px.bar(top_donors, x="amountUSD", y="srcOrganization", orientation="h").update_layout(
-            yaxis={"categoryorder": "total ascending"}, height=500, margin={"l":0,"r":0,"t":10,"b":0}
-        ),
-        use_container_width=True,
-    )
-
-    st.markdown("#### Donor concentration for a selected country")
-    # crude: pick rows where destLocations exactly matches an ISO3
-    sub["destLocations"] = sub["destLocations"].fillna("").astype(str)
-    single_country = sub[sub["destLocations"].str.len() == 3]
-    iso_choices = sorted(single_country["destLocations"].dropna().unique())
-    if iso_choices:
-        iso = st.selectbox("Country (single-destination rows only)", iso_choices, key="hhi_iso")
-        crisis = single_country[single_country["destLocations"] == iso]
-        by_donor = (
-            crisis.groupby("srcOrganization", as_index=False)["amountUSD"]
-            .sum()
-            .sort_values("amountUSD", ascending=False)
-        )
-        total = by_donor["amountUSD"].sum()
-        if total > 0:
-            shares = by_donor["amountUSD"] / total
-            hhi = float((shares ** 2).sum())
-        else:
-            hhi = float("nan")
-        m1, m2, m3 = st.columns(3)
-        m1.metric("Donors", len(by_donor))
-        m2.metric("Total to country", f"${total/1e6:,.0f}M")
-        m3.metric("HHI", f"{hhi:.3f}" if pd.notna(hhi) else "n/a",
-                  help="0 = perfectly diversified, 1 = single donor. Multi-country transactions excluded here.")
-        st.plotly_chart(
-            px.pie(by_donor.head(15), values="amountUSD", names="srcOrganization",
-                   title=f"Top-15 donor shares, {iso} {year}"),
-            use_container_width=True,
-        )
+# Analytic drill-downs (sector equity, donor concentration) moved to the
+# semantic-analysis surface on :8502 — avoiding duplication. This app is now
+# strictly a "data sources" audit of the five upstream datasets.
 
 
 def page_cbpf() -> None:
@@ -750,16 +650,14 @@ def page_hrp() -> None:
 # ─────────────────────────────────────────────────────────────────────────────
 
 st.sidebar.title("GEO-Insight")
-st.sidebar.caption("Data landscape · Datathon 2026")
+st.sidebar.caption("Data sources · what's in our upstream datasets")
 section = st.sidebar.radio(
-    "Section",
+    "Dataset",
     [
         "Overview",
         "Cross-dataset coverage",
         "Needs (HNO)",
         "Funding (FTS)",
-        "Sector equity preview",
-        "Donors (FTS)",
         "Severity (INFORM)",
         "Pooled funds (CBPF)",
         "Plans (HRP)",
@@ -768,7 +666,10 @@ section = st.sidebar.radio(
 
 st.sidebar.markdown("---")
 st.sidebar.caption(
-    "Raw data in `Data/` (reproduce with `python3 Data/download.py`).\n\n"
+    "Analytic views — sector equity, donor concentration, gap scores — live on the "
+    "**semantic-analysis** surface at http://localhost:8502. This app is the "
+    "provenance layer underneath it.\n\n"
+    "Raw data: `Data/` (reproduce with `python3 Data/download.py`).\n\n"
     "Methodology: `proposal/proposal.pdf`."
 )
 
@@ -777,8 +678,6 @@ PAGES = {
     "Cross-dataset coverage": page_coverage,
     "Needs (HNO)": page_hno,
     "Funding (FTS)": page_fts,
-    "Sector equity preview": page_equity_preview,
-    "Donors (FTS)": page_donors,
     "Severity (INFORM)": page_inform,
     "Pooled funds (CBPF)": page_cbpf,
     "Plans (HRP)": page_hrp,

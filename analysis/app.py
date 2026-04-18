@@ -1,10 +1,12 @@
-"""GEO-Insight — Unsupervised Analysis (lens-first).
+"""GEO-Insight — Semantic Analysis.
 
-Thin orchestrator. Reads sidebar → loads the enriched frame (Levels 1-3 for
-Phase 1) → dispatches to the chosen view mode with (enriched, lens, registry).
+Thin orchestrator. Reads sidebar (lens × mode) or a "Featured views" shortcut
+bar at the top of the page, loads the enriched frame from disk cache if
+fresh (else re-derives), and dispatches to the chosen view.
 
-Phase 1 wires the Funding Pressure lens end-to-end. Other lenses show a
-"ships in Phase 2/3" message so the shape of the final UI is visible.
+The eight lenses × six modes = 48-cell grid remains fully reachable via the
+sidebar. The featured strip above it lets a first-time visitor reach the
+load-bearing views in one click without exploring the grid.
 """
 from __future__ import annotations
 
@@ -50,60 +52,103 @@ def get_enriched():
 
 REGISTRY = get_registry()
 
-# Phase 3: all eight lenses wired end-to-end.
-ACTIVE_LENSES = {
-    "magnitude",
-    "intensity",
-    "severity_composition",
-    "funding_pressure",
-    "donor_fragility",
-    "temporal_dynamics",
-    "access_friction",
-    "geo_insight_score",
-}
+
+# ─── Default lens + mode (session_state so the featured-view buttons can
+# change them, and the sidebar widgets pick up the change on next render) ──
+st.session_state.setdefault("lens_id", "geo_insight_score")
+st.session_state.setdefault("mode_id", "atlas")
 
 
 # ─── Sidebar ───────────────────────────────────────────────────────────────
 st.sidebar.title("GEO-Insight")
-st.sidebar.caption("Unsupervised analysis · Cache Me if You Can · Phase 1")
+st.sidebar.caption("Semantic analysis · eight lenses × six modes")
 
-lens_order = ["funding_pressure"] + [
-    lid for lid in REGISTRY.lenses if lid != "funding_pressure"
-]
+lens_order = sorted(REGISTRY.lenses.keys(), key=lambda lid: (lid != "geo_insight_score", lid))
 
 
 def _label(lid: str) -> str:
     return REGISTRY.lenses[lid].name
 
 
-lens_id = st.sidebar.selectbox("Lens", lens_order, format_func=_label)
-lens = REGISTRY.lenses[lens_id]
-
-mode_id = st.sidebar.radio(
+st.sidebar.selectbox(
+    "Lens",
+    lens_order,
+    index=lens_order.index(st.session_state["lens_id"]),
+    format_func=_label,
+    key="lens_id",
+)
+st.sidebar.radio(
     "Mode",
     ["atlas", "pca", "cluster", "profile", "cross_lens", "validation"],
+    index=["atlas", "pca", "cluster", "profile", "cross_lens", "validation"].index(st.session_state["mode_id"]),
     format_func=lambda m: REGISTRY.modes[m].name,
+    key="mode_id",
 )
 
 st.sidebar.markdown("---")
 st.sidebar.caption(
-    "Companion: data-exploration dashboard on **:8501**.\n\n"
-    "Spec: `analysis/spec.yaml`.\n\n"
-    "Metric provenance: `proposal/metric_cards.md`.\n\n"
+    "Data-sources audit: [localhost:8501](http://localhost:8501).\n\n"
+    "Ontology: `analysis/spec.yaml` (71 properties, five derivation levels).\n\n"
     "Methodology: `proposal/proposal.pdf`."
 )
 
 
+# ─── Featured-views shortcut strip ─────────────────────────────────────────
+FEATURED = [
+    ("Top ten overlooked",          "Headline gap-score ranking",              "geo_insight_score", "atlas"),
+    ("Validation",                  "Against CERF UFE and CARE Silence",        "geo_insight_score", "validation"),
+    ("Four-cell typology",          "Consensus × sector-uneven matrix",         "geo_insight_score", "cross_lens"),
+    ("Country profile",             "Drill into one crisis across the layers",  "geo_insight_score", "profile"),
+    ("Funding pressure",            "Ranked by coverage-gap intensity",         "funding_pressure",  "atlas"),
+]
+
+
+def _select_featured(lens_id: str, mode_id: str) -> None:
+    st.session_state["lens_id"] = lens_id
+    st.session_state["mode_id"] = mode_id
+
+
+st.markdown(
+    f"<div style='font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.14em; "
+    f"color: {COLORS['accent']}; font-weight: 600; margin-bottom: 10px;'>"
+    f"Start here · featured views</div>",
+    unsafe_allow_html=True,
+)
+
+cols = st.columns(len(FEATURED))
+for col, (title, sub, lens_id, mode_id) in zip(cols, FEATURED):
+    selected = (st.session_state["lens_id"] == lens_id and st.session_state["mode_id"] == mode_id)
+    prefix = "• " if selected else ""
+    with col:
+        st.button(
+            f"{prefix}{title}",
+            help=sub,
+            on_click=_select_featured,
+            args=(lens_id, mode_id),
+            use_container_width=True,
+            type=("primary" if selected else "secondary"),
+        )
+        st.markdown(
+            f"<div style='font-size: 0.72rem; color: {COLORS['muted']}; "
+            f"line-height: 1.4; margin-top: 4px; margin-bottom: 14px;'>{sub}</div>",
+            unsafe_allow_html=True,
+        )
+
+st.markdown("---")
+
+
 # ─── Route ─────────────────────────────────────────────────────────────────
+lens = REGISTRY.lenses[st.session_state["lens_id"]]
+mode_id = st.session_state["mode_id"]
 enriched = get_enriched()
 
 VIEWS = {
-    "atlas": atlas.render,
-    "pca": pca_view.render,
-    "cluster": cluster.render,
-    "profile": profile.render,
-    "cross_lens": cross_lens.render,
-    "validation": validation_view.render,
+    "atlas":       atlas.render,
+    "pca":         pca_view.render,
+    "cluster":     cluster.render,
+    "profile":     profile.render,
+    "cross_lens":  cross_lens.render,
+    "validation":  validation_view.render,
 }
 
 VIEWS[mode_id](enriched, lens, REGISTRY)
