@@ -1,4 +1,4 @@
-# GEO-Insight — Data Landscape Dashboard
+# Facet — Data Landscape Dashboard
 
 Interactive Streamlit dashboard that surveys the five official datasets we downloaded. Purpose: orient the team before committing to a methodology — see what's there, see the gaps, preview the key signals (cluster-coverage Gini, donor HHI, cross-dataset intersection).
 

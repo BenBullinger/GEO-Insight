@@ -1,4 +1,4 @@
-"""GEO-Insight — Data Landscape Dashboard.
+"""Facet — Data Landscape Dashboard.
 
 Interactive, local. Run:
     cd dashboard
@@ -25,7 +25,7 @@ from _theme import apply_theme, page_header, COLORS  # noqa: E402
 DATA = Path(__file__).resolve().parent.parent / "Data"
 
 st.set_page_config(
-    page_title="GEO-Insight — Data Sources",
+    page_title="Facet — Data Sources",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -649,7 +649,7 @@ def page_hrp() -> None:
 # Router
 # ─────────────────────────────────────────────────────────────────────────────
 
-st.sidebar.title("GEO-Insight")
+st.sidebar.title("Facet")
 st.sidebar.caption("Data sources · what's in our upstream datasets")
 section = st.sidebar.radio(
     "Dataset",

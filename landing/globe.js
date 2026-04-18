@@ -1,4 +1,4 @@
-// GEO-Insight — interactive orthographic globe for the landing page.
+// Facet — interactive orthographic globe for the landing page.
 //
 // D3 v7 + TopoJSON. Renders Earth as a thin-line vector globe with the
 // top-ten overlooked crises as oxblood hotspots. Drag to rotate. Click a

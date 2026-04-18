@@ -1,4 +1,4 @@
-"""Level-5 composites — the GEO-Insight gap scores per donor profile.
+"""Level-5 composites — the Facet gap scores per donor profile.
 
 Implements the MAUT-additive scoring from proposal §5:
 

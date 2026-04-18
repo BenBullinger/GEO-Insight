@@ -1,4 +1,4 @@
-# GEO-Insight
+# Facet
 
 **Which humanitarian crises are most overlooked?**
 Datathon 2026

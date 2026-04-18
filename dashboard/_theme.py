@@ -1,4 +1,4 @@
-"""GEO-Insight shared Streamlit theme.
+"""Facet shared Streamlit theme.
 
 Injects Inter + JetBrains Mono, applies the oxblood-red accent across
 Streamlit chrome that `.streamlit/config.toml` doesn't cover, and registers

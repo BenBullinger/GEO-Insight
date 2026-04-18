@@ -1,4 +1,4 @@
-# GEO-Insight · Analysis Site · Design Specification
+# Facet · Analysis Site · Design Specification
 # ───────────────────────────────────────────────────────────────────────────
 # Settled structure for the unsupervised-analysis dashboard. Captures:
 #   - every property we consume or derive, typed by level
@@ -699,7 +699,7 @@ lenses:
     properties: [access_restricted_share, access_limited_share, impediments, access_restricted_baseline_12m, access_restricted_delta_3m]
 
   - id: geo_insight_score
-    name: GEO-Insight score
+    name: Facet score
     question: "Our framework's readout"
     properties: [median_rank, rank_iqr, gap_score_balanced, gap_score_cerf_profile, gap_score_echo_profile, gap_score_usaid_profile, gap_score_ngo_profile, completeness]
 
