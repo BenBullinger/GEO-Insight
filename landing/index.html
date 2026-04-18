@@ -42,6 +42,28 @@
             margin-bottom: var(--s-8);
             max-width: 72ch;
         }
+        .paper-link {
+            margin: var(--s-4) 0 0 0;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        .paper-link a {
+            color: var(--accent);
+            font-family: var(--font-mono);
+            font-size: 0.95em;
+            text-decoration: none;
+            border-bottom: 1px solid var(--accent-soft);
+            transition: border-color .15s ease, color .15s ease;
+        }
+        .paper-link a:hover {
+            color: var(--accent-dim);
+            border-bottom-color: var(--accent);
+        }
+        .paper-link span {
+            color: var(--subtle);
+            font-size: 0.9em;
+            margin-left: 4px;
+        }
 
         /* Stats strip */
         .stats {
@@ -122,6 +144,9 @@
         <div class="callout">
             When nearly every response is underfunded, a single coverage ratio no longer discriminates between crises. GEO-Insight reframes overlookedness as a <strong>joint distribution</strong> over four donor-preference profiles, with an <em>intra-crisis equity</em> term and a <em>cross-stakeholder disagreement</em> term. A typed five-level semantic layer makes every score traceable to its source data. Validated against two independent human-curated benchmarks.
         </div>
+        <p class="paper-link">
+            Full methodology: <a href="proposal.pdf" target="_blank">proposal/proposal.pdf</a> <span aria-hidden="true">→</span>
+        </p>
     </section>
 
     <!-- ── Stats strip ───────────────────────────────────────── -->
@@ -171,13 +196,6 @@
             <span class="card-url">localhost:8502</span>
         </a>
 
-        <a class="card" href="proposal.pdf" target="_blank">
-            <span class="card-arrow">→</span>
-            <div class="card-label">PDF — methodology</div>
-            <h3>Proposal</h3>
-            <p>Research framing, attribute provenance, evidence-bounded MAUT scoring, validation strategy, limitations.</p>
-            <span class="card-url">proposal/proposal.pdf</span>
-        </a>
     </section>
 
     <!-- ── Footer ────────────────────────────────────────────── -->
