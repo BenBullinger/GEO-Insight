@@ -1,689 +1,1071 @@
-/* GEO-Insight presentation theme
- * Custom theme inspired by UN publication aesthetics (muted, clean, blue accent).
- * Does not use UN branding, logos, or typefaces. */
+/* GEO-Insight presentation — DeepMind-style research presentation
+ * Principles: generous whitespace, confident typography, single accent,
+ * zero visual clutter. */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-    --un-blue: #009EDB;
-    --un-blue-dark: #0072BC;
-    --un-blue-deep: #1F4E79;
-    --un-gray-dark: #2C3E50;
-    --un-gray: #595959;
-    --un-gray-light: #8A8A8A;
-    --un-bg: #FFFFFF;
-    --un-bg-alt: #F4F7FA;
-    --un-rule: #D8DEE4;
-    --un-accent-warm: #E99C2D;
+    /* Neutrals */
+    --ink:      #111111;
+    --text:     #222222;
+    --muted:    #555555;
+    --subtle:   #888888;
+    --faint:    #bcbcbc;
+    --rule:     #e8e8e8;
+    --surface:  #fafafa;
+    --bg:       #ffffff;
+
+    /* Single accent — oxblood red, with graduated shades for depth */
+    --accent:       #7c1d1d;
+    --accent-dim:   #9a2a2a;
+    --accent-soft:  #c9554f;
+    --accent-wash:  #f8ecec;
+    --accent-mist:  #fcf5f5;
+
+    /* Legacy compat (old HTML still uses these) */
+    --un-blue:       var(--accent);
+    --un-blue-dark:  var(--accent);
+    --un-blue-deep:  var(--ink);
+    --un-gray-dark:  var(--text);
+    --un-gray:       var(--muted);
+    --un-gray-light: var(--subtle);
+    --un-bg:         var(--bg);
+    --un-bg-alt:     var(--surface);
+    --un-rule:       var(--rule);
+    --un-accent-warm: var(--accent-dim);
 }
 
-.reveal-viewport {
-    background: var(--un-bg);
-}
+/* ─────────────────────────────────────────────────────────────────────
+   Base
+   ───────────────────────────────────────────────────────────────────── */
+html, body, .reveal-viewport { background: var(--bg); }
 
 .reveal {
-    font-family: "Helvetica Neue", Helvetica, Arial, "Liberation Sans", sans-serif;
-    font-size: 28px;
-    font-weight: 300;
-    color: var(--un-gray-dark);
-    letter-spacing: 0.005em;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 26px;
+    font-weight: 400;
+    color: var(--text);
+    letter-spacing: -0.005em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-.reveal .slides {
-    text-align: left;
-}
+.reveal .slides { text-align: left; }
 
 .reveal .slides > section,
 .reveal .slides > section > section {
-    padding: 40px 60px;
-    line-height: 1.4;
+    padding: 56px 72px 72px;
+    line-height: 1.5;
+    height: 100%;
+    box-sizing: border-box;
+    background: var(--bg);
 }
 
-/* Headings */
+/* ─────────────────────────────────────────────────────────────────────
+   Typography
+   ───────────────────────────────────────────────────────────────────── */
 .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
     font-family: inherit;
-    color: var(--un-blue-deep);
+    color: var(--ink);
     text-transform: none;
     text-shadow: none;
-    font-weight: 500;
-    letter-spacing: 0;
-    margin: 0 0 0.6em 0;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.55em 0;
+    line-height: 1.15;
 }
 
 .reveal h1 {
-    font-size: 1.7em;
-    border-bottom: 3px solid var(--un-blue);
-    padding-bottom: 0.25em;
-    margin-bottom: 0.8em;
-    font-weight: 400;
+    font-size: 1.55em;
+    font-weight: 600;
+    padding: 0;
+    border: none;
+    margin-bottom: 0.5em;
 }
 
-.reveal h2 { font-size: 1.3em; }
-.reveal h3 { font-size: 1.05em; color: var(--un-gray-dark); font-weight: 500; }
-.reveal h4 { font-size: 0.9em; color: var(--un-gray); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+.reveal h2 { font-size: 1.25em; font-weight: 600; }
+.reveal h3 { font-size: 1em;    font-weight: 600; color: var(--ink); }
+.reveal h4 {
+    font-size: 0.65em;
+    font-weight: 600;
+    color: var(--subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 0.8em;
+}
 
-.reveal p { margin: 0 0 0.6em 0; }
+.reveal p { margin: 0 0 0.7em 0; font-weight: 400; }
 
 .reveal strong, .reveal b {
-    color: var(--un-blue-deep);
+    color: var(--ink);
     font-weight: 600;
 }
 
 .reveal em, .reveal i {
-    color: var(--un-gray-dark);
-    font-style: italic;
+    color: var(--accent);
+    font-style: normal;
+    font-weight: 500;
 }
 
 /* Lists */
-.reveal ul, .reveal ol {
-    margin: 0 0 0.6em 1em;
-    padding: 0;
-}
-
-.reveal ul li, .reveal ol li {
-    margin-bottom: 0.35em;
-}
-
-.reveal ul li::marker { color: var(--un-blue); }
-
-/* Tables */
-.reveal table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 0.5em 0;
-    font-size: 0.75em;
-    background: var(--un-bg);
-}
-
-.reveal table th {
-    background: var(--un-blue-deep);
-    color: white;
-    font-weight: 500;
-    text-align: left;
-    padding: 8px 14px;
-    border: none;
-}
-
-.reveal table td {
-    padding: 7px 14px;
-    border-bottom: 1px solid var(--un-rule);
-    vertical-align: top;
-}
-
-.reveal table tbody tr:hover { background: var(--un-bg-alt); }
+.reveal ul, .reveal ol { margin: 0 0 0.7em 1.1em; padding: 0; }
+.reveal ul li, .reveal ol li { margin-bottom: 0.3em; }
+.reveal ul li::marker { color: var(--accent); }
 
 /* Code */
 .reveal code, .reveal pre {
-    font-family: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    font-family: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
 }
 
 .reveal code {
-    font-size: 0.85em;
-    background: var(--un-bg-alt);
-    padding: 2px 8px;
+    font-size: 0.82em;
+    background: var(--accent-mist);
+    padding: 1px 7px;
     border-radius: 3px;
-    color: var(--un-blue-deep);
+    color: var(--accent);
+    font-weight: 500;
 }
 
-.reveal pre {
-    box-shadow: none;
-    font-size: 0.65em;
-    line-height: 1.4;
-    margin: 0.6em 0;
-}
-
-.reveal pre code {
-    padding: 16px 20px;
-    border-radius: 4px;
-    background: var(--un-bg-alt);
-    color: var(--un-gray-dark);
-    border-left: 3px solid var(--un-blue);
-    max-height: 500px;
-    overflow: auto;
-}
-
-/* Blockquote */
-.reveal blockquote {
-    display: block;
-    position: static;
-    width: 100%;
-    margin: 0.6em 0;
-    padding: 10px 20px;
-    background: var(--un-bg-alt);
-    border-left: 4px solid var(--un-blue);
-    box-shadow: none;
-    font-style: normal;
-    color: var(--un-gray-dark);
-    font-size: 0.95em;
-}
+/* Math */
+.reveal .katex { color: var(--ink); }
 
 /* Links */
 .reveal a {
-    color: var(--un-blue-dark);
+    color: var(--accent);
     text-decoration: none;
-    border-bottom: 1px solid var(--un-blue);
-    transition: color 0.15s;
+    border-bottom: 1px solid var(--accent-soft);
 }
 
-.reveal a:hover { color: var(--un-blue-deep); }
-
-/* Math (KaTeX) — keep default sizing but match color */
-.reveal .katex { color: var(--un-gray-dark); }
-
-/* Slide controls + progress bar */
-.reveal .controls {
-    color: var(--un-blue-dark);
+/* ─────────────────────────────────────────────────────────────────────
+   Tables
+   ───────────────────────────────────────────────────────────────────── */
+.reveal table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.6em 0;
+    font-size: 0.7em;
+    background: var(--bg);
 }
 
+.reveal table th {
+    background: transparent;
+    color: var(--subtle);
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 14px 8px;
+    border: none;
+    border-bottom: 2px solid var(--ink);
+    text-transform: uppercase;
+    font-size: 0.8em;
+    letter-spacing: 0.08em;
+}
+
+.reveal table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+    color: var(--text);
+}
+
+.reveal table td strong { color: var(--ink); font-weight: 600; }
+
+.reveal table tbody tr:last-child td { border-bottom: none; }
+.reveal table tbody tr:hover { background: var(--surface); }
+
+.reveal table td.partial {
+    color: var(--accent);
+    font-weight: 500;
+}
+
+.reveal table th { white-space: nowrap; }
+
+/* ─────────────────────────────────────────────────────────────────────
+   Controls + progress
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .controls { color: var(--accent); }
 .reveal .progress {
-    color: var(--un-blue);
-    background: var(--un-rule);
+    color: var(--accent);
+    background: var(--rule);
     height: 3px;
 }
 
-.reveal .slide-number {
-    color: var(--un-gray);
-    background: transparent;
-    font-size: 14px;
-    font-family: inherit;
-    right: 24px;
-    bottom: 16px;
+/* ─────────────────────────────────────────────────────────────────────
+   Footer
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .footer {
+    position: absolute;
+    bottom: 24px;
+    left: 72px;
+    right: 72px;
+    font-size: 0.42em;
+    color: var(--subtle);
+    display: flex;
+    justify-content: space-between;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-weight: 500;
 }
 
-/* Title slide (add class="title-slide" on the section) */
+/* ─────────────────────────────────────────────────────────────────────
+   Title slide
+   ───────────────────────────────────────────────────────────────────── */
 .reveal .title-slide {
-    text-align: left;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding: 72px 96px !important;
 }
 
 .reveal .title-slide::before {
     content: "";
     display: block;
-    width: 80px;
-    height: 4px;
-    background: var(--un-blue);
-    margin-bottom: 28px;
+    width: 48px;
+    height: 3px;
+    background: var(--accent);
+    margin-bottom: 40px;
 }
 
 .reveal .title-slide .eyebrow {
-    font-size: 0.55em;
+    font-size: 0.5em;
     text-transform: uppercase;
-    letter-spacing: 0.15em;
-    color: var(--un-gray);
-    margin-bottom: 1.2em;
-    font-weight: 500;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    margin-bottom: 1.4em;
+    font-weight: 600;
 }
 
 .reveal .title-slide h1 {
-    font-size: 2.3em;
-    font-weight: 300;
+    font-size: 3.6em;
+    font-weight: 700;
     border: none;
     padding: 0;
-    margin-bottom: 0.2em;
-    color: var(--un-blue-deep);
-    line-height: 1.1;
+    margin-bottom: 0.15em;
+    color: var(--ink);
+    line-height: 1;
+    letter-spacing: -0.035em;
 }
 
 .reveal .title-slide .subtitle {
-    font-size: 1.1em;
-    color: var(--un-gray-dark);
-    font-weight: 300;
-    margin-bottom: 2em;
+    font-size: 1.3em;
+    color: var(--muted);
+    font-weight: 400;
+    margin: 0.4em 0 2.2em 0;
     line-height: 1.3;
+    letter-spacing: -0.01em;
+    max-width: 42ch;
 }
 
 .reveal .title-slide .meta {
-    font-size: 0.55em;
-    color: var(--un-gray);
-    border-top: 1px solid var(--un-rule);
-    padding-top: 0.8em;
-    display: inline-block;
-    min-width: 360px;
+    font-size: 0.5em;
+    color: var(--subtle);
+    padding-top: 0;
+    border: none;
     line-height: 1.6;
-}
-
-.reveal .title-slide .meta strong {
-    color: var(--un-gray-dark);
+    min-width: 0;
     font-weight: 500;
-}
-
-/* Section divider slides */
-.reveal .section-divider {
-    text-align: left;
-    background: var(--un-blue-deep);
-    color: white;
-}
-
-.reveal .section-divider h1,
-.reveal .section-divider h2 {
-    color: white;
-    border-bottom-color: var(--un-accent-warm);
-}
-
-.reveal .section-divider .eyebrow {
-    font-size: 0.55em;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    color: rgba(255,255,255,0.7);
-}
-
-/* Footer (add <div class="footer"> inside a section) */
-.reveal .footer {
-    position: absolute;
-    bottom: 16px;
-    left: 60px;
-    right: 60px;
-    font-size: 0.45em;
-    color: var(--un-gray-light);
-    border-top: 1px solid var(--un-rule);
-    padding-top: 6px;
-    display: flex;
-    justify-content: space-between;
     letter-spacing: 0.03em;
 }
 
-/* Two-column layout helper (add class="cols" on a wrapper div) */
-.reveal .cols {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 28px;
-    align-items: start;
+.reveal .title-slide .meta strong {
+    color: var(--muted);
+    font-weight: 600;
 }
 
-.reveal .cols-3 {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 20px;
-    align-items: start;
+/* ─────────────────────────────────────────────────────────────────────
+   Section divider — bold red with white text
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .section-divider {
+    background: var(--accent) !important;
+    color: white;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding: 72px 96px !important;
 }
 
-/* Callout box */
-.reveal .callout {
-    background: var(--un-bg-alt);
-    border-left: 4px solid var(--un-blue);
-    padding: 14px 18px;
-    margin: 0.6em 0;
-    font-size: 0.9em;
-}
-
-.reveal .callout-warn {
-    background: #FDF6EC;
-    border-left: 4px solid var(--un-accent-warm);
-    padding: 14px 18px;
-    margin: 0.6em 0;
-    font-size: 0.9em;
-}
-
-/* Big stat block */
-.reveal .stat {
-    text-align: center;
-    padding: 12px;
-}
-
-.reveal .stat .value {
-    font-size: 2.2em;
-    font-weight: 300;
-    color: var(--un-blue-deep);
+.reveal .section-divider h1 {
+    color: white !important;
+    border: none !important;
+    padding: 0 !important;
+    font-size: 3em;
+    font-weight: 700;
+    letter-spacing: -0.03em;
     line-height: 1;
-    display: block;
+    margin: 0;
 }
 
-.reveal .stat .label {
-    font-size: 0.8em;
-    color: var(--un-gray);
-    margin-top: 6px;
-    display: block;
-}
-
-/* Sources line */
-.reveal .sources {
+.reveal .section-divider .eyebrow {
     font-size: 0.5em;
-    color: var(--un-gray-light);
-    margin-top: 1.5em;
-    line-height: 1.4;
-    border-top: 1px solid var(--un-rule);
-    padding-top: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: rgba(255,255,255,0.65);
+    margin-bottom: 1.2em;
+    font-weight: 600;
 }
 
-/* ── Popular-science slide patterns ───────────────────────────────────── */
-
-/* Big headline slide — applied DIRECTLY to <section class="headline-slide">
- * so the flex centering fills the full slide viewport. */
+/* ─────────────────────────────────────────────────────────────────────
+   Headline slide — generous, confident typography
+   ───────────────────────────────────────────────────────────────────── */
 .reveal section.headline-slide {
     display: flex !important;
     flex-direction: column !important;
     justify-content: center !important;
-    height: 100%;
-    padding: 60px 80px;
+    padding: 72px 96px !important;
 }
 
 .reveal section.headline-slide .eyebrow-small {
-    font-size: 0.5em;
+    font-size: 0.45em;
     text-transform: uppercase;
-    letter-spacing: 0.18em;
-    color: var(--un-gray);
-    font-weight: 500;
-    margin: 0 0 28px 0;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    font-weight: 600;
+    margin: 0 0 2.2em 0;
 }
 
 .reveal section.headline-slide .headline {
-    font-size: 1.55em;
-    font-weight: 300;
-    color: var(--un-blue-deep);
-    line-height: 1.15;
-    letter-spacing: -0.01em;
-    margin: 0 0 40px 0;
-    max-width: none;
+    font-size: 2em;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+    margin: 0 0 1em 0;
+    max-width: 32ch;
 }
 
 .reveal section.headline-slide .headline em {
-    color: var(--un-blue);
-    font-style: italic;
+    color: var(--accent);
+    font-style: normal;
+    font-weight: 600;
 }
 
 .reveal section.headline-slide .subhead {
-    font-size: 0.66em;
-    color: var(--un-gray);
-    max-width: 62ch;
-    margin: 0;
-    line-height: 1.6;
-    font-weight: 300;
-}
-
-/* Three-card layout for "kinds of X" */
-.reveal .kind-cards {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
-    margin-top: 18px;
-}
-
-.reveal .kind-card {
-    background: white;
-    border: 1px solid var(--un-rule);
-    border-top: 3px solid var(--un-blue);
-    border-radius: 4px;
-    padding: 16px 18px;
     font-size: 0.78em;
-    line-height: 1.45;
-}
-
-.reveal .kind-card .traits {
-    font-size: 0.7em;
-    color: var(--un-gray-light);
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    margin-bottom: 10px;
-}
-
-.reveal .kind-card h3 {
-    margin: 0 0 10px 0;
-    font-size: 1.15em;
-    color: var(--un-blue-deep);
-    font-weight: 500;
-    border: none;
-    padding: 0;
-}
-
-.reveal .kind-card .example {
-    color: var(--un-gray-dark);
+    color: var(--muted);
+    max-width: 56ch;
     margin: 0;
+    line-height: 1.55;
+    font-weight: 400;
 }
 
-.reveal .kind-card .example strong {
-    color: var(--un-blue-deep);
-}
-
-/* 2×2 quadrant diagram */
-.reveal .quadrant {
-    display: grid;
-    grid-template-columns: 26px repeat(2, 1fr);
-    grid-template-rows: auto 1fr 1fr;
-    gap: 4px;
-    margin: 14px 0;
-    font-size: 0.7em;
-    max-height: 480px;
-}
-
-.reveal .quadrant .col-head {
-    padding: 6px 10px;
-    font-weight: 600;
-    color: var(--un-gray);
-    text-transform: uppercase;
-    font-size: 0.82em;
-    letter-spacing: 0.1em;
-    text-align: center;
-    background: var(--un-bg-alt);
-    border-radius: 3px;
-}
-
-.reveal .quadrant .row-head {
-    font-weight: 600;
-    color: var(--un-gray);
-    text-transform: uppercase;
-    font-size: 0.82em;
-    letter-spacing: 0.1em;
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
-    text-align: center;
-    background: var(--un-bg-alt);
-    border-radius: 3px;
-    padding: 10px 2px;
-}
-
-.reveal .quadrant .cell {
-    padding: 10px 14px;
-    background: white;
-    border: 1px solid var(--un-rule);
-    border-radius: 4px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-height: 60px;
-}
-
-.reveal .quadrant .cell .label {
+.reveal section.headline-slide .subhead em {
+    color: var(--ink);
     font-weight: 500;
-    color: var(--un-blue-deep);
-    margin-bottom: 4px;
-    font-size: 1.05em;
 }
 
-.reveal .quadrant .cell .desc {
-    color: var(--un-gray);
-    font-size: 0.92em;
-    line-height: 1.4;
-}
-
-.reveal .quadrant .cell.highlight {
-    border-color: var(--un-blue);
-    background: linear-gradient(180deg, rgba(0,158,219,0.05), white);
-}
-
-/* Oversized stat trio — grid is more robust than flex against print.css */
+/* ─────────────────────────────────────────────────────────────────────
+   Big stats (3-column)
+   ───────────────────────────────────────────────────────────────────── */
 .reveal .big-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 40px;
-    margin: 28px 0 32px 0;
-    align-items: start;
+    gap: 48px;
+    margin: 40px 0 0;
 }
 
 .reveal .big-stats .stat-block .val {
-    font-size: 2.6em;
-    font-weight: 200;
-    color: var(--un-blue-deep);
+    font-size: 3.2em;
+    font-weight: 300;
+    color: var(--ink);
     line-height: 1;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.04em;
     display: block;
+    font-variant-numeric: tabular-nums;
 }
 
 .reveal .big-stats .stat-block .desc {
-    font-size: 0.58em;
-    color: var(--un-gray);
-    margin-top: 12px;
-    line-height: 1.4;
+    font-size: 0.55em;
+    color: var(--muted);
+    margin-top: 16px;
+    line-height: 1.5;
+    display: block;
+    font-weight: 400;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Kind cards (3 types of overlooked)
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .kind-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+    margin-top: 32px;
+}
+
+.reveal .kind-card {
+    padding: 24px 0 0 0;
+    border-top: 2px solid var(--ink);
+}
+
+.reveal .kind-card .traits {
+    font-size: 0.5em;
+    color: var(--subtle);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+}
+
+.reveal .kind-card h3 {
+    margin: 0 0 14px 0;
+    font-size: 1.15em;
+    color: var(--ink);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+.reveal .kind-card .example {
+    color: var(--muted);
+    margin: 0;
+    font-size: 0.7em;
+    line-height: 1.55;
+}
+
+.reveal .kind-card .example strong { color: var(--ink); font-weight: 600; }
+.reveal .kind-card .example em     { color: var(--accent); font-weight: 500; }
+
+.reveal .kind-card.muted {
+    border-top-color: var(--faint);
+}
+
+.reveal .kind-card.muted h3,
+.reveal .kind-card.muted .traits {
+    color: var(--subtle);
+}
+
+.reveal .kind-card.muted .example {
+    color: var(--subtle);
+}
+
+.reveal .kind-card.muted .example strong {
+    color: var(--muted);
+}
+
+.reveal .kind-card.selected {
+    border-top-color: var(--accent);
+    border-top-width: 3px;
+}
+
+.reveal .kind-card.selected h3 { color: var(--accent); }
+.reveal .kind-card.selected .traits { color: var(--accent); }
+
+/* Chronic vs. acute time panels */
+.reveal .time-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    margin-top: 28px;
+}
+
+.reveal .time-panel h3 {
+    font-size: 0.9em;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 0 0 12px 0;
+    letter-spacing: -0.01em;
+}
+
+.reveal .time-panel svg {
+    width: 100%;
+    height: auto;
     display: block;
 }
 
-/* Equation block with inline legend */
-.reveal .equation-block {
-    background: var(--un-bg-alt);
-    border-radius: 6px;
-    padding: 22px 28px;
-    margin: 16px 0 14px 0;
-    text-align: center;
-    font-size: 1em;
-}
-
-.reveal .equation-legend {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 8px 18px;
-    margin-top: 12px;
+.reveal .time-panel .time-desc {
     font-size: 0.65em;
+    color: var(--muted);
+    margin-top: 12px;
+    line-height: 1.6;
 }
 
-.reveal .equation-legend .tok {
-    font-family: "SF Mono", Menlo, Consolas, monospace;
-    color: var(--un-blue-deep);
-    font-weight: 500;
+.reveal .time-panel .time-desc strong { color: var(--ink); font-weight: 600; }
+
+/* "What this is not" grid */
+.reveal .not-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px 36px;
+    margin-top: 28px;
 }
 
-.reveal .equation-legend .tok-desc {
-    color: var(--un-gray);
-    margin-left: 6px;
-    font-weight: 300;
+.reveal .not-grid > div {
+    padding-top: 14px;
+    border-top: 1px solid var(--rule);
 }
 
-/* Before → after comparison */
+.reveal .not-grid h4 {
+    font-size: 0.55em;
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin: 0 0 10px 0;
+}
+
+.reveal .not-grid p {
+    font-size: 0.65em;
+    color: var(--text);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.reveal .not-grid p em { color: var(--accent); font-weight: 500; }
+
+/* Small grey footnote used under charts/tables */
+.reveal .slide-footnote {
+    font-size: 0.55em;
+    color: var(--subtle);
+    line-height: 1.6;
+    margin-top: 20px;
+    max-width: 88ch;
+}
+
+.reveal .slide-footnote strong { color: var(--muted); font-weight: 600; }
+.reveal .slide-footnote em     { color: var(--muted); font-style: normal; }
+
+/* ─────────────────────────────────────────────────────────────────────
+   Before / After layout
+   ───────────────────────────────────────────────────────────────────── */
 .reveal .before-after {
     display: grid;
-    grid-template-columns: 1fr 60px 1fr;
+    grid-template-columns: 1fr 80px 1fr;
     gap: 0;
     align-items: stretch;
-    margin: 20px 0;
+    margin: 32px 0 24px;
 }
 
 .reveal .before-after .side {
-    padding: 24px 20px;
-    border: 1px solid var(--un-rule);
-    border-radius: 6px;
-    background: white;
+    padding: 32px 28px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     text-align: center;
-    min-height: 220px;
+    min-height: 260px;
 }
 
-.reveal .before-after .side.before { opacity: 0.7; }
-.reveal .before-after .side.after  {
-    border-color: var(--un-blue);
-    box-shadow: 0 0 0 2px rgba(0,114,188,0.08);
+.reveal .before-after .side.before {
+    background: var(--surface);
+    border-radius: 4px;
+}
+
+.reveal .before-after .side.after {
+    background: var(--accent-mist);
+    border-radius: 4px;
 }
 
 .reveal .before-after .arrow {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.8em;
-    color: var(--un-blue);
-    font-weight: 200;
-}
-
-.reveal .before-after .side .label {
-    font-size: 0.55em;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--un-gray-light);
-    margin-bottom: 14px;
-    font-weight: 500;
-}
-
-.reveal .before-after .side .big-num {
-    font-size: 2.6em;
-    font-weight: 200;
-    color: var(--un-gray);
-    line-height: 1;
-    margin: 4px 0 14px 0;
-}
-
-.reveal .before-after .side.after .axis {
-    font-size: 0.8em;
-    color: var(--un-blue-deep);
-    font-weight: 500;
-    margin: 3px 0;
-}
-
-.reveal .before-after .side .sub {
-    font-size: 0.62em;
-    color: var(--un-gray);
-    line-height: 1.45;
-    margin-top: 10px;
-}
-
-/* Caption below a diagram */
-.reveal .caption {
-    text-align: center;
-    font-size: 0.58em;
-    color: var(--un-gray);
-    margin-top: 10px;
-    font-style: italic;
+    font-size: 1.4em;
+    color: var(--accent);
     font-weight: 300;
 }
 
-/* Closing two-column card strip */
-.reveal .benchmark-card {
-    background: white;
-    border: 1px solid var(--un-rule);
-    border-radius: 5px;
-    padding: 20px 22px;
-    font-size: 0.82em;
+.reveal .before-after .side .label {
+    font-size: 0.48em;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--subtle);
+    margin-bottom: 20px;
+    font-weight: 600;
 }
 
-.reveal .benchmark-card.blue  { border-left: 4px solid var(--un-blue); }
-.reveal .benchmark-card.warm  { border-left: 4px solid var(--un-accent-warm); }
+.reveal .before-after .side .big-num {
+    font-size: 3.4em;
+    font-weight: 300;
+    color: var(--faint);
+    line-height: 1;
+    margin: 4px 0 18px 0;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+}
+
+.reveal .before-after .side.after .axis {
+    font-size: 0.85em;
+    color: var(--ink);
+    font-weight: 600;
+    margin: 4px 0;
+    letter-spacing: -0.015em;
+}
+
+.reveal .before-after .side .sub {
+    font-size: 0.55em;
+    color: var(--muted);
+    line-height: 1.55;
+    margin-top: 14px;
+    font-weight: 400;
+}
+
+.reveal .before-after .side .sub em { color: var(--accent); font-weight: 500; }
+
+.reveal .caption {
+    text-align: center;
+    font-size: 0.5em;
+    color: var(--subtle);
+    margin-top: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Equation block
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .equation-block {
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 32px 40px;
+    margin: 24px 0 16px 0;
+    text-align: center;
+    font-size: 1.05em;
+    border-left: 3px solid var(--accent);
+}
+
+.reveal .equation-legend {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 10px 24px;
+    margin-top: 14px;
+    font-size: 0.58em;
+    line-height: 1.5;
+}
+
+.reveal .equation-legend .tok {
+    font-family: "JetBrains Mono", monospace;
+    color: var(--accent);
+    font-weight: 500;
+}
+
+.reveal .equation-legend .tok-desc {
+    color: var(--muted);
+    margin-left: 8px;
+}
+
+.reveal .equation-note {
+    font-size: 0.6em;
+    color: var(--muted);
+    margin-top: 18px;
+    line-height: 1.65;
+    max-width: 78ch;
+}
+
+.reveal .equation-note strong { color: var(--ink); font-weight: 600; }
+.reveal .equation-note em     { color: var(--accent); }
+
+/* ─────────────────────────────────────────────────────────────────────
+   Semantic layer — equal-width bars, descriptions live inside each bar.
+   Swiss-grid style: strict alignment, no wrapping, generous negative space
+   between rows, graduated red encoding depth of derivation.
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .onto-funnel {
+    position: relative;
+    margin: 28px auto 0;
+    max-width: 960px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.reveal .onto-bar {
+    display: grid;
+    grid-template-columns: 40px 48px 150px 1fr;
+    column-gap: 20px;
+    align-items: center;
+    height: 56px;
+    padding: 0 28px;
+    color: white;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.reveal .onto-bar .b-tag {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6em;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.55);
+    text-transform: uppercase;
+}
+
+.reveal .onto-bar .b-count {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 1em;
+    font-weight: 500;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: rgba(255,255,255,0.95);
+    line-height: 1;
+}
+
+.reveal .onto-bar .b-name {
+    font-size: 0.82em;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: white;
+    line-height: 1;
+}
+
+.reveal .onto-bar .b-desc {
+    font-size: 0.6em;
+    font-weight: 400;
+    color: rgba(255,255,255,0.78);
+    line-height: 1.35;
+    letter-spacing: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Red gradient from deep (most-derived, L5 top) to pale (observed, L1 bottom). */
+.reveal .onto-bar.r-5 { background: #5c1414; }
+.reveal .onto-bar.r-4 { background: #782020; }
+.reveal .onto-bar.r-3 { background: #942d2d; }
+.reveal .onto-bar.r-2 { background: #af3d3d; }
+.reveal .onto-bar.r-1 { background: #c95555; }
+
+/* Axis label running down the right edge of the bar stack */
+.reveal .onto-axis {
+    position: absolute;
+    top: 0;
+    right: -72px;
+    bottom: 0;
+    width: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    font-size: 0.42em;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--subtle);
+    font-weight: 600;
+    padding: 4px 0;
+}
+
+.reveal .onto-axis .axis-line {
+    width: 1px;
+    flex: 1;
+    background: var(--rule);
+    margin: 6px 0 6px 4px;
+}
+
+/* Single sentence under the stack */
+.reveal .onto-narrative {
+    font-size: 0.6em;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 760px;
+    margin: 28px auto 0;
+    text-align: left;
+}
+
+.reveal .onto-narrative em {
+    color: var(--accent);
+    font-weight: 600;
+    font-style: normal;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Legacy pyramid (kept for backward compat, unused in current deck)
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .semantic-layer {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 36px;
+    margin-top: 24px;
+    align-items: start;
+}
+
+.reveal .level-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.reveal .level-row {
+    display: grid;
+    grid-template-columns: 140px 44px 1fr;
+    column-gap: 14px;
+    align-items: center;
+    padding: 10px 16px;
+    border-radius: 3px;
+    font-size: 0.58em;
+    line-height: 1.3;
+    color: white;
+}
+
+.reveal .level-row .level-tag {
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    font-size: 1.08em;
+    white-space: nowrap;
+}
+
+.reveal .level-row .level-count {
+    font-family: "JetBrains Mono", monospace;
+    color: rgba(255,255,255,0.85);
+    font-size: 1.7em;
+    font-weight: 600;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+.reveal .level-row .level-desc {
+    color: rgba(255,255,255,0.85);
+    font-size: 1em;
+    grid-row: 1;
+    grid-column: 3;
+}
+
+.reveal .level-row .level-ex {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.85em;
+    color: rgba(255,255,255,0.7);
+    background: none;
+    padding: 0;
+    grid-row: 2;
+    grid-column: 3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Shades of red, deepest at the top (conceptually "closer to output") */
+.reveal .level-row.lvl-5 { background: var(--accent);         margin: 0 0 0 48px; }
+.reveal .level-row.lvl-4 { background: #8f2a2a;              margin: 0 0 0 36px; }
+.reveal .level-row.lvl-3 { background: #a13636;              margin: 0 0 0 24px; }
+.reveal .level-row.lvl-2 { background: #b34545;              margin: 0 0 0 12px; }
+.reveal .level-row.lvl-1 { background: #c55757;              margin: 0; }
+
+.reveal .semantic-side {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-self: start;
+    padding-top: 8px;
+}
+
+.reveal .failure-card {
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: 3px;
+    padding: 14px 18px;
+    background: var(--bg);
+    font-size: 0.58em;
+    line-height: 1.5;
+}
+
+.reveal .failure-card .failure-head {
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.8em;
+    font-weight: 600;
+    color: var(--subtle);
+    margin-bottom: 10px;
+}
+
+.reveal .failure-card code {
+    background: var(--accent-wash);
+    color: var(--accent);
+}
+
+.reveal .failure-card em { color: var(--ink); font-weight: 500; }
+.reveal .failure-card .failure-body { color: var(--text); margin-bottom: 8px; }
+.reveal .failure-card .failure-foot { color: var(--muted); font-size: 0.95em; }
+
+.reveal .lens-block {
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: 3px;
+    padding: 14px 18px;
+    background: var(--bg);
+    font-size: 0.58em;
+    line-height: 1.55;
+}
+
+.reveal .lens-block .lens-head {
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.8em;
+    color: var(--subtle);
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.reveal .lens-block .lens-head strong {
+    color: var(--ink);
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+.reveal .lens-block .lens-list { color: var(--ink); font-weight: 500; margin-bottom: 6px; }
+.reveal .lens-block .lens-modes { color: var(--muted); font-size: 0.95em; }
+
+/* ─────────────────────────────────────────────────────────────────────
+   2×2 Quadrant
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .quadrant {
+    display: grid;
+    grid-template-columns: 30px repeat(2, 1fr);
+    grid-template-rows: auto 1fr 1fr;
+    gap: 8px;
+    margin: 24px 0;
+    font-size: 0.72em;
+    max-height: 460px;
+}
+
+.reveal .quadrant .col-head {
+    padding: 8px 10px;
+    font-weight: 600;
+    color: var(--subtle);
+    text-transform: uppercase;
+    font-size: 0.78em;
+    letter-spacing: 0.12em;
+    text-align: center;
+}
+
+.reveal .quadrant .row-head {
+    font-weight: 600;
+    color: var(--subtle);
+    text-transform: uppercase;
+    font-size: 0.78em;
+    letter-spacing: 0.12em;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    text-align: center;
+    padding: 10px 2px;
+}
+
+.reveal .quadrant .cell {
+    padding: 18px 22px;
+    background: var(--surface);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 70px;
+}
+
+.reveal .quadrant .cell .label {
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 6px;
+    font-size: 1.02em;
+    letter-spacing: -0.01em;
+}
+
+.reveal .quadrant .cell .desc {
+    color: var(--muted);
+    font-size: 0.9em;
+    line-height: 1.45;
+}
+
+.reveal .quadrant .cell.highlight {
+    background: var(--accent-mist);
+    box-shadow: inset 2px 0 0 var(--accent);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Two-column layout helper
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+}
+
+.reveal .cols-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+    align-items: start;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Callout boxes
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .callout {
+    background: var(--accent-mist);
+    border-left: 3px solid var(--accent);
+    padding: 16px 22px;
+    margin: 20px 0;
+    font-size: 0.78em;
+    border-radius: 0 4px 4px 0;
+    line-height: 1.55;
+}
+
+.reveal .callout strong { color: var(--accent); font-weight: 600; }
+
+.reveal .callout-warn {
+    background: var(--surface);
+    border-left: 3px solid var(--ink);
+    padding: 16px 22px;
+    margin: 20px 0;
+    font-size: 0.78em;
+    border-radius: 0 4px 4px 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Benchmark cards (validation setup)
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .benchmark-card {
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 24px 28px;
+    font-size: 0.78em;
+    border-left: 3px solid var(--accent);
+}
+
+.reveal .benchmark-card.blue { border-left-color: var(--accent); }
+.reveal .benchmark-card.warm { border-left-color: var(--ink); }
 
 .reveal .benchmark-card .badge {
-    font-size: 0.65em;
-    color: var(--un-gray);
+    font-size: 0.6em;
+    color: var(--subtle);
     text-transform: uppercase;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.14em;
     font-weight: 600;
-    margin-bottom: 6px;
+    margin-bottom: 10px;
 }
 
 .reveal .benchmark-card h3 {
-    margin: 0 0 10px 0;
-    font-size: 1.1em;
-    color: var(--un-blue-deep);
-    border: none;
-    padding: 0;
+    margin: 0 0 14px 0;
+    font-size: 1.12em;
+    color: var(--ink);
+    font-weight: 600;
 }
+
+.reveal .benchmark-card p { line-height: 1.55; }
 
 .reveal .benchmark-card .map {
-    margin-top: 10px;
-    color: var(--un-blue-deep);
+    margin-top: 14px;
+    color: var(--accent);
     font-weight: 500;
-    font-size: 0.95em;
+    font-size: 0.92em;
 }
 
-/* ── Print-mode overrides ────────────────────────────────────────────────
- * reveal.js adds `html.reveal-print .reveal .slides section { padding:0
- * !important; display:block !important; position:absolute !important }` with
- * specificity (0,3,1). These rules match with specificity (0,4,1) so they
- * win, restoring our padding and letting headline slides flex-center. */
+/* ─────────────────────────────────────────────────────────────────────
+   "What this is not" — stripped, minimal grid
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .cols-3 h4 {
+    color: var(--subtle) !important;
+    font-size: 0.5em !important;
+    margin-bottom: 0.6em;
+}
 
-/* Every print-mode slide needs padding, especially a bottom safety margin
- * so the absolute-positioned footer doesn't overlap content. */
+/* ─────────────────────────────────────────────────────────────────────
+   Print mode
+   ───────────────────────────────────────────────────────────────────── */
 html.reveal-print .reveal .slides section {
-    padding: 40px 60px 64px 60px !important;
+    padding: 56px 72px 72px !important;
 }
 
-/* Section dividers keep the full-bleed blue bg but still need bottom padding. */
 html.reveal-print .reveal .slides section.section-divider {
-    padding: 60px 60px 64px 60px !important;
+    padding: 72px 96px !important;
 }
 
-/* Headline slides: vertically centered content; fill the whole pdf-page. */
+html.reveal-print .reveal .slides section.title-slide,
 html.reveal-print .reveal .slides section.headline-slide {
     display: flex !important;
     flex-direction: column !important;
@@ -692,26 +1074,9 @@ html.reveal-print .reveal .slides section.headline-slide {
     left: 0 !important;
     width: 100% !important;
     height: 100% !important;
-    padding: 60px 80px !important;
+    padding: 72px 96px !important;
 }
 
-/* Title slide: same centering treatment for consistency. */
-html.reveal-print .reveal .slides section.title-slide {
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: center !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    padding: 60px 80px !important;
-}
-
-/* Print-mode CSS reset doesn't apply our existing slide padding, so the
- * on-screen rule stays identical but is re-asserted in print mode with
- * higher specificity. */
 @media print {
-    .reveal .slides section {
-        page-break-after: always;
-    }
+    .reveal .slides section { page-break-after: always; }
 }
