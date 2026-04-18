@@ -7,8 +7,7 @@
 //      section and lets the user click to jump.
 //
 // No parallax, no scroll-linked transforms, no motion budget above ~1.5 s
-// per interaction. This is the ICRC/DeepMind register — motion exists to
-// aid comprehension, not to ornament.
+// per interaction. Motion exists to aid comprehension, not to ornament.
 
 (function () {
     "use strict";

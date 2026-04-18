@@ -111,7 +111,7 @@ def _select_featured(lens_id: str, mode_id: str) -> None:
 st.markdown(
     f"<div style='font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.14em; "
     f"color: {COLORS['accent']}; font-weight: 600; margin-bottom: 10px;'>"
-    f"Start here · featured views</div>",
+    f"Featured views</div>",
     unsafe_allow_html=True,
 )
 

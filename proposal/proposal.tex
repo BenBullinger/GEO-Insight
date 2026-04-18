@@ -33,7 +33,7 @@
 \noindent
 Humanitarian coordinators and donor advisors need rapid, defensible answers to one question: \emph{where does documented need most outpace available funding?} The 2026 Global Humanitarian Overview asks \$33B for 135M people, yet the 2025 appeal raised only \$12B --- the lowest in a decade. Nineteen country contexts are now severely underfunded, up from eight in 2021. When almost every response is underfunded, the useful question shifts from \emph{which crises are funded?} to \emph{relative to documented need, which crises are most overlooked?}
 
-Existing tools --- CERF UFE rankings, FTS coverage ratios, and Palantir-Foundry-based systems such as WFP's DOTS --- treat overlookedness as a \textbf{scalar}: one number per country-year. Our contribution is a \emph{joint-distribution} view of overlookedness, anchored in three explicit research gaps in the 2015--2026 humanitarian-analytics literature. We extend the MADM/AHP/MAUT framework of Rye \& Aktas~\cite{rye2022} with two new axes:
+Existing tools --- CERF UFE rankings, FTS coverage ratios, per-country-year coverage indices more broadly --- treat overlookedness as a \textbf{scalar}: one number per country-year. Our contribution is a \emph{joint-distribution} view of overlookedness, anchored in three explicit research gaps in the 2015--2026 humanitarian-analytics literature. We extend the MADM/AHP/MAUT framework of Rye \& Aktas~\cite{rye2022} with two new axes:
 (i) an \textbf{intra-crisis equity term} measuring inequality of coverage across sector clusters within a single country, following the fair-distribution formulation of Vargas Florez et al.~\cite{vargasflorez2015};
 (ii) an \textbf{inter-stakeholder disagreement term} measuring rank variance across four donor-preference profiles, operationalising the per-decision-maker rank divergence empirically demonstrated by Rye \& Aktas (Table~13).
 The resulting four-cell typology --- \emph{consensus-overlooked}, \emph{contested}, \emph{sector-starved}, or combinations --- is a classification that current tools conflate. Scored via \emph{evidence-bounded} MAUT (a weighted sum without renormalisation over observed attributes; missing attributes contribute zero) so that incomplete data cannot inflate rank. Validated against two independent external benchmarks: on the strict-completeness pool we reach Overlap@5 $= 100\%$ against OCHA's CERF Underfunded Emergencies, and the same four of five crises persist at top-5 as the pool triples to admit partial-completeness countries (Overlap@5 $= 80\%$).
@@ -79,7 +79,7 @@ Vargas Florez et al.~\cite{vargasflorez2015} give the equation template. Their E
 Griffith et al.~\cite{griffith2017} argue that during time-constrained humanitarian operations, simple and interpretable analytics outperform complex black-box methods, and characterise the field as ``data rich, information poor'' with data integration (not algorithm choice) as the operational bottleneck. We take this as a constraint on any method that adds to the score vector: every new term must decompose cleanly and be explainable to a non-technical analyst.
 
 \paragraph{What Geo-Insight adds that is not in this literature.}
-No paper in our review aggregates per-decision-maker rank divergence into an operational ``disagreement'' meta-score. No paper operationalises intra-crisis equity as a Gini-type inequality on cluster coverage ratios within a single country HRP. Both are small, defensible extensions of existing frameworks. Neither is addressed by Palantir-Foundry-based systems such as WFP's DOTS~\cite{wfppalantir}, which unify an organisation's operational data toward a single source of truth --- the opposite of surfacing inter-stakeholder disagreement.
+No paper in our review aggregates per-decision-maker rank divergence into an operational ``disagreement'' meta-score. No paper operationalises intra-crisis equity as a Gini-type inequality on cluster coverage ratios within a single country HRP. Both are small, defensible extensions of existing frameworks, and neither is addressed by operational analytics platforms that unify a single organisation's data toward one authoritative figure --- the opposite of what is needed when the interesting signal lies in disagreement across stakeholders.
 
 \section{Data Sources}
 
@@ -331,7 +331,7 @@ We average these over profiles and surface the (chronic, acute) pair as a 2-D vi
 \section{System Architecture}
 
 \subsection{Typed semantic layer}\label{sec:semantic-layer}
-Every analytic quantity in the system is registered as a named property at one of five derivation levels: \emph{L1 observations} (22 raw primitives, e.g.\ HNO in-need counts, FTS requirements and funding), \emph{L2 ratios} (18 scale-normalised signals, e.g.\ coverage, gap-per-person-in-need), \emph{L3 inequality} (10 distribution indices: sector Gini, donor HHI, weakest-sector coverage), \emph{L4 trends} (12 windowed aggregates: rolling baselines, deltas, slopes, persistence), and \emph{L5 composites} (9 scores, typology labels, and the completeness flag). The canonical declaration lives in a single YAML specification that names, for each of the 71 properties, its formula, input lineage, unit, granularity, and known failure modes. A registry class reads this specification at import time, so every displayed value can carry a tooltip derived directly from the spec; no analytic column exists in code that is not declared in the ontology. This is the Palantir-Foundry-style substrate on which the scoring engine runs.
+Every analytic quantity in the system is registered as a named property at one of five derivation levels: \emph{L1 observations} (22 raw primitives, e.g.\ HNO in-need counts, FTS requirements and funding), \emph{L2 ratios} (18 scale-normalised signals, e.g.\ coverage, gap-per-person-in-need), \emph{L3 inequality} (10 distribution indices: sector Gini, donor HHI, weakest-sector coverage), \emph{L4 trends} (12 windowed aggregates: rolling baselines, deltas, slopes, persistence), and \emph{L5 composites} (9 scores, typology labels, and the completeness flag). The canonical declaration lives in a single YAML specification that names, for each of the 71 properties, its formula, input lineage, unit, granularity, and known failure modes. A registry class reads this specification at import time, so every displayed value can carry a tooltip derived directly from the spec; no analytic column exists in code that is not declared in the ontology. The scoring engine and all lens views read from this substrate without exception.
 
 \begin{enumerate}[leftmargin=1.5em,itemsep=2pt,topsep=2pt]
     \item \textbf{Ingestion.} HDX HAPI client (preferred) with fallback to direct CSV pulls. Pandas dataframes cached locally with dataset version and fetch timestamp.
@@ -455,11 +455,6 @@ Engineering Applications of Artificial Intelligence, 46, 326--335.
 Griffith, D.A., Boehmke, B., Bradley, R.V., Hazen, B.T.\ and Johnson, A.W. (2017).
 \emph{Embedded analytics: improving decision support for humanitarian logistics operations.}
 Annals of Operations Research, 283, 247--265.
-
-\bibitem{wfppalantir}
-World Food Programme (2019).
-\emph{WFP and Palantir partnership.}
-\url{https://www.wfp.org/news/palantir-and-wfp-partner-help-transform-global-humanitarian-delivery}
 
 \bibitem{gho2026}
 OCHA (2025).
