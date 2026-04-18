@@ -14,7 +14,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from aggregations.concentration import donor_concentration, cluster_inequality
+from aggregations.concentration import (
+    donor_concentration,
+    cluster_inequality,
+    phase_gini_latest,
+    cbpf_reliance_latest,
+)
+from aggregations.temporal import build_temporal_frame
 
 DATA = Path(__file__).resolve().parent.parent / "Data"
 
@@ -159,11 +165,23 @@ def build_enriched_frame(year: int = 2025) -> pd.DataFrame:
     # ── Level 3 ──
     donors = donor_concentration(year=year)
     clusters = cluster_inequality(year=year)
-    df = df.join(donors, how="left").join(clusters, how="left")
+    phase_gini = phase_gini_latest()
+    cbpf = cbpf_reliance_latest(year=year)
+    df = (
+        df.join(donors, how="left")
+        .join(clusters, how="left")
+        .join(phase_gini, how="left")
+        .join(cbpf, how="left")
+    )
 
-    # Drop countries with no meaningful Funding Pressure signal:
-    # need at least requirements>0 and coverage definable
-    df = df[df["requirements"].fillna(0) > 0]
+    # ── Level 4 ──
+    temporal = build_temporal_frame()
+    df = df.join(temporal, how="left")
+
+    # Eligibility: need at least requirements>0 OR a severity reading on the panel
+    has_req = df["requirements"].fillna(0) > 0
+    has_sev = df.get("severity_baseline_24m", pd.Series(dtype=float)).notna()
+    df = df[has_req | has_sev]
     return df
 
 

@@ -41,8 +41,17 @@ def get_enriched():
 
 REGISTRY = get_registry()
 
-# Phase 1: only Funding Pressure is fully wired
-PHASE_1_LENSES = {"funding_pressure"}
+# Phase 2: seven lenses wired (Level 1-4 aggregates landed). Only geo_insight_score
+# (Lens 8 — our composite gap score) waits on Phase 3.
+ACTIVE_LENSES = {
+    "magnitude",
+    "intensity",
+    "severity_composition",
+    "funding_pressure",
+    "donor_fragility",
+    "temporal_dynamics",
+    "access_friction",
+}
 
 
 # ─── Sidebar ───────────────────────────────────────────────────────────────
@@ -56,7 +65,7 @@ lens_order = ["funding_pressure"] + [
 
 def _label(lid: str) -> str:
     lens = REGISTRY.lenses[lid]
-    marker = " · Phase 1" if lid in PHASE_1_LENSES else " · Phase 2/3"
+    marker = "" if lid in ACTIVE_LENSES else " · Phase 3"
     return f"{lens.name}{marker}"
 
 
@@ -79,10 +88,10 @@ st.sidebar.caption(
 
 
 # ─── Route ─────────────────────────────────────────────────────────────────
-if lens_id not in PHASE_1_LENSES:
+if lens_id not in ACTIVE_LENSES:
     st.warning(
-        f"**{lens.name}** ships in Phase 2/3. Phase 1 wires only "
-        "**Funding Pressure** end-to-end."
+        f"**{lens.name}** ships in Phase 3. Phase 2 wires seven lenses end-to-end; "
+        "this one needs the Level-5 composite gap score which is Phase 3 work."
     )
     st.markdown(f"_Question this lens will answer:_ **{lens.question}**")
     import pandas as _pd
@@ -90,7 +99,7 @@ if lens_id not in PHASE_1_LENSES:
     for p in lens.properties:
         prop = REGISTRY.properties.get(p)
         if prop:
-            in_frame = "✓ in enriched frame" if p in get_enriched().columns else "Phase 2/3"
+            in_frame = "✓ in enriched frame" if p in get_enriched().columns else "Phase 3"
             rows.append({
                 "property": p,
                 "description": (prop.description if prop.description else "—"),
