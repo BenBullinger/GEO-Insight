@@ -342,6 +342,329 @@
     padding-top: 6px;
 }
 
+/* ── Popular-science slide patterns ───────────────────────────────────── */
+
+/* Big headline slide — one sentence, lots of whitespace */
+.reveal .headline-slide {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 520px;
+    padding: 40px 20px;
+}
+
+.reveal .headline-slide .eyebrow-small {
+    font-size: 0.55em;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--un-gray);
+    font-weight: 500;
+    margin-bottom: 20px;
+}
+
+.reveal .headline {
+    font-size: 1.9em;
+    font-weight: 300;
+    color: var(--un-blue-deep);
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+    margin: 0 0 22px 0;
+    max-width: 28ch;
+}
+
+.reveal .headline em {
+    color: var(--un-blue);
+    font-style: italic;
+}
+
+.reveal .subhead {
+    font-size: 0.72em;
+    color: var(--un-gray);
+    max-width: 62ch;
+    margin: 0;
+    line-height: 1.55;
+    font-weight: 300;
+}
+
+/* Three-card layout for "kinds of X" */
+.reveal .kind-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-top: 18px;
+}
+
+.reveal .kind-card {
+    background: white;
+    border: 1px solid var(--un-rule);
+    border-top: 3px solid var(--un-blue);
+    border-radius: 4px;
+    padding: 16px 18px;
+    font-size: 0.78em;
+    line-height: 1.45;
+}
+
+.reveal .kind-card .traits {
+    font-size: 0.7em;
+    color: var(--un-gray-light);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+}
+
+.reveal .kind-card h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.15em;
+    color: var(--un-blue-deep);
+    font-weight: 500;
+    border: none;
+    padding: 0;
+}
+
+.reveal .kind-card .example {
+    color: var(--un-gray-dark);
+    margin: 0;
+}
+
+.reveal .kind-card .example strong {
+    color: var(--un-blue-deep);
+}
+
+/* 2×2 quadrant diagram */
+.reveal .quadrant {
+    display: grid;
+    grid-template-columns: 26px repeat(2, 1fr);
+    gap: 4px;
+    margin: 14px 0;
+    font-size: 0.75em;
+}
+
+.reveal .quadrant .col-head {
+    padding: 6px 10px;
+    font-weight: 600;
+    color: var(--un-gray);
+    text-transform: uppercase;
+    font-size: 0.82em;
+    letter-spacing: 0.1em;
+    text-align: center;
+    background: var(--un-bg-alt);
+    border-radius: 3px;
+}
+
+.reveal .quadrant .row-head {
+    font-weight: 600;
+    color: var(--un-gray);
+    text-transform: uppercase;
+    font-size: 0.82em;
+    letter-spacing: 0.1em;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    text-align: center;
+    background: var(--un-bg-alt);
+    border-radius: 3px;
+    padding: 10px 2px;
+}
+
+.reveal .quadrant .cell {
+    padding: 16px 18px;
+    background: white;
+    border: 1px solid var(--un-rule);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 76px;
+}
+
+.reveal .quadrant .cell .label {
+    font-weight: 500;
+    color: var(--un-blue-deep);
+    margin-bottom: 4px;
+    font-size: 1.05em;
+}
+
+.reveal .quadrant .cell .desc {
+    color: var(--un-gray);
+    font-size: 0.92em;
+    line-height: 1.4;
+}
+
+.reveal .quadrant .cell.highlight {
+    border-color: var(--un-blue);
+    background: linear-gradient(180deg, rgba(0,158,219,0.05), white);
+}
+
+/* Oversized stat trio */
+.reveal .big-stats {
+    display: flex;
+    gap: 60px;
+    justify-content: flex-start;
+    align-items: flex-start;
+    margin: 22px 0 26px 0;
+    flex-wrap: wrap;
+}
+
+.reveal .big-stats .stat-block .val {
+    font-size: 2.8em;
+    font-weight: 200;
+    color: var(--un-blue-deep);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    display: block;
+}
+
+.reveal .big-stats .stat-block .desc {
+    font-size: 0.62em;
+    color: var(--un-gray);
+    margin-top: 10px;
+    line-height: 1.35;
+    display: block;
+    max-width: 22ch;
+}
+
+/* Equation block with inline legend */
+.reveal .equation-block {
+    background: var(--un-bg-alt);
+    border-radius: 6px;
+    padding: 22px 28px;
+    margin: 16px 0 14px 0;
+    text-align: center;
+    font-size: 1em;
+}
+
+.reveal .equation-legend {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 8px 18px;
+    margin-top: 12px;
+    font-size: 0.65em;
+}
+
+.reveal .equation-legend .tok {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    color: var(--un-blue-deep);
+    font-weight: 500;
+}
+
+.reveal .equation-legend .tok-desc {
+    color: var(--un-gray);
+    margin-left: 6px;
+    font-weight: 300;
+}
+
+/* Before → after comparison */
+.reveal .before-after {
+    display: grid;
+    grid-template-columns: 1fr 60px 1fr;
+    gap: 0;
+    align-items: stretch;
+    margin: 20px 0;
+}
+
+.reveal .before-after .side {
+    padding: 24px 20px;
+    border: 1px solid var(--un-rule);
+    border-radius: 6px;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    min-height: 220px;
+}
+
+.reveal .before-after .side.before { opacity: 0.7; }
+.reveal .before-after .side.after  {
+    border-color: var(--un-blue);
+    box-shadow: 0 0 0 2px rgba(0,114,188,0.08);
+}
+
+.reveal .before-after .arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8em;
+    color: var(--un-blue);
+    font-weight: 200;
+}
+
+.reveal .before-after .side .label {
+    font-size: 0.55em;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--un-gray-light);
+    margin-bottom: 14px;
+    font-weight: 500;
+}
+
+.reveal .before-after .side .big-num {
+    font-size: 2.6em;
+    font-weight: 200;
+    color: var(--un-gray);
+    line-height: 1;
+    margin: 4px 0 14px 0;
+}
+
+.reveal .before-after .side.after .axis {
+    font-size: 0.8em;
+    color: var(--un-blue-deep);
+    font-weight: 500;
+    margin: 3px 0;
+}
+
+.reveal .before-after .side .sub {
+    font-size: 0.62em;
+    color: var(--un-gray);
+    line-height: 1.45;
+    margin-top: 10px;
+}
+
+/* Caption below a diagram */
+.reveal .caption {
+    text-align: center;
+    font-size: 0.58em;
+    color: var(--un-gray);
+    margin-top: 10px;
+    font-style: italic;
+    font-weight: 300;
+}
+
+/* Closing two-column card strip */
+.reveal .benchmark-card {
+    background: white;
+    border: 1px solid var(--un-rule);
+    border-radius: 5px;
+    padding: 20px 22px;
+    font-size: 0.82em;
+}
+
+.reveal .benchmark-card.blue  { border-left: 4px solid var(--un-blue); }
+.reveal .benchmark-card.warm  { border-left: 4px solid var(--un-accent-warm); }
+
+.reveal .benchmark-card .badge {
+    font-size: 0.65em;
+    color: var(--un-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.reveal .benchmark-card h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.1em;
+    color: var(--un-blue-deep);
+    border: none;
+    padding: 0;
+}
+
+.reveal .benchmark-card .map {
+    margin-top: 10px;
+    color: var(--un-blue-deep);
+    font-weight: 500;
+    font-size: 0.95em;
+}
+
 /* Print / PDF export — let reveal handle pagination */
 @media print {
     .reveal .slides section {
