@@ -176,6 +176,7 @@ def model(observed: dict, mask: dict, n: int):
 # ─── SVI fit + posterior sampling ──────────────────────────────────────────
 def fit(
     inputs: dict,
+    model_fn=None,
     num_steps: int = 4000,
     learning_rate: float = 1e-2,
     num_samples: int = 2000,
@@ -189,10 +190,12 @@ def fit(
         theta_median:  array of per-country posterior medians
         theta_ci90:    (2, n) array of 5th / 95th percentiles
     """
+    if model_fn is None:
+        model_fn = model
     numpyro.set_platform("cpu")
     rng = jax.random.PRNGKey(seed)
-    guide = AutoNormal(model)
-    svi = SVI(model, guide, numpyro.optim.Adam(learning_rate), Trace_ELBO())
+    guide = AutoNormal(model_fn)
+    svi = SVI(model_fn, guide, numpyro.optim.Adam(learning_rate), Trace_ELBO())
 
     t0 = time.time()
     svi_result = svi.run(
