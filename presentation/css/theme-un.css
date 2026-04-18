@@ -435,9 +435,11 @@
 .reveal .quadrant {
     display: grid;
     grid-template-columns: 26px repeat(2, 1fr);
+    grid-template-rows: auto 1fr 1fr;
     gap: 4px;
     margin: 14px 0;
-    font-size: 0.75em;
+    font-size: 0.7em;
+    max-height: 480px;
 }
 
 .reveal .quadrant .col-head {
