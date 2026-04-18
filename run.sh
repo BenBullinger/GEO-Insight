@@ -36,6 +36,15 @@ if [ ! -x dashboard/.venv/bin/streamlit ]; then
     dashboard/.venv/bin/pip install --quiet -r dashboard/requirements.txt
 fi
 
+# ─── 2b. Third-party: INFORM Severity (global monthly severity panel) ───────
+# ~130 MB of monthly xlsx → one consolidated CSV. Skipped if already present.
+if [ ! -f Data/Third-Party/DRMKC-INFORM/inform_severity_long.csv ]; then
+    echo "→ Downloading INFORM Severity snapshots (one-time, ~3–5 min, polite rate-limited)…"
+    python3 Data/Third-Party/DRMKC-INFORM/download.py
+    echo "→ Consolidating INFORM snapshots into long-format CSV…"
+    dashboard/.venv/bin/python Data/Third-Party/DRMKC-INFORM/consolidate.py
+fi
+
 # Ensure Streamlit's first-run email prompt is pre-silenced
 if [ ! -f "$HOME/.streamlit/credentials.toml" ]; then
     mkdir -p "$HOME/.streamlit"

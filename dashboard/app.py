@@ -107,6 +107,21 @@ def load_cbpf_contributions() -> pd.DataFrame:
     return pd.read_csv(DATA / "cbpf" / "cbpf_contributions.csv", low_memory=False)
 
 
+@st.cache_data(show_spinner="Loading INFORM Severity (monthly panel)…")
+def load_inform() -> pd.DataFrame:
+    path = DATA / "Third-Party" / "DRMKC-INFORM" / "inform_severity_long.csv"
+    if not path.exists():
+        return pd.DataFrame()
+    df = pd.read_csv(path)
+    df["severity"] = pd.to_numeric(df["severity"], errors="coerce")
+    df["category"] = pd.to_numeric(df["category"], errors="coerce")
+    df["date"] = pd.to_datetime(
+        df["year"].astype(str) + "-" + df["month"].astype(str).str.zfill(2) + "-01",
+        errors="coerce",
+    )
+    return df.dropna(subset=["severity", "ISO3", "date"])
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers
 # ─────────────────────────────────────────────────────────────────────────────
@@ -530,6 +545,102 @@ def page_cbpf() -> None:
     )
 
 
+def page_inform() -> None:
+    st.title("Severity — INFORM (monthly panel)")
+    st.caption(
+        "EU JRC DRMKC Index for Risk Management. Per-crisis severity on a 1–10 scale, "
+        "assessed every month. This is the source for attribute $a_4$ and the panel-data "
+        "backbone for the temporal bonus task."
+    )
+
+    df = load_inform()
+    if df.empty:
+        st.warning(
+            "`Data/Third-Party/DRMKC-INFORM/inform_severity_long.csv` is missing. "
+            "Run `python3 Data/Third-Party/DRMKC-INFORM/download.py` then "
+            "`dashboard/.venv/bin/python Data/Third-Party/DRMKC-INFORM/consolidate.py` "
+            "— or just re-run `./run.sh`."
+        )
+        return
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Observations", f"{len(df):,}")
+    c2.metric("Countries", df["ISO3"].nunique())
+    c3.metric("Crises", df["CRISIS ID"].nunique() if "CRISIS ID" in df.columns else "—")
+    c4.metric(
+        "Months spanned",
+        f"{df['snapshot'].min()} → {df['snapshot'].max()}",
+    )
+
+    # Snapshot choropleth
+    snapshots = sorted(df["snapshot"].unique())
+    snap = st.select_slider("Snapshot", options=snapshots, value=snapshots[-1])
+    snap_df = df[df["snapshot"] == snap]
+
+    st.markdown(f"#### Severity choropleth — {snap}")
+    fig = px.choropleth(
+        snap_df,
+        locations="ISO3",
+        locationmode="ISO-3",
+        color="severity",
+        color_continuous_scale="OrRd",
+        range_color=(1, 10),
+        hover_name="COUNTRY",
+        hover_data={"severity": ":.1f", "category": True, "ISO3": False},
+    )
+    fig.update_layout(margin={"l": 0, "r": 0, "t": 10, "b": 0}, height=460)
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Time-series for selected countries
+    st.markdown("#### Severity trajectories")
+    iso_choices = sorted(df["ISO3"].unique())
+    defaults = [c for c in ("SDN", "YEM", "SOM", "COD", "UKR", "AFG") if c in iso_choices]
+    picks = st.multiselect("Countries", iso_choices, default=defaults)
+    if picks:
+        sub = df[df["ISO3"].isin(picks)].sort_values("date")
+        fig2 = px.line(
+            sub,
+            x="date",
+            y="severity",
+            color="ISO3",
+            markers=True,
+            hover_data=["COUNTRY", "snapshot"],
+        )
+        fig2.update_layout(
+            yaxis={"range": [1, 10], "title": "INFORM Severity (1–10)"},
+            margin={"l": 0, "r": 0, "t": 10, "b": 0},
+            height=460,
+        )
+        st.plotly_chart(fig2, use_container_width=True)
+
+    # Category distribution (snapshot-level)
+    st.markdown(f"#### Category distribution — {snap}")
+    cat_counts = (
+        snap_df.dropna(subset=["category"])
+        .groupby("category", as_index=False)
+        .size()
+        .rename(columns={"size": "count"})
+    )
+    cat_labels = {1: "1 Very Low", 2: "2 Low", 3: "3 Medium", 4: "4 High", 5: "5 Very High"}
+    cat_counts["label"] = cat_counts["category"].map(cat_labels)
+    fig3 = px.bar(cat_counts, x="label", y="count", color="category",
+                  color_continuous_scale="OrRd")
+    fig3.update_layout(
+        xaxis_title=None, yaxis_title="countries",
+        margin={"l": 0, "r": 0, "t": 10, "b": 0}, height=320, showlegend=False,
+    )
+    st.plotly_chart(fig3, use_container_width=True)
+
+    with st.expander("Raw snapshot data"):
+        st.dataframe(
+            snap_df.sort_values("severity", ascending=False)[
+                ["ISO3", "COUNTRY", "CRISIS ID", "severity", "category"]
+            ],
+            use_container_width=True,
+            height=420,
+        )
+
+
 def page_hrp() -> None:
     st.title("Response plans — HRP")
     st.caption("OCHA HPC response plans (flash appeals, HRPs, refugee plans).")
@@ -568,6 +679,7 @@ section = st.sidebar.radio(
         "Funding (FTS)",
         "Sector equity preview",
         "Donors (FTS)",
+        "Severity (INFORM)",
         "Pooled funds (CBPF)",
         "Plans (HRP)",
     ],
@@ -586,6 +698,7 @@ PAGES = {
     "Funding (FTS)": page_fts,
     "Sector equity preview": page_equity_preview,
     "Donors (FTS)": page_donors,
+    "Severity (INFORM)": page_inform,
     "Pooled funds (CBPF)": page_cbpf,
     "Plans (HRP)": page_hrp,
 }

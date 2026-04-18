@@ -6,22 +6,39 @@ Raw source datasets for GEO-Insight. None of the CSV/JSON files in this folder a
 
 ```bash
 cd GEO-Insight
-python3 Data/download.py          # download missing files
-python3 Data/download.py --check  # list what's present / missing
-python3 Data/download.py --force  # re-download everything
+
+# Primary sources (~270 MB, stdlib only)
+python3 Data/download.py                 # download missing files
+python3 Data/download.py --check         # list what's present / missing
+python3 Data/download.py --force         # re-download everything
+
+# Third-party: INFORM Severity (~130 MB of xlsx + a 251 KB consolidated CSV)
+python3 Data/Third-Party/DRMKC-INFORM/download.py
+dashboard/.venv/bin/python Data/Third-Party/DRMKC-INFORM/consolidate.py
 ```
 
-Python 3 standard library only — no `pip install` step.
+`./run.sh` at the repo root calls all four of these on first run. The primary downloader uses Python stdlib only; the consolidator needs the dashboard venv (pandas, openpyxl).
 
 ## Sources
 
-Five official sources from the challenge brief, listed in `sources.txt`:
+### Primary (5 official sources from the challenge brief, in `sources.txt`)
 
 1. [HNO — Humanitarian Needs Overview](https://data.humdata.org/dataset/global-hpc-hno) → `hno/`
 2. [HRP — Humanitarian Response Plans](https://data.humdata.org/dataset/humanitarian-response-plans) → `hrp/`
 3. [CoD-PS — Global subnational population](https://data.humdata.org/dataset/cod-ps-global) → `cod-ps/`
 4. [FTS — Global requirements & funding](https://data.humdata.org/dataset/global-requirements-and-funding-data) → `fts/`
 5. [CBPF Pooled Funds Data Hub](https://cbpf.data.unocha.org) → `cbpf/` (resolved to the HDX dataset `cbpf-allocations-and-contributions`, which is what the portal serves)
+
+Downloaded by `Data/download.py` (stdlib only; no pip install).
+
+### Third-party (declared external data with their own downloaders)
+
+| Source | Role | Folder |
+|---|---|---|
+| [INFORM Severity Index (EU JRC DRMKC)](https://drmkc.jrc.ec.europa.eu/inform-index/INFORM-Severity/Results-and-data) | Monthly crisis severity 1–10 + 1–5 category, global, 2020-09 → present. Load-bearing for attribute `a₄` and the temporal bonus. **5,298 (country × month) rows across 109 countries**; every full-stack priority country has ≥60 months of history. | `Third-Party/DRMKC-INFORM/` |
+| [IPC Population Tracking Tool](https://www.ipcinfo.org/ipc-country-analysis/population-tracking-tool/en/) | Per-unit food-security phase 1–5. Kept as a richer Afghanistan-focused backup for demo purposes (2 countries, 19 analyses). | `Third-Party/IPCInfo/` |
+
+Each third-party folder has its own `download.py` (and for INFORM, a `consolidate.py` that produces `inform_severity_long.csv`). `./run.sh` at the repo root triggers both first-run.
 
 ## Local folder layout after a full download
 
@@ -76,7 +93,7 @@ The admin2/3/4 population files are pulled in completeness but are not required 
 
 Audit run 2026-04-18, full mapping in `proposal/proposal.pdf` §4.1–4.4:
 
-- **Severity (methodology attribute $a_4$) is NOT in HNO.** HNO CSVs have PIN/Targeted/Reached but no structured 1–5 severity score — only a free-text `Description` field. Source for $a_4$: IPC [Population Tracking Tool](https://www.ipcinfo.org/ipc-country-analysis/population-tracking-tool/en/). An initial export lives in `Data/Third-Party/IPCInfo/` (committed to git, 2.1 MB xlsx) but covers **only Afghanistan (17 analyses 2017–2025) + Angola (sparse)** — it's a format sample. To extend coverage to the ~20 full-stack countries, export per-country selections from the same tool. Non-food-driven crises degrade to a plan-typology flag.
+- **Severity (methodology attribute $a_4$) is NOT in HNO** — only a free-text `Description` field. Solved globally via **INFORM Severity** (EU JRC DRMKC): 67 monthly snapshots 2020-09 → present, consolidated into `Third-Party/DRMKC-INFORM/inform_severity_long.csv` (5,298 rows across 109 countries; every full-stack priority country has ≥60 months of history). IPC export retained as Afghanistan-focused backup for demo purposes. See `Third-Party/DRMKC-INFORM/download.py` + `consolidate.py`.
 - **Cluster names disagree between HNO and FTS.** E.g. HNO `"Sanitation & Hygiene"` vs. FTS `"Water Sanitation and Hygiene"` vs. French `"EHA - Eau Hygiène Assainissement"`. A manual mapping table will live at `src/taxonomies/cluster_map.csv` (~20–30 entries) and is load-bearing for the equity Gini.
 - **FTS incoming records sometimes span multiple destination countries** via pipe-delimited `destLocations`. HHI computation applies a lead-country rule or splits equally across listed destinations and flags the crisis as `estimated`.
 - **HNO 2026 is a stub** (~7 KB, ~100 rows) — plan cycles not finalised yet. Primary analysis uses 2024 + 2025.

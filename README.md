@@ -27,8 +27,9 @@ cd GEO-Insight
 
 On the very first run, `./run.sh` will:
 1. **Download ~270 MB of source data** via `Data/download.py` (HNO, HRP, CoD-PS, FTS, CBPF from the 5 official sources — see `Data/README.md`). ~2–3 minutes on broadband.
-2. **Create a dashboard virtualenv** at `dashboard/.venv/` and install requirements from `dashboard/requirements.txt` (Streamlit, pandas, plotly).
-3. **Silence Streamlit's first-run email prompt** by writing `~/.streamlit/credentials.toml`.
+2. **Create a dashboard virtualenv** at `dashboard/.venv/` and install requirements from `dashboard/requirements.txt` (Streamlit, pandas, plotly, openpyxl).
+3. **Download INFORM Severity** — 67 monthly xlsx snapshots from the EU JRC DRMKC (~130 MB, polite 1.2 s inter-request delay so 3–5 min total) and consolidate them into one CSV. This supplies global monthly severity data for attribute `a₄` and the temporal bonus.
+4. **Silence Streamlit's first-run email prompt** by writing `~/.streamlit/credentials.toml`.
 
 Subsequent runs skip all of the above and just start the three servers.
 
@@ -46,7 +47,7 @@ Opens the landing page in your default browser. `Ctrl-C` in the terminal shuts e
 |---|---|---|
 | **<http://localhost:7777>** | **Landing page** | Start here — clean page linking to everything else |
 | <http://localhost:8000> | Presentation | reveal.js deck · `S` speaker · `F` fullscreen · `?` shortcuts · `?print-pdf` for PDF export |
-| <http://localhost:8501> | Dashboard | Streamlit data-landscape explorer across the 5 sources |
+| <http://localhost:8501> | Dashboard | Streamlit data-landscape explorer across the 5 primary sources + INFORM Severity |
 | `proposal/proposal.pdf` | Proposal | Also reachable from the landing page card |
 
 ## Running pieces individually

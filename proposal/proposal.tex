@@ -10,6 +10,7 @@
 \usepackage{tabularx}
 \usepackage{enumitem}
 \usepackage{xcolor}
+\usepackage{url}
 \usepackage{hyperref}
 \hypersetup{
   colorlinks=true,
@@ -113,24 +114,46 @@ An audit of the five downloaded HDX datasets (run 2026-04-18) maps each score at
 
 \begin{table}[h]
 \centering
-\small
-\begin{tabularx}{\linewidth}{@{}lXl@{}}
+\footnotesize
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.22}
+\begin{tabularx}{\linewidth}{@{}l >{\raggedright\arraybackslash}X l@{}}
 \toprule
 \textbf{Attribute} & \textbf{Source file / columns} & \textbf{Status}\\
 \midrule
-$a_1$ coverage shortfall & \texttt{fts\_requirements\_funding\_global.csv}\newline \texttt{countryCode, year, requirements, funding} & Ready \\
-$a_2$ per-PIN gap     & above + \texttt{hpc\_hno\_2025.csv} (\texttt{In Need}) + \texttt{cod\_population\_admin0.csv} (\texttt{Population}) & Ready \\
-$a_3$ need intensity  & \texttt{hpc\_hno\_2025.csv} / \texttt{cod\_population\_admin0.csv} & Ready \\
-$a_4$ severity        & INFORM Severity Index 1--10 (with a 1--5 category), monthly, from the EU JRC DRMKC. 67 monthly snapshots 2020-09 to 2026-03 consolidated into \texttt{Data/Third-Party/DRMKC-INFORM/inform\_severity\_long.csv}. IPC xlsx retained as a richer single-country backup. & Ready --- 5,298 country\,$\times$\,month rows across 109 countries; every full-stack priority country has $\geq$60 months \\
-$a_5$ donor HHI       & \texttt{fts\_incoming\_funding\_global.csv}\newline \texttt{amountUSD, srcOrganization, destLocations} & Ready; multi-country rule needed \\
-$a_6$ cluster Gini    & \texttt{fts\_requirements\_funding\_cluster\_global.csv} $\times$ \texttt{hpc\_hno\_2025.csv} & Ready; cluster-taxonomy map needed \\
+$a_1$ coverage shortfall &
+FTS global requirements \& funding: \path{fts_requirements_funding_global.csv}.\newline
+Cols: \path{countryCode}, \path{year}, \path{requirements}, \path{funding}.
+& Ready \\
+$a_2$ per-PIN gap &
+Above + HNO: \path{hpc_hno_2025.csv} (\path{In Need}) + population: \path{cod_population_admin0.csv} (\path{Population}).
+& Ready \\
+$a_3$ need intensity &
+\path{hpc_hno_2025.csv} / \path{cod_population_admin0.csv}.
+& Ready \\
+$a_4$ severity &
+INFORM Severity Index (1--10 + 1--5 category), monthly, from EU JRC DRMKC. 67 snapshots (2020-09 to 2026-03) consolidated into \path{Data/Third-Party/DRMKC-INFORM/inform_severity_long.csv}. IPC xlsx kept as a single-country backup.
+& Ready: 5{,}298 country\,$\times$\,month rows, 109 countries \\
+$a_5$ donor HHI &
+FTS incoming flows: \path{fts_incoming_funding_global.csv}.\newline
+Cols: \path{amountUSD}, \path{srcOrganization}, \path{destLocations}.
+& Ready; multi-country rule needed \\
+$a_6$ cluster Gini &
+FTS cluster breakdown: \path{fts_requirements_funding_cluster_global.csv} joined to \path{hpc_hno_2025.csv}.
+& Ready; cluster-taxonomy map needed \\
 \midrule
-Temporal (bonus) & HNO 2024 + 2025 + FTS 2020--2026 & 2 full years; HNO 2026 stub only \\
-CERF UFE benchmark & \url{https://cerf.un.org/what-we-do/underfunded-emergencies} & External scrape \\
-CARE \emph{Breaking the Silence} & \url{https://www.care.org/our-work/other-work/breaking-silence/} & External scrape \\
+Temporal (bonus) &
+HNO 2024 + 2025; FTS 2020--2026; INFORM Severity monthly 2020-09 to 2026-03.
+& Panel-data ready \\
+CERF UFE benchmark &
+\path{cerf.un.org/what-we-do/underfunded-emergencies}.
+& External scrape \\
+CARE \emph{Breaking the Silence} &
+\path{care.org/our-work/other-work/breaking-silence/}.
+& External scrape \\
 \bottomrule
 \end{tabularx}
-\caption{Each attribute mapped to its exact file and column(s). Cluster-level FTS and HNO-cluster PIN are both present at country $\times$ cluster $\times$ year granularity, confirming that $a_6$ is computable.}
+\caption{Each attribute mapped to its exact file and column(s). Cluster-level FTS and HNO-cluster PIN are both present at country\,$\times$\,cluster\,$\times$\,year granularity, confirming $a_6$ is computable. INFORM Severity supplies the temporal panel.}
 \end{table}
 
 \subsection{Gaps and public-source workarounds}

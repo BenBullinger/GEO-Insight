@@ -42,15 +42,22 @@ fi
 echo "→ Using $CHROME"
 echo "→ Exporting $URL → $OUT"
 
+# Use a throwaway --user-data-dir every run. Without this, Chrome reuses the
+# default profile, which has caused spurious blank PDFs when the profile was
+# left in a bad state (e.g. cancelled previous run, cached empty page).
+TMP_PROFILE=$(mktemp -d -t chrome-pdf-export)
+trap 'rm -rf "$TMP_PROFILE"' EXIT
+
 "$CHROME" \
     --headless=new \
     --disable-gpu \
     --no-sandbox \
     --hide-scrollbars \
     --no-pdf-header-footer \
-    --virtual-time-budget=30000 \
+    --virtual-time-budget=45000 \
     --run-all-compositor-stages-before-draw \
     --window-size=1280,800 \
+    --user-data-dir="$TMP_PROFILE" \
     --print-to-pdf-no-header \
     --print-to-pdf="$OUT" \
     "$URL" 2>&1 | grep -v "^$" | head -20
