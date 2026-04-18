@@ -364,13 +364,13 @@
 }
 
 .reveal section.headline-slide .headline {
-    font-size: 1.8em;
+    font-size: 1.55em;
     font-weight: 300;
     color: var(--un-blue-deep);
     line-height: 1.15;
     letter-spacing: -0.01em;
     margin: 0 0 40px 0;
-    max-width: 28ch;
+    max-width: none;
 }
 
 .reveal section.headline-slide .headline em {
@@ -467,14 +467,14 @@
 }
 
 .reveal .quadrant .cell {
-    padding: 16px 18px;
+    padding: 10px 14px;
     background: white;
     border: 1px solid var(--un-rule);
     border-radius: 4px;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    min-height: 76px;
+    min-height: 60px;
 }
 
 .reveal .quadrant .cell .label {
