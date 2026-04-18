@@ -52,6 +52,7 @@ import pandas as pd
 from numpyro import handlers
 from numpyro.infer import SVI, Trace_ELBO
 from numpyro.infer.autoguide import AutoNormal
+from numpyro.infer.initialization import init_to_median
 from scipy.stats import spearmanr
 
 # Allow `import features` when run from the repo root or as a module
@@ -194,7 +195,10 @@ def fit(
         model_fn = model
     numpyro.set_platform("cpu")
     rng = jax.random.PRNGKey(seed)
-    guide = AutoNormal(model_fn)
+    # init_to_median + tight init_scale avoids the float-overflow blowup that
+    # AutoNormal's default init_to_uniform produces once enough slopes are
+    # positivity-constrained (HalfNormal/TruncatedNormal). See Day-2 notes.
+    guide = AutoNormal(model_fn, init_loc_fn=init_to_median, init_scale=0.01)
     svi = SVI(model_fn, guide, numpyro.optim.Adam(learning_rate), Trace_ELBO())
 
     t0 = time.time()

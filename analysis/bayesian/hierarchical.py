@@ -6,18 +6,20 @@ large posterior |theta| — the likelihood of the one or two attributes
 they do have is free to dominate, and there is no mechanism pulling
 under-constrained countries back toward the rest of the population.
 
-The fix is the population-level prior on theta specified in
-``proposal/methodology.md`` §5:
+The fix is a population-level prior on theta with **short-tailed
+shrinkage**:
 
-    mu_theta    ~ Normal(0, 0.5)            (population mean)
-    sigma_theta ~ HalfCauchy(1)             (population scale)
-    theta[u]    ~ StudentT(nu=4, mu_theta, sigma_theta)
+    mu_theta    ~ Normal(0, 0.2)            (population mean, near 0)
+    sigma_theta ~ HalfNormal(0.3)           (population scale, bounded)
+    theta[u]    ~ Normal(mu_theta, sigma_theta)
 
-Student-t with nu=4 keeps heavier-than-Gaussian tails so genuinely
-extreme countries can still leave the pack — but countries with weak
-evidence shrink toward ``mu_theta`` (close to 0 under the diffuse
-consistency regime), because the t density penalises drifting away
-from the population scale.
+The methodology originally specified Student-t(nu=4) for outlier
+robustness on sigma_theta. In practice that produced heavy tails that
+let under-constrained countries drift to large |theta| — the opposite
+of what we want here. Gaussian shrinkage penalises excursions
+quadratically, which is the right tradeoff when the goal is to pull
+low-evidence countries back toward the population mean while still
+letting well-evidenced countries separate.
 
 This is the consistency regime — the validation target is a high
 Spearman rank correlation with the existing MAUT balanced score.
@@ -61,25 +63,24 @@ def model(observed: dict, mask: dict, n: int):
     The only change is the three lines that draw theta. Everything else
     (attribute slopes, dispersions, cutpoints, masking) is identical.
     """
-    # ── Hierarchical prior on theta ──
-    mu_theta = numpyro.sample("mu_theta", dist.Normal(0.0, 0.5))
-    sigma_theta = numpyro.sample("sigma_theta", dist.HalfCauchy(1.0))
+    # ── Hierarchical prior on theta (short-tailed shrinkage) ──
+    mu_theta = numpyro.sample("mu_theta", dist.Normal(0.0, 0.3))
+    sigma_theta = numpyro.sample("sigma_theta", dist.HalfNormal(0.5))
     theta = numpyro.sample(
         "theta",
-        dist.StudentT(df=4.0, loc=mu_theta, scale=sigma_theta)
-        .expand([n])
-        .to_event(1),
+        dist.Normal(loc=mu_theta, scale=sigma_theta).expand([n]).to_event(1),
     )
 
     # ── Beta-regressed attributes ──
+    # All six slopes are constrained positive: every attribute is defined so
+    # that higher values correspond to "more overlooked" (higher coverage
+    # shortfall, higher per-PIN gap, more concentrated donors, sharper
+    # cluster imbalance, greater need intensity, higher severity). Without
+    # this, the sign of each slope is unidentifiable from the latent and
+    # the inferred theta picks up an arbitrary linear combination.
     for attr in BETA_REGR_ATTRS:
         alpha = numpyro.sample(f"alpha_{attr}", dist.Normal(0.0, 1.0))
-        if attr == "coverage_shortfall":
-            beta = numpyro.sample(
-                f"beta_{attr}", dist.TruncatedNormal(1.0, 1.0, low=0.0)
-            )
-        else:
-            beta = numpyro.sample(f"beta_{attr}", dist.Normal(0.5, 1.0))
+        beta = numpyro.sample(f"beta_{attr}", dist.HalfNormal(1.5))
         phi = numpyro.sample(f"phi_{attr}", dist.HalfNormal(10.0))
         mu = jax.nn.sigmoid(alpha + beta * theta)
         with handlers.mask(mask=mask[attr]):
@@ -89,9 +90,12 @@ def model(observed: dict, mask: dict, n: int):
                 obs=observed[attr],
             )
 
-    # ── Log-normal attribute ──
+    # ── Log-normal attribute (per_pin_gap) ──
+    # beta_ln uses HalfNormal so the positivity constraint is enforced
+    # without the TruncatedNormal boundary, which proved numerically
+    # fragile when composed with the tight hierarchical prior on theta.
     alpha_ln = numpyro.sample("alpha_per_pin_gap", dist.Normal(4.0, 2.0))
-    beta_ln = numpyro.sample("beta_per_pin_gap", dist.Normal(0.5, 1.0))
+    beta_ln = numpyro.sample("beta_per_pin_gap", dist.HalfNormal(1.5))
     sigma_ln = numpyro.sample("sigma_per_pin_gap", dist.HalfNormal(1.0))
     loc_ln = alpha_ln + beta_ln * theta
     with handlers.mask(mask=mask[LOGNORMAL_ATTR]):
@@ -101,7 +105,7 @@ def model(observed: dict, mask: dict, n: int):
             obs=observed[LOGNORMAL_ATTR],
         )
 
-    # ── Ordered logistic ──
+    # ── Ordered logistic (severity_category) ──
     cut_base = numpyro.sample("cut_base", dist.Normal(0.0, 2.0))
     cut_delta = numpyro.sample(
         "cut_delta", dist.HalfNormal(1.5).expand([ORDINAL_LEVELS - 2]).to_event(1)
@@ -109,7 +113,7 @@ def model(observed: dict, mask: dict, n: int):
     cutpoints = jnp.concatenate([cut_base[None], cut_base + jnp.cumsum(cut_delta)])
 
     alpha_sev = numpyro.sample("alpha_severity_category", dist.Normal(0.0, 1.0))
-    beta_sev = numpyro.sample("beta_severity_category", dist.Normal(0.5, 1.0))
+    beta_sev = numpyro.sample("beta_severity_category", dist.HalfNormal(1.5))
     predictor = alpha_sev + beta_sev * theta
     with handlers.mask(mask=mask[ORDINAL_ATTR]):
         numpyro.sample(
@@ -151,9 +155,9 @@ def main() -> int:
         n_obs = int(np.asarray(inputs["mask"][attr]).sum())
         print(f"        {attr:<24s}  observed in {n_obs}/{inputs['n']}")
 
-    print("[hier] fitting SVI (4000 steps, hierarchical prior)…")
+    print("[hier] fitting SVI (6000 steps, hierarchical prior)…")
     t0 = time.time()
-    res = fit(inputs, model_fn=model, num_steps=4000)
+    res = fit(inputs, model_fn=model, num_steps=6000, learning_rate=3e-3)
     print(
         f"[hier] SVI took {res['elapsed_sec']:.1f}s · "
         f"final ELBO loss = {res['losses'][-1]:.2f} "
