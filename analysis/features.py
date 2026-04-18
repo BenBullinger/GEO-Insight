@@ -21,6 +21,7 @@ from aggregations.concentration import (
     cbpf_reliance_latest,
 )
 from aggregations.temporal import build_temporal_frame
+from aggregations.composites import compute_gap_scores, four_cell_typology
 
 DATA = Path(__file__).resolve().parent.parent / "Data"
 
@@ -178,10 +179,17 @@ def build_enriched_frame(year: int = 2025) -> pd.DataFrame:
     temporal = build_temporal_frame()
     df = df.join(temporal, how="left")
 
-    # Eligibility: need at least requirements>0 OR a severity reading on the panel
+    # Eligibility gate BEFORE Level-5 so pool-based normalisation is clean
     has_req = df["requirements"].fillna(0) > 0
     has_sev = df.get("severity_baseline_24m", pd.Series(dtype=float)).notna()
     df = df[has_req | has_sev]
+
+    # ── Level 5 ──
+    gap = compute_gap_scores(df)
+    df = df.join(gap, how="left")
+
+    # Four-cell typology — classification based on cluster_gini × rank_iqr
+    df["typology_cell"] = four_cell_typology(df)
     return df
 
 
