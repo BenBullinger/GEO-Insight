@@ -1,9 +1,11 @@
-# GEO-Insight
+# Geo-Insight
 
 **Which humanitarian crises are most overlooked?**
-Cache Me if You Can — Datathon 2026 · FS26
+Datathon 2026
 
-A decision-support prototype that ranks active humanitarian crises by the mismatch between documented need (HNO/HRP) and available funding coverage (FTS/CBPF), with an intra-crisis equity term and an inter-stakeholder disagreement term. Research direction and methodology live in `proposal/proposal.pdf`; this README is the operational guide to getting everything running locally.
+A decision-support prototype that ranks active humanitarian crises by the mismatch between documented need (HNO/HRP) and available funding coverage (FTS/CBPF), with an intra-crisis equity term and a cross-stakeholder disagreement term. A typed five-level semantic layer (71 properties, declared formulas, declared failure modes) makes every score traceable to its source.
+
+Research direction and methodology live in `proposal/proposal.pdf`; this README is the operational guide to getting everything running locally.
 
 Everything runs on localhost — no public hosting.
 
@@ -111,7 +113,7 @@ GEO-Insight/
 │   └── proposal.pdf          compiled (committed for preview)
 ├── presentation/
 │   ├── index.html            reveal.js deck
-│   ├── css/theme-un.css      UN-adjacent custom theme
+│   ├── css/theme-un.css      custom theme (oxblood-red single-accent)
 │   ├── README.md             editing and export instructions
 │   └── vendor/reveal.js/     vendored reveal.js 6.0.1
 ├── landing/
@@ -119,13 +121,21 @@ GEO-Insight/
 │   └── proposal.pdf          symlink to ../proposal/proposal.pdf
 ├── dashboard/
 │   ├── app.py                Streamlit data-exploration dashboard (9 sections)
+│   ├── _theme.py             shared UI theme + Plotly template (imported by both apps)
 │   ├── requirements.txt      streamlit, pandas, plotly, openpyxl, scikit-learn, scipy
 │   ├── README.md             dashboard-specific notes
 │   └── .venv/                created by run.sh (gitignored; shared with analysis/)
 ├── analysis/
-│   ├── app.py                Streamlit unsupervised-analysis site (7 sections)
-│   ├── features.py           per-country feature matrix + trajectory matrix builders
+│   ├── app.py                Streamlit semantic-analysis app (lens × mode grid)
+│   ├── spec.yaml             canonical ontology — all 71 properties, levels, lenses, modes
+│   ├── ontology.py           Property + Lens + Mode registry with provenance helpers
+│   ├── features.py           L1 loaders, L2 ratios, enriched-frame orchestration
+│   ├── aggregations/         L3 concentration · L4 temporal · L5 composites
+│   ├── views/                six render modes (atlas, PCA, cluster, profile, cross-lens, validation)
 │   └── README.md
+├── scripts/
+│   ├── export-pdf.sh         slide-deck PDF exporter (experimental)
+│   └── refresh_enriched.py   materialise analysis/enriched.parquet for fast cold starts
 └── src/                      implementation — to be written
 ```
 
@@ -146,9 +156,10 @@ Temporal chronic/acute decomposition is the bonus third axis. Validated against 
 
 ## Status & conventions
 
-Implementation (`src/`) not yet started. Immediate next step: Phase 1 MVP — country-level six-attribute scoring under a balanced profile, validated against CERF UFE.
+The semantic stack (L1 observations → L5 composites) is complete. Every property declared in `analysis/spec.yaml` resolves either as a scalar column on the enriched frame or via a long-form helper in `features.py` (sector-level, donor-level). The four donor-profile gap scores, four-cell typology, and median-rank / rank-IQR pair are all computed and validated against two independent benchmarks.
 
-- **Commits** go to `main` directly for now (small team, fast iteration). Branch/PR if a change is substantive or risky.
+- **Single source of truth** — `analysis/spec.yaml` declares every property with its formula, source, inputs, unit, and known failure modes. No analytic column exists in code that isn't registered there.
 - **Data-quality transparency** is a first-class design principle. Stale HNO, missing sector data, plan-less crises are flagged — never silently imputed.
-- **No false precision**. Scores to two significant figures; inter-profile IQR always shown alongside point estimates.
+- **No false precision**. Scores to two significant figures; inter-profile rank-IQR always shown alongside point estimates.
 - **Decision support, not automation**. The tool ranks; humans decide.
+- **Commits** go to `main` directly for now (small team, fast iteration). Branch/PR if a change is substantive or risky.

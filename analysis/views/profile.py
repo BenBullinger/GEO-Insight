@@ -2,12 +2,18 @@
 
 All lens properties with values, ranks, provenance, plus a rank-based radar.
 Rank used rather than raw values so axes are comparable regardless of unit.
+
+Also drills down into the multi-row L1/L2 properties — sector-level coverage
+and donor breakdown — which cannot live as scalar columns in the country-
+indexed enriched frame.
 """
 from __future__ import annotations
 
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+
+import features
 
 
 def render(enriched: pd.DataFrame, lens, registry) -> None:
@@ -71,3 +77,77 @@ def render(enriched: pd.DataFrame, lens, registry) -> None:
         for c in cols:
             st.markdown(registry.tooltip(c))
             st.markdown("---")
+
+    # ── Multi-row drill-downs (spec.yaml country_sector_year / country_donor_year) ──
+    sector_df, donor_df = _load_breakdowns()
+
+    sector_rows = sector_df[sector_df["iso3"] == iso]
+    if not sector_rows.empty:
+        st.markdown("### Sector breakdown")
+        st.caption(
+            "L1 `pin_by_sector`, `requirements_by_sector`, `funding_by_sector` · "
+            "L2 `coverage_by_sector`. Derived from the HNO × FTS cluster join."
+        )
+        show = sector_rows[[
+            "cluster",
+            "pin_by_sector",
+            "requirements_by_sector",
+            "funding_by_sector",
+            "coverage_by_sector",
+        ]].copy()
+        show = show.sort_values("coverage_by_sector", na_position="last").reset_index(drop=True)
+        show["pin_by_sector"] = show["pin_by_sector"].map(_fmt_int)
+        show["requirements_by_sector"] = show["requirements_by_sector"].map(_fmt_usd)
+        show["funding_by_sector"] = show["funding_by_sector"].map(_fmt_usd)
+        show["coverage_by_sector"] = show["coverage_by_sector"].map(_fmt_pct)
+        show.columns = ["Sector", "PIN", "Requested", "Funded", "Coverage"]
+        st.dataframe(show, use_container_width=True, hide_index=True, height=320)
+
+    donor_rows = donor_df[donor_df["iso3"] == iso]
+    if not donor_rows.empty:
+        st.markdown("### Donor breakdown")
+        st.caption(
+            "L1 `funding_by_donor`. Single-destination FTS incoming flows only "
+            "(rows whose destLocations is a single ISO3)."
+        )
+        top = donor_rows.nlargest(15, "funding_by_donor").copy()
+        total = donor_rows["funding_by_donor"].sum()
+        top["share"] = top["funding_by_donor"] / total if total else 0
+        show = top[["donor", "funding_by_donor", "share"]].copy()
+        show["funding_by_donor"] = show["funding_by_donor"].map(_fmt_usd)
+        show["share"] = show["share"].map(_fmt_pct)
+        show.columns = ["Donor", "USD contributed", "Share"]
+        st.dataframe(show, use_container_width=True, hide_index=True, height=320)
+        if len(donor_rows) > 15:
+            st.caption(f"Showing top 15 of {len(donor_rows)} donors.")
+
+
+# ─── Helpers ───────────────────────────────────────────────────────────────
+@st.cache_data(show_spinner=False)
+def _load_breakdowns() -> tuple[pd.DataFrame, pd.DataFrame]:
+    return features.load_sector_breakdown(), features.load_donor_breakdown()
+
+
+def _fmt_int(x: object) -> str:
+    if pd.isna(x):
+        return "—"
+    return f"{int(x):,}"
+
+
+def _fmt_usd(x: object) -> str:
+    if pd.isna(x):
+        return "—"
+    v = float(x)
+    if v >= 1e9:
+        return f"${v / 1e9:.2f}B"
+    if v >= 1e6:
+        return f"${v / 1e6:.1f}M"
+    if v >= 1e3:
+        return f"${v / 1e3:.0f}K"
+    return f"${v:.0f}"
+
+
+def _fmt_pct(x: object) -> str:
+    if pd.isna(x):
+        return "—"
+    return f"{float(x) * 100:.1f}%"

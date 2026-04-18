@@ -1,4 +1,4 @@
-# GEO-Insight — Unsupervised Analysis
+# Geo-Insight — Unsupervised Analysis
 
 Sister site to the **data-exploration** dashboard. Applies classical unsupervised methods (PCA, k-means, hierarchical, t-SNE, temporal clustering, correlation structure) to a per-country feature matrix joined from all sources — FTS, HNO, CoD-PS, INFORM Severity + sub-indicators.
 

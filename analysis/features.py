@@ -20,10 +20,17 @@ from aggregations.concentration import (
     phase_gini_latest,
     cbpf_reliance_latest,
 )
+from aggregations import sectoral
 from aggregations.temporal import build_temporal_frame
 from aggregations.composites import compute_gap_scores, four_cell_typology
 
 DATA = Path(__file__).resolve().parent.parent / "Data"
+
+# Disk-cache location for the assembled enriched frame (see spec.yaml →
+# persistence.enriched_frame). Writing is opt-in via save_enriched_frame();
+# build_enriched_frame() prefers a fresh on-disk cache if `max_age_hours` is
+# respected, otherwise re-derives.
+ENRICHED_CACHE = Path(__file__).resolve().parent / "enriched.parquet"
 
 
 # ─── Level-1 loaders (cached as DataFrames, not Series, so joins are cleaner)
@@ -147,19 +154,76 @@ def _assemble_level_1_and_2(year: int) -> pd.DataFrame:
     return df
 
 
+# ─── Public long-form helpers for multi-row L1/L2 properties ──────────────
+# The country-indexed enriched frame can only hold scalar columns. Spec
+# properties with country_sector_year or country_donor_year granularity are
+# exposed here instead, for per-country drill-downs in the profile view.
+def load_sector_breakdown(year: int = 2025) -> pd.DataFrame:
+    """Long-form country × sector frame.
+
+    Surfaces L1 `pin_by_sector`, `requirements_by_sector`, `funding_by_sector`
+    and L2 `coverage_by_sector` — properties declared in spec.yaml with
+    country_sector_year granularity, which don't fit the country-indexed
+    enriched frame.
+    """
+    return sectoral.build_sector_coverage(year=year)
+
+
+def load_donor_breakdown(year: int = 2025) -> pd.DataFrame:
+    """Long-form country × donor frame.
+
+    Surfaces L1 `funding_by_donor` (spec.yaml granularity: country_donor_year).
+    Mirrors the filter used for donor concentration: only rows whose
+    FTS `destLocations` is a single ISO3, and positive amounts.
+
+    Returns a DataFrame with columns:
+        iso3, donor, funding_by_donor
+    """
+    inc = pd.read_csv(
+        DATA / "fts" / "fts_incoming_funding_global.csv",
+        skiprows=[1],
+        low_memory=False,
+    )
+    inc["budgetYear"] = pd.to_numeric(inc["budgetYear"], errors="coerce")
+    inc["amountUSD"] = pd.to_numeric(inc["amountUSD"], errors="coerce")
+    sub = inc[(inc["budgetYear"] == year) & inc["destLocations"].notna()].copy()
+    sub["destLocations"] = sub["destLocations"].astype(str).str.strip()
+    single = sub[sub["destLocations"].str.len() == 3]
+    single = single.dropna(subset=["amountUSD", "srcOrganization"])
+    single = single[single["amountUSD"] > 0]
+    per_donor = (
+        single.rename(columns={"destLocations": "iso3", "srcOrganization": "donor", "amountUSD": "funding_by_donor"})
+        .groupby(["iso3", "donor"], as_index=False)["funding_by_donor"]
+        .sum()
+        .sort_values(["iso3", "funding_by_donor"], ascending=[True, False])
+    )
+    return per_donor
+
+
 # ─── Public API ─────────────────────────────────────────────────────────────
 def build_enriched_frame(year: int = 2025) -> pd.DataFrame:
-    """One row per country, indexed by ISO3, Levels 1-3.
+    """One row per country, indexed by ISO3, with all scalar L1-L5 properties.
 
-    Level 1: pin_total, requirements, funding_received, population,
+    Level 1 scalars: pin_total, requirements, funding_received, population,
              severity_{category,index}, pin_phase_{1..5}, affected, displaced,
-             fatalities, injured, access_{limited,restricted}, impediments
-    Level 2: coverage, coverage_shortfall, per_pin_{gap,allocated},
+             fatalities, access_{limited,restricted}, impediments,
+             cbpf_allocation
+    Level 2 scalars: coverage, coverage_shortfall, per_pin_{gap,allocated},
              need_intensity, affected_intensity, displaced_intensity,
              phase_{45,5}_share, displaced_share_of_pin,
              access_{restricted,limited}_share, log_*
     Level 3: donor_{hhi,top1_share,top3_share,entropy}, n_donors,
-             cluster_{gini,min_coverage,min_name}
+             cluster_{gini,min_coverage,min_name}, phase_gini, cbpf_reliance
+    Level 4: severity_{baseline_24m,acute_delta_3m,volatility_12m,trend_12m},
+             phase_45_share_{baseline_12m,delta_3m},
+             access_restricted_{baseline_12m,delta_3m}, persistence_P4_plus,
+             coverage_{baseline_3y,trend_3y}, displaced_growth_12m
+    Level 5: gap_score_{balanced,cerf,echo,usaid,ngo}_profile, median_rank,
+             rank_iqr, completeness, typology_cell
+
+    Multi-row properties (pin_by_sector, requirements_by_sector,
+    funding_by_sector, coverage_by_sector, funding_by_donor) are available
+    via load_sector_breakdown() and load_donor_breakdown().
     """
     df = _assemble_level_1_and_2(year)
 
@@ -190,7 +254,45 @@ def build_enriched_frame(year: int = 2025) -> pd.DataFrame:
 
     # Four-cell typology — classification based on cluster_gini × rank_iqr
     df["typology_cell"] = four_cell_typology(df)
+
+    # inform_severity_index is the same value as severity_index, re-exported
+    # at Level 5 because INFORM's native composite is itself a composite
+    # score. Aliased here so every L5 property resolves in the frame.
+    if "severity_index" in df.columns:
+        df["inform_severity_index"] = df["severity_index"]
     return df
+
+
+# ─── Disk-cached enriched frame (optional, for fast cold starts) ──────────
+def save_enriched_frame(year: int = 2025, path: Path | None = None) -> Path:
+    """Materialise the enriched frame to parquet for fast cold starts.
+
+    The parquet is a byte-for-byte snapshot of what build_enriched_frame()
+    returns — the authoritative source of truth remains the code path.
+    """
+    path = path or ENRICHED_CACHE
+    df = build_enriched_frame(year=year)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_parquet(path)
+    return path
+
+
+def load_cached_enriched_frame(
+    path: Path | None = None, max_age_hours: float = 24.0
+) -> pd.DataFrame | None:
+    """Read the on-disk enriched frame if it exists and is fresh.
+
+    Returns None when the cache is missing or older than `max_age_hours`.
+    """
+    import time
+
+    path = path or ENRICHED_CACHE
+    if not path.exists():
+        return None
+    age_hours = (time.time() - path.stat().st_mtime) / 3600.0
+    if age_hours > max_age_hours:
+        return None
+    return pd.read_parquet(path)
 
 
 # ─── Trajectory matrices (used in Phase 2 temporal lenses) ─────────────────

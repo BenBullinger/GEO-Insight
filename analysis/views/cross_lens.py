@@ -120,15 +120,29 @@ def render(enriched: pd.DataFrame, lens, registry) -> None:
 
     # ─── Four-cell typology (if Level-5 columns present) ─────────────
     if "typology_cell" in enriched.columns and enriched["typology_cell"].notna().any():
-        st.markdown("#### Four-cell typology (from proposal §5.7)")
+        st.markdown("#### Four-cell typology")
         st.caption(
-            "Classification against cluster-coverage Gini × rank-IQR (median splits). "
-            "Anchored in the GEO-Insight gap score."
+            "Classification against sector-coverage inequality × donor-rank disagreement "
+            "(median splits). See proposal §5.7."
         )
+
+        def _prettify(raw: str) -> str:
+            """consensus-sector-starved → consensus · sector-starved"""
+            if not isinstance(raw, str):
+                return raw
+            # First hyphen separates {consensus, contested} from the rest.
+            head, _, tail = raw.partition("-")
+            return f"{head} · {tail}" if tail else head
+
         typ = enriched[["typology_cell"]].copy()
-        counts = typ["typology_cell"].value_counts()
-        st.dataframe(counts.to_frame("count"), use_container_width=True)
+        typ["type"] = typ["typology_cell"].map(_prettify)
+        counts = (
+            typ["type"]
+            .value_counts()
+            .rename_axis("Type")
+            .to_frame("Countries")
+        )
+        st.dataframe(counts, use_container_width=True)
         with st.expander("Typology assignments (full list)"):
-            st.dataframe(
-                typ.sort_values("typology_cell"), use_container_width=True, height=420
-            )
+            full = typ[["type"]].rename(columns={"type": "Type"}).sort_values("Type")
+            st.dataframe(full, use_container_width=True, height=420)

@@ -1,4 +1,4 @@
-# GEO-Insight · Analysis Site · Design Specification
+# Geo-Insight · Analysis Site · Design Specification
 # ───────────────────────────────────────────────────────────────────────────
 # Settled structure for the unsupervised-analysis dashboard. Captures:
 #   - every property we consume or derive, typed by level
@@ -578,7 +578,7 @@ properties:
   # ── Level 5 — Composites ────────────────────────────────────────────────
   gap_score_balanced:
     level: 5
-    description: "Our composite overlooked-ness score under balanced (default) donor-profile weights."
+    description: "Our composite overlookedness score under balanced (default) donor-profile weights."
     formula: "Σ_i w_i · U_i(ã_i),  balanced profile"
     inputs: [coverage_shortfall, per_pin_gap, need_intensity, severity_category, donor_hhi, cluster_gini]
     unit: "[0,1]"
@@ -618,7 +618,7 @@ properties:
 
   median_rank:
     level: 5
-    description: "Median rank across the four donor profiles — central tendency of overlooked-ness."
+    description: "Median rank across the four donor profiles — central tendency of overlookedness."
     formula: "median of ranks across the 4 donor profiles"
     inputs: [gap_score_cerf_profile, gap_score_echo_profile, gap_score_usaid_profile, gap_score_ngo_profile]
     unit: rank
@@ -699,7 +699,7 @@ lenses:
     properties: [access_restricted_share, access_limited_share, impediments, access_restricted_baseline_12m, access_restricted_delta_3m]
 
   - id: geo_insight_score
-    name: GEO-Insight score
+    name: Geo-Insight score
     question: "Our framework's readout"
     properties: [median_rank, rank_iqr, gap_score_balanced, gap_score_cerf_profile, gap_score_echo_profile, gap_score_usaid_profile, gap_score_ngo_profile, completeness]
 

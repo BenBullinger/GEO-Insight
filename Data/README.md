@@ -1,6 +1,6 @@
 # Data
 
-Raw source datasets for GEO-Insight. None of the CSV/JSON files in this folder are tracked in git (too large for GitHub; ~270 MB total). The repository ships the **download script** and the **source manifest**; everyone reproduces their local data directory with one command.
+Raw source datasets for Geo-Insight. None of the CSV/JSON files in this folder are tracked in git (too large for GitHub; ~270 MB total). The repository ships the **download script** and the **source manifest**; everyone reproduces their local data directory with one command.
 
 ## Reproducing the data
 

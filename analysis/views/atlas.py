@@ -48,7 +48,7 @@ def render(enriched: pd.DataFrame, lens, registry) -> None:
     view = enriched[cols].dropna(how="all").copy()
 
     # Completeness filter, when this lens includes completeness (i.e. the
-    # GEO-Insight lens). Lets the analyst toggle between strict / all-observed.
+    # Geo-Insight lens). Lets the analyst toggle between strict / all-observed.
     if "completeness" in view.columns:
         mode = st.radio(
             "Confidence filter",

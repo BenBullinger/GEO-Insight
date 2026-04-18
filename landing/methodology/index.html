@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Methodology · Geo-Insight</title>
+    <link rel="stylesheet" href="../shared.css">
+
+    <!-- MathJax 3 — inline $…$ and display $$…$$ -->
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']],
+          tags: 'none',
+        },
+        svg: { fontCache: 'global' },
+        options: { renderActions: { addMenu: [] } },
+      };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+
+    <style>
+        body { padding: 0; margin: 0; }
+
+        .page {
+            max-width: 820px;
+            margin: 0 auto;
+            padding: var(--s-8) var(--s-5) var(--s-8);
+        }
+
+        /* ── Top breadcrumb + heading ─────────────────────────── */
+        .crumb {
+            font-size: 0.78rem;
+            color: var(--muted);
+            margin-bottom: var(--s-5);
+        }
+        .crumb a {
+            color: var(--muted);
+            text-decoration: none;
+            border-bottom: 1px solid var(--rule);
+        }
+        .crumb a:hover { color: var(--accent); border-bottom-color: var(--accent-soft); }
+
+        header.doc-head {
+            margin-bottom: var(--s-8);
+            padding-bottom: var(--s-5);
+            border-bottom: 1px solid var(--rule);
+        }
+        header.doc-head .eyebrow {
+            color: var(--accent);
+            margin-bottom: var(--s-3);
+        }
+        header.doc-head h1 {
+            font-size: 2.6rem;
+            font-weight: 700;
+            letter-spacing: -0.035em;
+            line-height: 1.05;
+            color: var(--ink);
+            margin: 0 0 var(--s-3) 0;
+        }
+        header.doc-head .sub {
+            font-size: 1.1rem;
+            color: var(--muted);
+            max-width: 60ch;
+            line-height: 1.4;
+            margin: 0;
+        }
+        header.doc-head .meta {
+            margin-top: var(--s-5);
+            font-size: 0.78rem;
+            color: var(--subtle);
+            font-family: var(--font-mono);
+        }
+        header.doc-head .meta a {
+            color: var(--accent);
+            text-decoration: none;
+            border-bottom: 1px solid var(--accent-soft);
+        }
+
+        /* ── Body typography ──────────────────────────────────── */
+        section.doc-section {
+            margin: var(--s-8) 0;
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 540ms ease-out, transform 540ms ease-out;
+        }
+        section.doc-section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            section.doc-section { opacity: 1; transform: none; transition: none; }
+        }
+
+        section h2 {
+            font-size: 1.65rem;
+            font-weight: 600;
+            letter-spacing: -0.022em;
+            line-height: 1.2;
+            color: var(--ink);
+            margin: 0 0 var(--s-3) 0;
+        }
+        section h2 .section-number {
+            color: var(--accent);
+            font-family: var(--font-mono);
+            font-size: 0.72em;
+            font-weight: 500;
+            margin-right: 0.7em;
+            letter-spacing: 0;
+            vertical-align: 0.14em;
+        }
+        section h3 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--ink);
+            margin: var(--s-5) 0 var(--s-2) 0;
+        }
+        section p {
+            font-size: 1rem;
+            color: var(--text);
+            line-height: 1.75;
+            margin: 0 0 var(--s-3) 0;
+        }
+        section p em {
+            color: var(--accent);
+            font-style: normal;
+            font-weight: 500;
+        }
+        section p strong {
+            color: var(--ink);
+            font-weight: 600;
+        }
+
+        /* Pullquote primitive for the takeaway-in-plain-English under a heading */
+        .lede {
+            font-size: 1.12rem;
+            color: var(--ink);
+            font-weight: 500;
+            line-height: 1.45;
+            margin: 0 0 var(--s-5) 0;
+            letter-spacing: -0.005em;
+            max-width: 58ch;
+        }
+
+        /* Figure blocks */
+        figure {
+            margin: var(--s-7) 0;
+        }
+        figure img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 3px;
+        }
+        figcaption {
+            font-size: 0.82rem;
+            color: var(--muted);
+            line-height: 1.55;
+            margin-top: var(--s-3);
+            padding-left: var(--s-4);
+            border-left: 2px solid var(--rule);
+        }
+        figcaption .fig-tag {
+            color: var(--accent);
+            font-family: var(--font-mono);
+            font-size: 0.9em;
+            font-weight: 500;
+            margin-right: 0.6em;
+        }
+
+        /* Math display styling */
+        mjx-container[jax="CHTML"][display="true"] {
+            margin: var(--s-5) 0 !important;
+        }
+        /* Muted grey numbering when we manually tag equations */
+        .eq-tag {
+            float: right;
+            color: var(--subtle);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            margin-top: -0.8em;
+        }
+
+        /* Callouts */
+        .callout-note {
+            background: var(--surface);
+            border-left: 2px solid var(--ink);
+            padding: var(--s-3) var(--s-5);
+            margin: var(--s-5) 0;
+            font-size: 0.94rem;
+            color: var(--text);
+            line-height: 1.6;
+            border-radius: 0 3px 3px 0;
+        }
+        .callout-note .callout-label {
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: var(--muted);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        /* Table styling — reuse for validation + profile priors */
+        .table-wrap { margin: var(--s-5) 0; }
+        table.doc-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+        table.doc-table th {
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.74rem;
+            color: var(--subtle);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 6px 10px 6px 0;
+            border-bottom: 2px solid var(--ink);
+        }
+        table.doc-table td {
+            padding: 8px 10px 8px 0;
+            border-bottom: 1px solid var(--rule);
+            font-variant-numeric: tabular-nums;
+        }
+        table.doc-table tr:last-child td { border-bottom: none; }
+        table.doc-table td.mono {
+            font-family: var(--font-mono);
+            font-size: 0.88em;
+            color: var(--muted);
+        }
+        table.doc-table td.hl { color: var(--accent); font-weight: 600; }
+
+        /* Lists */
+        section ul, section ol {
+            margin: 0 0 var(--s-4) 1.3em;
+            padding: 0;
+            line-height: 1.7;
+        }
+        section li { margin-bottom: var(--s-2); color: var(--text); }
+        section li::marker { color: var(--accent); }
+
+        /* ── Left-edge section index ──────────────────────────── */
+        #section-index {
+            position: fixed;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 50;
+        }
+        .section-dot {
+            position: relative;
+            width: 14px;
+            height: 2px;
+            background: var(--faint);
+            border-radius: 1px;
+            transition: width 180ms ease, background 180ms ease;
+            display: block;
+            text-decoration: none;
+        }
+        .section-dot:hover { background: var(--subtle); width: 22px; }
+        .section-dot.is-active { background: var(--accent); width: 26px; }
+        .section-dot-label {
+            position: absolute;
+            left: 36px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.66rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 180ms ease;
+        }
+        .section-dot:hover .section-dot-label { opacity: 1; }
+
+        @media (max-width: 1100px) { #section-index { display: none; } }
+
+        /* Footer */
+        footer.doc-foot {
+            margin-top: var(--s-8);
+            padding-top: var(--s-5);
+            border-top: 1px solid var(--rule);
+            font-size: 0.78rem;
+            color: var(--subtle);
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: var(--s-3);
+        }
+        footer.doc-foot a {
+            color: var(--accent);
+            text-decoration: none;
+            border-bottom: 1px solid var(--accent-soft);
+        }
+    </style>
+</head>
+<body>
+
+<!-- Left-edge section index, same pattern as the main landing -->
+<nav id="section-index" aria-label="Section index"></nav>
+
+<div class="page">
+
+    <p class="crumb">
+        <a href="../">Geo-Insight</a> &nbsp;/&nbsp; Methodology
+    </p>
+
+    <header class="doc-head">
+        <div class="eyebrow">Methodology</div>
+        <h1>From observation to overlookedness</h1>
+        <p class="sub">
+            A latent-variable model for ranking humanitarian crises under incompleteness,
+            temporal drift, and multi-stakeholder ambiguity.
+        </p>
+        <p class="meta">
+            Also available as a paper: <a href="../proposal.pdf" target="_blank">proposal.pdf</a>
+        </p>
+    </header>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section id="s1" class="doc-section" data-label="The problem">
+        <h2><span class="section-number">§ 1</span>The problem</h2>
+
+        <p class="lede">
+            Sorting humanitarian crises by funding coverage used to work. It no longer
+            does, because almost every active response is now in the failure zone
+            together.
+        </p>
+
+        <p>
+            The 2026 Global Humanitarian Overview asks $\$33$ billion to reach 135 million
+            people. The 2025 appeal raised $\$12$ billion — the lowest in a decade.
+            Nineteen country contexts sit below fifty per cent coverage, up from eight
+            in 2021.
+        </p>
+
+        <figure>
+            <img src="figures/fig1_coverage_collapse.png"
+                 alt="Small-multiples of funding coverage 2019–2025 for six active crises, each ending below 50 %">
+            <figcaption>
+                <span class="fig-tag">Fig 1.</span>
+                Six active crises, 2019–2025. The shaded region is below fifty per cent
+                coverage. By 2025, every trajectory has crossed into it.
+            </figcaption>
+        </figure>
+
+        <p>
+            A single coverage ratio places all of them in a dense band near the floor.
+            It doesn't distinguish between the three faces a neglected crisis can have:
+            <em>forgotten</em> (unfunded and unnoticed — Angola 2023), <em>contested</em>
+            (unfunded despite global attention — Sudan 2025), or <em>sector-starved</em>
+            (adequate in aggregate while one sector sits at twenty per cent). Three
+            problems, three different responses. The rest of this document describes
+            a model that separates them.
+        </p>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section id="s2" class="doc-section" data-label="A quantity we cannot see">
+        <h2><span class="section-number">§ 2</span>A quantity we cannot see</h2>
+
+        <p class="lede">
+            The thing we want to measure — how overlooked a crisis is — is not written
+            down anywhere. We have to infer it.
+        </p>
+
+        <p>
+            Call it $\theta(u, t)$: one real number per country $u$ per month $t$. It is
+            a fiction — no one has ever written it down — but a useful one, because it
+            lets us ask a sharper question than <em>which crisis has the lowest coverage
+            ratio.</em> The sharper question is: <em>given the evidence we do have, what
+            does the data say about $\theta$, and how confident should we be?</em>
+        </p>
+
+        <div class="callout-note">
+            <div class="callout-label">The reframe</div>
+            This turns the problem from scoring into inference. Our output is not a
+            number — it is a posterior distribution over $\theta$ per country, whose
+            width honestly reports what the evidence can and cannot tell us. A single
+            number, however cleverly aggregated, cannot carry that uncertainty.
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section id="s3" class="doc-section" data-label="The clues">
+        <h2><span class="section-number">§ 3</span>The clues we see</h2>
+
+        <p class="lede">
+            Six clues. Four different shapes. Each gets an equation matched to what it
+            actually is.
+        </p>
+
+        <p>
+            We work with six: funding coverage shortfall, unmet amount per person in need,
+            fraction of the population in need, INFORM severity category, donor
+            concentration, and how evenly funding is split across sectors. Three live on
+            $[0, 1]$. One is a positive real spanning orders of magnitude. One is an
+            ordinal $\{1, \ldots, 5\}$. Any of them can be missing.
+        </p>
+
+        <figure>
+            <img src="figures/fig2_observation_model.png"
+                 alt="Four panels showing Beta regression, log-normal, ordered probit likelihoods, and a wider posterior when data are missing">
+            <figcaption>
+                <span class="fig-tag">Fig 2.</span>
+                Four families of observation. <strong>(a)</strong> Bounded fractions: beta
+                regression with a logit link. <strong>(b)</strong> The per-person gap:
+                log-normal, because financial gaps scale multiplicatively.
+                <strong>(c)</strong> Severity: ordered probit, with cut-points inferred
+                from data rather than assumed equally spaced. <strong>(d)</strong> Missing
+                observations widen the posterior on $\theta$ rather than shifting it.
+            </figcaption>
+        </figure>
+
+        <p>
+            For the bounded fractions, beta regression keeps the predicted mean on
+            $[0, 1]$:
+            $a_i \mid \theta \sim \mathrm{Beta}\bigl(\mu_i\phi_i,\,(1-\mu_i)\phi_i\bigr)$
+            with $\mu_i = \sigma(\alpha_i + \beta_i\theta)$. For the per-person gap,
+            $\log a_2 \sim \mathcal{N}(\alpha_2 + \beta_2\theta,\,\sigma_2^2)$. For
+            severity, ordered probit with four cut-points
+            $\kappa_1 < \kappa_2 < \kappa_3 < \kappa_4$ we infer alongside everything
+            else — we let the data say how INFORM actually spaces its labels.
+        </p>
+
+        <p>
+            For missing observations, nothing. No imputation. The likelihood contribution
+            is simply zero. This is not a convention — it falls out of conditional
+            probability. And it has a consequence the whole system depends on: a country
+            with sparse data produces a <em>wider</em> posterior, never a confidently
+            extreme one. Fig 2(d) shows exactly this.
+        </p>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section id="s4" class="doc-section" data-label="Crises have memory">
+        <h2><span class="section-number">§ 4</span>Crises have memory</h2>
+
+        <p class="lede">
+            Sudan in April 2025 is not independent of Sudan in March 2025. The model
+            needs to know this.
+        </p>
+
+        <p>
+            A country's overlookedness has a baseline and has episodes. The simplest
+            honest way to say so is an AR(1) with country-specific parameters:
+        </p>
+
+        <p>
+            $$
+            \theta(u, t) \;=\; \mu_u \;+\; \rho_u\bigl(\theta(u, t-1) - \mu_u\bigr)
+                             \;+\; \eta_u(t),
+            \qquad
+            \eta_u(t) \sim \mathcal{N}(0,\, \tau_u^2).
+            $$
+        </p>
+
+        <p>
+            Three quantities fall out. $\mu_u$ is the country's long-run baseline — the
+            <em>chronic</em> component. The deviation $\theta(u, t) - \mu_u$ is the
+            <em>acute</em> component — how this month compares to the country's usual
+            level. $\rho_u$ says how long shocks persist. None is computed separately;
+            all three come from the same posterior.
+        </p>
+
+        <figure>
+            <img src="figures/fig3_temporal_dynamics.png"
+                 alt="Smoothed AR(1) trajectory over five years with chronic baseline dashed and a 90 percent credible interval band">
+            <figcaption>
+                <span class="fig-tag">Fig 3.</span>
+                One country's trajectory over five years. Dashed line: chronic baseline
+                $\mu_u$. Shaded band: 90 % credible interval on $\theta$.
+            </figcaption>
+        </figure>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section id="s5" class="doc-section" data-label="Stakeholders as priors">
+        <h2><span class="section-number">§ 5</span>Stakeholders, as priors</h2>
+
+        <p class="lede">
+            Instead of asking what weight severity should have in a formula, we ask
+            what each stakeholder <em>believes</em> about severity, a priori. The
+            difference sounds subtle. It isn't.
+        </p>
+
+        <p>
+            CERF emphasises severity and coverage shortfall. ECHO leans on equity. USAID
+            looks at donor concentration. NGO consortia weight sector-equity. In the old
+            machinery, that was a disagreement about numbers in a weighted sum. In our
+            framing, each stakeholder $s$ is a <em>prior</em> over the six attribute
+            slopes:
+        </p>
+
+        <p>
+            $$
+            \beta_i^{(s)} \;\sim\; \mathcal{N}\bigl(m_i^{(s)},\; v_i^{(s)}\bigr),
+            \qquad i = 1, \ldots, 6.
+            $$
+        </p>
+
+        <p>
+            The mean $m_i^{(s)}$ says what the stakeholder believes a priori; the variance
+            $v_i^{(s)}$ says how tightly. Each stakeholder produces a separate posterior
+            over $\theta$.
+        </p>
+
+        <figure>
+            <img src="figures/fig4_stakeholder_priors.png"
+                 alt="Four distinct prior densities for the coverage-shortfall slope, one per stakeholder">
+            <figcaption>
+                <span class="fig-tag">Fig 4.</span>
+                Four stakeholder priors on a single slope — $\beta_{\text{coverage}}$.
+                Each curve is a pre-registered statistical claim. CERF (dark) places
+                tight mass near 1.5; NGO (blue-grey) is broader and centred lower.
+            </figcaption>
+        </figure>
+
+        <p>
+            Three things follow. First, the priors are <strong>falsifiable</strong>: after
+            fitting, the posterior on $\beta$ either corroborates a stakeholder's belief
+            or moves away from it. If CERF's prior centres the coverage slope at 1.5 but
+            the data pull the posterior to 0.8, we have learned something concrete about
+            CERF's stated-versus-effective preference — a finding no weighted sum can
+            produce. Second, stakeholder disagreement is no longer a four-point spread;
+            it is the overlap of four posterior distributions, which we can measure
+            directly. Third, the method is honestly context-sensitive: where data is
+            abundant, all four posteriors converge; where it is sparse, stakeholder
+            differences show up more. The system adapts to how much evidence it has.
+        </p>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section id="s6" class="doc-section" data-label="What comes out">
+        <h2><span class="section-number">§ 6</span>What comes out</h2>
+
+        <p class="lede">
+            Every rank comes with its uncertainty, and every rank can be decomposed
+            into the signals that produced it.
+        </p>
+
+        <p>
+            For each country, month, and stakeholder, we take posterior samples and read
+            off: a posterior median rank, a 90 % credible interval on that rank, an
+            attribute-level contribution decomposition showing which signals drove it, and
+            a stakeholder-aggregated consensus/contested score.
+        </p>
+
+        <figure>
+            <img src="figures/fig6_rank_forest.png"
+                 alt="Forest plot of ten countries with their median ranks and 90 percent credible intervals">
+            <figcaption>
+                <span class="fig-tag">Fig 6.</span>
+                Ten most-overlooked countries in 2025. Dot: posterior median rank.
+                Bar: 90 % credible interval. Zimbabwe and Malawi (marked *) have partial
+                completeness — the widened bars are the model being honest about what
+                the evidence can support.
+            </figcaption>
+        </figure>
+
+        <p>
+            With four stakeholder posteriors per country, we can measure how much they
+            overlap. A country is <em>consensus</em> when all four distributions
+            concentrate on the same range; it is <em>contested</em> when they separate.
+            The <strong>consensus score</strong> is the fraction of posterior samples in
+            which the country is in the top-$K$ under all four stakeholders simultaneously.
+            The <strong>contested score</strong> is the spread of posterior medians across
+            stakeholders. Fig 5 shows one country of each kind.
+        </p>
+
+        <figure>
+            <img src="figures/fig5_consensus_contested.png"
+                 alt="Left: four posteriors tightly overlapping for a consensus country. Right: four posteriors clearly separated for a contested country">
+            <figcaption>
+                <span class="fig-tag">Fig 5.</span>
+                Left, a consensus country — the four stakeholder posteriors land on the
+                same range. Right, a contested country — the rank depends on whose
+                preferences you apply. In the old weighted-sum world this was an
+                intuition; here it is a reading off the data.
+            </figcaption>
+        </figure>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section id="s7" class="doc-section" data-label="Validation & limits">
+        <h2><span class="section-number">§ 7</span>Validation, and what we are not claiming</h2>
+
+        <p class="lede">
+            A model's job is not to feel right. It is to agree with reality, or fail
+            noisily.
+        </p>
+
+        <p>
+            We validate in three pre-registered ways. <strong>Temporal held-out</strong>:
+            fit on data through December 2024, predict 2025 posterior ranks, compare against
+            OCHA's CERF Underfunded Emergencies selections for 2025; report top-$K$ overlap
+            and rank correlation with credible intervals. <strong>Attribute masking</strong>:
+            take a fully-observed country, mask each attribute in turn, confirm that the
+            credible interval on the rank widens predictably. <strong>Consistency</strong>:
+            under a diffuse stakeholder prior the posterior median ranking should reproduce
+            the weighted-sum ranking we shipped in the first version of the system.
+        </p>
+
+        <p>
+            What the system <em>does</em> is produce ranked posteriors, traceable to source
+            data, with declared uncertainty. What it does <em>not</em> do is equally
+            important. It does not forecast — the next layer handles that. It does not make
+            causal claims; the observation model is association, not intervention. It does
+            not replace judgement; it produces a ranked list, a coordinator decides. The
+            benchmarks we validate against — CERF UFE, CARE's <em>Breaking the Silence</em> —
+            are themselves imperfect proxies, reflecting political process and media
+            attention respectively. The stakeholder priors are judgement, not calibration;
+            regressing actual selections on the attributes to recover a stakeholder's
+            <em>effective</em> prior is a natural extension we have not done yet. And
+            fundamentally, $\theta$ is never directly observed — every posterior statement
+            is contingent on the observation model being approximately correct. Validation
+            gives us evidence. It does not give us proof.
+        </p>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section id="s8" class="doc-section" data-label="Where this goes next">
+        <h2><span class="section-number">§ 8</span>The learned layer</h2>
+
+        <p class="lede">
+            The six signals above are themselves aggregates. The information they throw
+            away is what the next layer will carry.
+        </p>
+
+        <p>
+            Under our six aggregates sits a richer raw panel: eighteen INFORM
+            sub-indicators on displacement, casualties, access, and phase-level need;
+            monthly flows donor by donor; sector-level breakdowns. A sequence model
+            trained on that panel — Mamba, a masked-attention encoder — can compress the
+            raw history into an embedding $z(u, t)$ that carries what the aggregates
+            cannot. The extension slots in cleanly: replace $a_i \mid \theta$ with
+            $\{a, z\} \mid \theta$. The latent $\theta$ stays scalar and interpretable.
+            The encoder has a crisp objective — reduce posterior variance on $\theta$
+            given the evidence — and a registered place in the typed ontology, with its
+            training data and failure modes declared alongside every other property.
+        </p>
+    </section>
+
+    <footer class="doc-foot">
+        <span>
+            <a href="../">← back to Geo-Insight</a>
+        </span>
+        <span>
+            paper: <a href="../proposal.pdf" target="_blank">proposal.pdf</a>
+            &nbsp;·&nbsp;
+            source: <code>proposal/methodology.md</code>
+        </span>
+    </footer>
+
+</div>
+
+<script>
+(function () {
+    "use strict";
+
+    // Fade-in on scroll (once each)
+    const faders = document.querySelectorAll("section.doc-section");
+    if ("IntersectionObserver" in window) {
+        const fadeObs = new IntersectionObserver((entries) => {
+            entries.forEach((e) => {
+                if (e.isIntersecting) {
+                    e.target.classList.add("is-visible");
+                    fadeObs.unobserve(e.target);
+                }
+            });
+        }, { threshold: 0.08, rootMargin: "0px 0px -60px 0px" });
+        faders.forEach((el) => fadeObs.observe(el));
+    } else {
+        faders.forEach((el) => el.classList.add("is-visible"));
+    }
+
+    // Left-edge section index
+    const sections = document.querySelectorAll("section.doc-section");
+    const bar = document.getElementById("section-index");
+    if (sections.length && bar) {
+        sections.forEach((sec) => {
+            const dot = document.createElement("a");
+            dot.className = "section-dot";
+            dot.href = "#" + sec.id;
+            const label = document.createElement("span");
+            label.className = "section-dot-label";
+            label.textContent = sec.dataset.label || sec.id;
+            dot.appendChild(label);
+            bar.appendChild(dot);
+        });
+        const dots = bar.querySelectorAll(".section-dot");
+        const byId = new Map();
+        sections.forEach((sec, i) => byId.set(sec.id, dots[i]));
+        if ("IntersectionObserver" in window) {
+            const secObs = new IntersectionObserver((entries) => {
+                entries.forEach((e) => {
+                    const dot = byId.get(e.target.id);
+                    if (!dot) return;
+                    if (e.isIntersecting && e.intersectionRatio >= 0.3) {
+                        dots.forEach((d) => d.classList.remove("is-active"));
+                        dot.classList.add("is-active");
+                    }
+                });
+            }, { threshold: [0.3, 0.5, 0.75] });
+            sections.forEach((sec) => secObs.observe(sec));
+        }
+    }
+})();
+</script>
+
+</body>
+</html>

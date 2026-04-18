@@ -104,6 +104,7 @@ def render(enriched: pd.DataFrame, lens, registry) -> None:
     fig.update_traces(textposition="top center", textfont={"size": 9})
 
     # Loading arrows
+    ARROW_COLOR = "#7c1d1d"
     load2 = pca.components_[:2].T
     arrow_scale = max(abs(scores["PC1"]).max(), abs(scores["PC2"]).max()) * 0.9
     for i, name in enumerate(cols):
@@ -111,11 +112,11 @@ def render(enriched: pd.DataFrame, lens, registry) -> None:
         fig.add_annotation(
             x=x, y=y, ax=0, ay=0,
             xref="x", yref="y", axref="x", ayref="y",
-            arrowhead=3, arrowsize=1, arrowwidth=1, arrowcolor="#E99C2D",
+            arrowhead=3, arrowsize=1, arrowwidth=1, arrowcolor=ARROW_COLOR,
         )
         fig.add_annotation(
             x=x * 1.08, y=y * 1.08, text=name, showarrow=False,
-            font=dict(size=10, color="#E99C2D"),
+            font=dict(size=10, color=ARROW_COLOR),
         )
     fig.update_layout(height=560, margin={"l": 0, "r": 0, "t": 10, "b": 0})
     st.plotly_chart(fig, use_container_width=True)

@@ -1,6 +1,6 @@
 # Metric Cards
 
-Every aggregate metric used anywhere in the GEO-Insight pipeline — whether consumed from source data or produced by our scoring — has a card here. Each card captures the formal definition, authoritative source, known discontinuities, failure modes, and our specific handling.
+Every aggregate metric used anywhere in the Geo-Insight pipeline — whether consumed from source data or produced by our scoring — has a card here. Each card captures the formal definition, authoritative source, known discontinuities, failure modes, and our specific handling.
 
 The purpose of this discipline is **defensibility**: any claim we make from an aggregate must be auditable back to a clearly-defined primitive.
 
@@ -145,7 +145,7 @@ PIN-weighted Gini of cluster coverage ratios $r_c = F_c / R_c$.
 
 ---
 
-## 7. GEO-Insight Gap Score $G_p(u)$ — Our Composite
+## 7. Geo-Insight Gap Score $G_p(u)$ — Our Composite
 
 **Source.** Defined in `proposal/proposal.pdf` §5. Builds on Rye & Aktas (2022) MADM/AHP/MAUT framework.
 

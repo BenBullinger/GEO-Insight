@@ -2,7 +2,7 @@
 
 Every analytic view reads from this registry so that column names surface with
 their formal provenance (formula, source, inputs, unit, failure modes). This
-is the "Foundry ontology" layer — every aggregation has a declared type.
+is the ontology layer — every aggregation has a declared type.
 """
 from __future__ import annotations
 

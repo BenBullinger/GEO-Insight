@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-GEO-Insight — reproducible download of the 5 official source datasets.
+Geo-Insight — reproducible download of the 5 official source datasets.
 
 Populates Data/{hno,hrp,cod-ps,fts,cbpf}/ with files matching the structure
 described in Data/README.md. The five official sources listed in sources.txt

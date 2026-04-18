@@ -2,12 +2,12 @@
 
 CERF UFE (OCHA underfunded-emergencies allocations) and CARE Breaking the
 Silence (under-reported humanitarian crises) provide human-curated ground
-truth on two orthogonal dimensions of overlooked-ness. We compute
+truth on two orthogonal dimensions of overlookedness. We compute
 set-overlap metrics (precision / recall at K) against CERF UFE and a
 Spearman rank correlation against CARE's 1–10 ranking.
 
 This view depends on the Level-5 `median_rank` column — available once the
-composite gap-score pipeline has run (the GEO-Insight score lens). In other
+composite gap-score pipeline has run (the Geo-Insight score lens). In other
 lenses it displays a hint pointing the analyst at that lens.
 """
 from __future__ import annotations
@@ -51,7 +51,7 @@ def render(enriched: pd.DataFrame, lens, registry) -> None:
 
     if "median_rank" not in enriched.columns or enriched["median_rank"].isna().all():
         st.info(
-            "No `median_rank` in the enriched frame. Switch to the **GEO-Insight score** "
+            "No `median_rank` in the enriched frame. Switch to the **Geo-Insight score** "
             "lens so the Level-5 pipeline runs; validation reads its output."
         )
         return

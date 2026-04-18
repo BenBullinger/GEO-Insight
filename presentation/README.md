@@ -1,4 +1,4 @@
-# GEO-Insight — Presentation
+# Geo-Insight — Presentation
 
 Local reveal.js deck for the Datathon 2026 final presentation. Styled with a UN-adjacent aesthetic (clean sans-serif, blue accent, muted palette). No UN branding, logos, or typefaces are used.
 
