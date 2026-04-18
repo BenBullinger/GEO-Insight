@@ -56,16 +56,21 @@ GEO-Insight/
 └── README.md
 ```
 
-## Current direction (provisional)
+## Research framing: overlookedness as disagreement
 
-A full write-up is in [`proposal/proposal.pdf`](proposal/proposal.pdf). In short, the working plan draws on a multi-attribute decision-making framework (Rye & Aktas, 2022) — AHP-elicited weights over attributes covering coverage shortfall, per-PIN funding gap, need intensity, severity, and donor concentration, composed via a MAUT additive score — with a temporal decomposition separating chronic neglect from acute deterioration for the bonus task.
+A full write-up is in [`proposal/proposal.pdf`](proposal/proposal.pdf). The core insight: existing tools (CERF UFE rankings, FTS coverage ratios, Palantir-Foundry-based systems like WFP's DOTS) score overlookedness as a *scalar* — one number per country-year. We extend the MADM/AHP/MAUT framework of Rye & Aktas (2022) with two new axes, each anchored in an explicit gap in the 2015–2026 literature:
 
-The design principles are firmer than the specific methodology:
+1. **Intra-crisis equity** — a cluster-coverage Gini within a single country's HRP, following the fair-distribution formulation of Vargas Florez et al. (2015, Eqs. 9–12). Unmasks aggregate-coverage blindness: an 80%-covered crisis with a starved health cluster is arguably worse than a 40%-covered crisis with uniform allocation.
+2. **Inter-stakeholder disagreement** — rank variance across four donor-preference profiles (CERF-, ECHO-, USAID-, NGO-consortium-flavoured). Low variance = *consensus-overlooked*; high variance = *contested*.
+
+The joint output is a four-cell typology (consensus-overlooked, contested, sector-starved, combinations) that current tools conflate. Literature convergence: Abdulrashid et al. (2026, §7.3), Sahebjamnia et al. (2017, §6), Vargas Florez et al. (2015) all name equity-aware modelling as open. Validated against **two independent benchmarks** — CERF UFE (consensus axis) and CARE *Breaking the Silence* (sector-starved axis).
+
+Design principles:
 
 - **Decision support, not automation.** The tool produces rankings; humans decide.
-- **Explainable by construction.** Every weight is inspectable; every score decomposes into per-attribute contributions.
+- **Explainable by construction.** Every weight is inspectable; every score decomposes into per-attribute contributions per profile.
 - **Honest about data quality.** Stale HNO figures, missing sector breakdowns, and plan-less crises are flagged, not imputed.
-- **No false precision.** Scores reported to two significant figures; weight-sensitivity bands shown alongside point values.
+- **No false precision.** Scores to two significant figures; inter-profile IQR always shown alongside point estimates.
 
 Details, validation strategy, failure modes, and phased delivery plan are in the proposal.
 
