@@ -43,12 +43,30 @@ if [ ! -f "$HOME/.streamlit/credentials.toml" ]; then
 fi
 
 # ─── 3. Port checks ──────────────────────────────────────────────────────────
-port_busy() { lsof -nP -iTCP:"$1" -sTCP:LISTEN >/dev/null 2>&1; }
+# If a port is still held (e.g. stale server from a prior ./run.sh that
+# wasn't Ctrl-C'd cleanly), release it. SIGTERM first; SIGKILL if the
+# process doesn't exit within 3 s.
+free_port() {
+    local port=$1
+    local pid
+    pid=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN -t 2>/dev/null | head -1 || true)
+    [ -z "$pid" ] && return 0
+    local cmd
+    cmd=$(ps -p "$pid" -o comm= 2>/dev/null | xargs)
+    echo "→ Port $port held by pid $pid ($cmd) — releasing…"
+    kill "$pid" 2>/dev/null || true
+    for _ in 1 2 3; do
+        sleep 1
+        pid=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN -t 2>/dev/null | head -1 || true)
+        [ -z "$pid" ] && return 0
+    done
+    echo "  ↳ still held; sending SIGKILL"
+    kill -9 "$pid" 2>/dev/null || true
+    sleep 1
+}
+
 for p in "$PORT_LAND" "$PORT_PRES" "$PORT_DASH"; do
-    if port_busy "$p"; then
-        echo "✗ Port $p already in use. Stop the process using it or edit run.sh." >&2
-        exit 1
-    fi
+    free_port "$p"
 done
 
 # ─── 4. Launch servers ───────────────────────────────────────────────────────
