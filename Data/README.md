@@ -72,6 +72,18 @@ Used for enrichment / bonus task:
 
 The admin2/3/4 population files are pulled in completeness but are not required for the country-level methodology.
 
+## Known data-audit findings
+
+Audit run 2026-04-18, full mapping in `proposal/proposal.pdf` §4.1–4.4:
+
+- **Severity (methodology attribute $a_4$) is NOT in HNO.** HNO CSVs have PIN/Targeted/Reached but no structured 1–5 severity score — only a free-text `Description` field. Source for $a_4$: IPC phase classification from [ipcinfo.org](https://www.ipcinfo.org/) via their free registered API. Non-food crises degrade to a plan-typology flag.
+- **Cluster names disagree between HNO and FTS.** E.g. HNO `"Sanitation & Hygiene"` vs. FTS `"Water Sanitation and Hygiene"` vs. French `"EHA - Eau Hygiène Assainissement"`. A manual mapping table will live at `src/taxonomies/cluster_map.csv` (~20–30 entries) and is load-bearing for the equity Gini.
+- **FTS incoming records sometimes span multiple destination countries** via pipe-delimited `destLocations`. HHI computation applies a lead-country rule or splits equally across listed destinations and flags the crisis as `estimated`.
+- **HNO 2026 is a stub** (~7 KB, ~100 rows) — plan cycles not finalised yet. Primary analysis uses 2024 + 2025.
+- **Validation benchmarks** (CERF UFE, CARE *Breaking the Silence*) are not included in the core download — they are scraped separately once per cycle.
+
+Verdict: all six attributes recoverable from public sources; no kill blocker.
+
 ## If a download 404s
 
 HDX resource IDs are generally stable, but if OCHA re-issues a dataset the URL hash changes. To regenerate URLs:
