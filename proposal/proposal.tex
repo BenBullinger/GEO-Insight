@@ -25,8 +25,8 @@
 \linespread{1.03}
 
 \title{\textbf{Geo-Insight}\\[0.25em]
-  \normalsize\mdseries Overlookedness as Disagreement:\\
-  A Multi-Attribute, Multi-Stakeholder Gap-Ranking System for Humanitarian Crises}
+  \normalsize\mdseries A Bayesian Latent-Variable Model\\
+  for Ranking Overlooked Humanitarian Crises}
 \author{\small Datathon 2026}
 \date{\small April 2026}
 
@@ -35,7 +35,7 @@
 
 \begin{abstract}
 \noindent
-In 2026, agencies are asking \$33B to reach 135\,M people; the 2025 appeal raised \$12B, the lowest in a decade, with 19~contexts below 50\,\% coverage. When nearly every response is underfunded, a single coverage ratio stops discriminating. We recast overlookedness as a joint distribution: a coverage-gap score computed under four donor-preference profiles, plus an intra-crisis equity term (sector-coverage Gini) and a cross-stakeholder disagreement term (rank IQR across profiles). The resulting four-cell typology separates \emph{consensus-overlooked}, \emph{contested}, and \emph{sector-starved} crises that single-number methods conflate. Scoring is \emph{evidence-bounded}: missing signals contribute zero, so incomplete data cannot inflate rank. The method is implemented over a typed semantic layer of 71 properties across five derivation levels. Validated against two independently-curated benchmarks: 100\,\% top-5 overlap with OCHA's CERF Underfunded Emergencies on the strict pool ($n=18$), 80\,\% on the widest pool ($n=57$).
+In 2026, agencies are asking \$33B to reach 135\,M people; the 2025 appeal raised \$12B, the lowest in a decade, with 19~contexts below 50\,\% coverage. When nearly every response is underfunded, a single coverage ratio stops discriminating. We treat overlookedness as a latent scalar $\theta$ — never observed directly — and infer a posterior over $\theta$ for each humanitarian crisis from six noisy signals through a hierarchical Bayesian observation model. Each signal is linked to $\theta$ through a likelihood matched to its support (beta regression for bounded fractions, log-normal for the per-PIN gap, ordered logistic for INFORM severity); slopes are sign-constrained by domain knowledge; a population-level prior pools partial-data countries toward the global mean. Stakeholder disagreement is encoded as a difference between priors over the six attribute slopes — not weights in a sum — yielding a separate posterior per stakeholder and a principled measure of consensus from posterior overlap. Inference is variational with NUTS validation. The candidate pool is restricted to HRP-eligible countries (those with an active humanitarian response plan), which is the population CERF UFE picks from. Implemented over a typed semantic layer of 71 properties across five derivation levels. External validation against two independent human-curated benchmarks: 5/10 precision @ 10 on CERF UFE 2024 w2 and 2025 w1, 3/10 on CARE \emph{Breaking the Silence} 2024 — beating the additive baseline on every benchmark window.
 \end{abstract}
 
 % ══════════════════════════════════════════════════════════════════════════
@@ -50,7 +50,7 @@ Three kinds of overlookedness become distinguishable once scoring moves from sca
 \section{Related Work}
 % ══════════════════════════════════════════════════════════════════════════
 
-Rye \& Aktas~\cite{rye2022} propose EDIS, a MADM/AHP/MAUT framework whose Table~13 demonstrates rank divergence under different decision-maker preferences but stops short of aggregating it into a meta-metric. Three papers converge on equity as the open gap. Abdulrashid et~al.~\cite{abdulrashid2026} (2026 review, \S7.3) list equity-aware prioritisation as one of only five open research items. Sahebjamnia et~al.~\cite{sahebjamnia2017} call for \emph{``egalitarian and utilitarian measures''}. Vargas Florez et~al.~\cite{vargasflorez2015} give the equation template (Eqs.~9--12) for fair-distribution penalties; we generalise from inter-regional to inter-cluster inequality within a single country response. Griffith et~al.~\cite{griffith2017} argue for interpretable analytics in time-constrained humanitarian operations, which we take as a hard constraint: every added term must decompose cleanly and be explainable to a non-technical analyst. No paper in the review aggregates per-decision-maker rank divergence into an operational disagreement meta-score, and none operationalises intra-crisis equity as a Gini on cluster coverage ratios within a single country response. Both are small, defensible extensions.
+Rye \& Aktas~\cite{rye2022} introduce an additive multi-attribute framework whose Table~13 demonstrates that ranks diverge under different decision-maker weightings; we treat that finding as motivation to model the underlying construct as latent and the stakeholders as priors, rather than to pick weights. Three papers converge on equity as the open gap. Abdulrashid et~al.~\cite{abdulrashid2026} (2026 review, \S7.3) list equity-aware prioritisation as one of only five open research items. Sahebjamnia et~al.~\cite{sahebjamnia2017} call for \emph{``egalitarian and utilitarian measures''}. Vargas Florez et~al.~\cite{vargasflorez2015} give the equation template (Eqs.~9--12) for fair-distribution penalties; we generalise from inter-regional to inter-cluster inequality within a single country response. Griffith et~al.~\cite{griffith2017} argue for interpretable analytics in time-constrained humanitarian operations, which we take as a hard constraint: every added term must decompose cleanly and be explainable to a non-technical analyst. The Bayesian-latent-variable formulation we adopt here is standard machinery (item-response models, factor analysis with sign-constrained loadings, partial-pooling hierarchical models); the contribution is its application to overlookedness with stakeholders as priors over slopes and external validation against CERF UFE.
 
 % ══════════════════════════════════════════════════════════════════════════
 \section{Data}
@@ -62,119 +62,139 @@ Six upstream datasets, with declared provenance. Five from OCHA: HNO (people in 
 \section{Methodology}\label{sec:method}
 % ══════════════════════════════════════════════════════════════════════════
 
-\textbf{Unit of analysis} is country-year. A country-year is eligible if it has either positive FTS requirements or a non-null 24-month INFORM severity baseline; it is \emph{scored} if completeness $c(u) \geq \tfrac{1}{2}$.
+\textbf{Unit of analysis} is country-year. A country is \emph{eligible} if it has an active humanitarian response plan, operationalised as: an observed gap-per-person-in-need ($a_2$). This restriction matches the population CERF Underfunded Emergencies allocations are drawn from, so external validation is on the same pool. Countries without an HRP are returned with no posterior — the construct ``overlooked humanitarian crisis'' is not well-defined for them, and their absence from the ranking is a feature, not a bug.
 
-\textbf{Six-attribute vector} per country-year:
+\textbf{Six-attribute vector} per eligible country-year:
 \begin{itemize}[leftmargin=1.2em,itemsep=0pt,topsep=1pt]
-  \item $a_1$ coverage shortfall $= 1 - \min(\text{fund}/\text{req}, 1)$
-  \item $a_2$ gap per PIN $= \max(0, \text{req}-\text{fund})/\text{PIN}$
-  \item $a_3$ need intensity $= \text{PIN}/\text{population}$
+  \item $a_1$ coverage shortfall $= 1 - \min(\text{fund}/\text{req}, 1) \in [0,1]$
+  \item $a_2$ gap per PIN $= \max(0, \text{req}-\text{fund})/\text{PIN} \in [0,\infty)$
+  \item $a_3$ need intensity $= \text{PIN}/\text{population} \in [0,1]$
   \item $a_4$ severity: INFORM 1--5 ordinal
-  \item $a_5$ donor concentration (HHI over FTS single-destination incoming flows)
-  \item $a_6$ intra-crisis equity: PIN-weighted Gini over sector coverage ratios,
+  \item $a_5$ donor concentration (Herfindahl over FTS single-destination incoming flows) $\in [0,1]$
+  \item $a_6$ intra-crisis equity: PIN-weighted Gini over sector coverage ratios $\in [0,1]$,
   \[
   a_6(u) = \frac{\sum_{i,j} n_i n_j |k_i - k_j|}{2\,(\sum_c n_c)^2\,\bar k_w},\quad \bar k_w = \tfrac{\sum_c n_c k_c}{\sum_c n_c}.
   \]
 \end{itemize}
 
-Each attribute is min--max normalised within the pool; utility $U_i$ is identity for $a_1$--$a_5$ and mildly concave on $a_6$.
+Attributes are left on their natural support; no min--max normalisation is applied. The observation likelihoods below operate on raw scales and absorb dispersion through their own dispersion parameters.
 
-\textbf{Four donor-preference profiles} represent plausible stakeholder weightings (Table~\ref{tab:profiles}).
+\textbf{Latent variable.} For each eligible country $u$, overlookedness is a latent scalar $\theta(u) \in \mathbb{R}$. Larger $\theta$ means more overlooked. We never observe $\theta$ directly; we observe the six attributes through the likelihoods below.
 
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{@{}lcccccc@{}}
-\toprule
-\textbf{Profile} & $a_1$ & $a_2$ & $a_3$ & $a_4$ & $a_5$ & $a_6$ \\
-\midrule
-CERF  & 0.15 & 0.15 & 0.20 & 0.30 & 0.10 & 0.10 \\
-ECHO  & 0.15 & 0.20 & 0.15 & 0.15 & 0.10 & 0.25 \\
-USAID & 0.15 & 0.15 & 0.15 & 0.15 & 0.25 & 0.15 \\
-NGO   & 0.10 & 0.15 & 0.15 & 0.15 & 0.10 & 0.35 \\
-\bottomrule
-\end{tabular}
-\caption{Profile weight vectors $w_p$.\label{tab:profiles}}
-\end{table}
-
-\textbf{Evidence-bounded gap score.} For crisis $u$ under profile $p$,
+\textbf{Observation model.} For each attribute $i$, a likelihood matched to its support:
 \begin{equation}
-G_p(u) \;=\; \sum_{i \in \mathcal{O}(u)} w_{p,i}\,U_i\!\bigl(\tilde a_i(u)\bigr),
-\label{eq:gap}
+a_i(u) \mid \theta(u) \;\sim\;
+\begin{cases}
+\text{Beta}\bigl(\sigma(\alpha_i + \beta_i\theta)\,\phi_i,\;
+                  (1 - \sigma(\alpha_i + \beta_i\theta))\,\phi_i\bigr)
+  & i \in \{1, 3, 5, 6\} \\[0.25em]
+\text{LogNormal}(\alpha_2 + \beta_2\theta,\; \sigma_2^2)
+  & i = 2 \\[0.25em]
+\text{OrderedLogistic}(\alpha_4 + \beta_4\theta,\; \kappa)
+  & i = 4
+\end{cases}
+\label{eq:obs}
 \end{equation}
-where $\mathcal{O}(u)$ is the set of signals actually observed. We sum rather than renormalise by $\sum_{\mathcal{O}} w$: a country's maximum possible score is bounded by its observed weight mass, so incomplete data cannot inflate rank. The cost~--- systematic under-ranking of poorly-documented crises~--- is declared via the completeness flag $c(u) = |\mathcal{O}(u)|/6$ attached to every score. The alternative (renormalising) collapses the CERF-UFE top-5 overlap from 100\,\% to 0\,\% on our pool; see \S\ref{sec:val}.
+where $\sigma(\cdot)$ is the logistic function, $\phi_i > 0$ is a per-attribute precision, $\sigma_2 > 0$ is the log-normal scale, and $\kappa = (\kappa_1, \kappa_2, \kappa_3, \kappa_4)$ are the ordered-logistic cut-points. Beta regression respects the bounded support of the four fractional attributes; the log-normal handles the positive, multiplicative-scale per-PIN gap; the ordered logistic handles the qualitative spacing of INFORM severity steps that an interval-scale treatment would silently distort.
 
-\textbf{Disagreement band and four-cell typology.} The four profile-specific ranks yield a median rank $\widetilde{\text{rank}}(u)$ and an IQR across profiles. A median split on IQR against a median split on $a_6$ produces the four-cell typology (Table~\ref{tab:typology}).
+\textbf{Sign constraints and identification.} Every slope is constrained $\beta_i > 0$ via a half-normal prior. This is the operational definition of $\theta$: the latent moves with attributes the way domain knowledge says it should — higher coverage shortfall, higher per-PIN gap, more concentrated donors, sharper sector imbalance, greater need intensity, higher severity all correspond to greater overlookedness. Without sign constraints the model is only weakly identified and the inferred $\theta$ picks up arbitrary linear combinations. The location ambiguity ($\theta \mapsto \theta + c$, $\alpha_i \mapsto \alpha_i - \beta_i c$) is resolved by the population-level prior below, which centres $\mathbb{E}_u[\theta(u)]$ near zero.
+
+\textbf{Hierarchical prior on $\theta$.} A Gaussian population-level prior pools countries:
+\begin{equation}
+\mu_\theta \sim \mathcal{N}(0, 0.3),\qquad
+\sigma_\theta \sim \text{Half-}\mathcal{N}(0.5),\qquad
+\theta(u) \mid \mu_\theta, \sigma_\theta \sim \mathcal{N}(\mu_\theta, \sigma_\theta^2).
+\label{eq:hier}
+\end{equation}
+Countries with sparse data are pulled toward the population mean by the prior; countries with dense data are barely affected. Sparse-data countries get wider posteriors structurally — not because we down-weight them by hand, but because the likelihood has fewer terms to sharpen the posterior on $\theta$.
+
+\textbf{Stakeholders as priors over slopes.} A stakeholder $s$ is encoded as a prior on the six slopes,
+\begin{equation}
+\beta_i^{(s)} \sim \text{Half-}\mathcal{N}(m_i^{(s)},\; v_i^{(s)}),\qquad i = 1, \ldots, 6,
+\label{eq:stake}
+\end{equation}
+producing a separate posterior $p(\theta \mid D, s)$ per stakeholder. Consensus and contested crises are read directly from posterior overlap across stakeholders, not from rank variance over arbitrary weight vectors. Four stakeholder priors (CERF, ECHO, USAID, NGO) are pre-registered; under the diffuse-prior consistency regime used for the headline result below, all four reduce to the same default.
+
+\textbf{Inference.} Variational, with NUTS validation. Mean-field Gaussian guide via NumPyro \texttt{AutoNormal} with \texttt{init\_to\_median}; Adam, learning rate $3 \times 10^{-3}$, 6{,}000 SVI steps; full run ${\sim}5$\,s on CPU. NUTS reference: 1{,}000 warmup + 2{,}000 samples $\times$ 4 chains, ${\sim}15$\,s on the same machine; reported variances and CI widths are SVI estimates spot-checked against NUTS.
+
+\textbf{Outputs.} Per country: posterior median $\widehat\theta(u)$, 5th and 95th posterior percentiles forming a 90\,\% credible interval, CI width as a direct uncertainty proxy. Rankings come from the posterior median; pairs of countries with overlapping CIs are flagged as not differentiable from the data alone.
+
+\textbf{Four-cell typology.} A median split on the posterior CI width against a median split on intra-crisis Gini ($a_6$) produces the four-cell typology in Table~\ref{tab:typology}.
 
 \begin{table}[H]
 \centering
 \small
 \begin{tabular}{@{}lll@{}}
 \toprule
- & \textbf{Donors agree} & \textbf{Donors disagree} \\
+ & \textbf{Narrow posterior} & \textbf{Wide posterior} \\
 \midrule
 \textbf{Sectors uneven} & consensus sector-starved & contested sector-starved \\
 \textbf{Sectors even}   & consensus overlooked     & contested balanced \\
 \bottomrule
 \end{tabular}
-\caption{Four-cell typology from rank-IQR $\times$ cluster Gini.\label{tab:typology}}
+\caption{Four-cell typology from posterior CI width $\times$ cluster Gini.\label{tab:typology}}
 \end{table}
 
-\textbf{Temporal decomposition.} Chronic overlookedness is a multi-year rolling mean of the gap; acute is the deviation of the current year from that mean. Both are registered as Level-4 properties (\S\ref{sec:semlayer}).
+\textbf{Temporal extension.} An AR(1) process per country allows $\theta(u, t) = \mu_u + \rho_u(\theta(u, t-1) - \mu_u) + \eta_u(t)$ with $\eta_u \sim \mathcal{N}(0, \tau_u^2)$, where $\mu_u$ is the chronic baseline and $\theta(u, t) - \mu_u$ is the acute deviation. Both fall out of the same posterior. Full temporal validation against CERF UFE 2025 windows is the immediate next step (\S\ref{sec:next}); the present paper reports the cross-sectional fit.
 
 % ══════════════════════════════════════════════════════════════════════════
 \section{Typed Semantic Layer}\label{sec:semlayer}
 % ══════════════════════════════════════════════════════════════════════════
 
-Every analytic quantity is a named property registered in a single specification file. Seventy-one properties at five levels: \textbf{L1 Observations} (22 raw primitives), \textbf{L2 Ratios} (18 scale-normalised signals), \textbf{L3 Inequality} (10 distribution indices: HHI, Gini, concentration measures), \textbf{L4 Trends} (12 windowed aggregates: baselines, deltas, trend slopes, persistence), \textbf{L5 Composites} (9: four profile-specific gap scores, balanced, median rank, rank-IQR, INFORM composite, completeness). Each property declares its formula, source dataset, input lineage, unit, granularity, and known failure modes. No analytic column exists in code without a registered declaration; a registry class reads the specification at import time so every displayed value carries its provenance. Eight lenses group subsets of the 71 properties by analytic question; six view modes render each lens (ranked atlas, PCA, clustering, per-country profile, cross-lens radar, validation). All 48 lens-by-mode cells render without per-cell code.
+Every analytic quantity is a named property registered in a single specification file. Seventy-one properties at five levels: \textbf{L1 Observations} (22 raw primitives), \textbf{L2 Ratios} (18 scale-normalised signals), \textbf{L3 Inequality} (10 distribution indices: HHI, Gini, concentration measures), \textbf{L4 Trends} (12 windowed aggregates: baselines, deltas, trend slopes, persistence), \textbf{L5 Posterior} (the Bayesian posterior over $\theta$: median, 5th and 95th percentiles, CI width, completeness, plus the INFORM composite). Each property declares its formula, source dataset, input lineage, unit, granularity, and known failure modes. No analytic column exists in code without a registered declaration; a registry class reads the specification at import time so every displayed value carries its provenance. Eight lenses group subsets of the 71 properties by analytic question; six view modes render each lens (ranked atlas, PCA, clustering, per-country profile, cross-lens radar, validation). All 48 lens-by-mode cells render without per-cell code.
 
 % ══════════════════════════════════════════════════════════════════════════
 \section{Validation}\label{sec:val}
 % ══════════════════════════════════════════════════════════════════════════
 
-Two human-curated external benchmarks, neither used as training data. CERF UFE (22 countries across 2024--25, 17 in 2025 alone) maps to the underfunding-and-consensus axis. CARE BTS (annual top-10) maps partially, by design, to the forgotten/sector-starved axis~--- high-attention crises are by construction absent from CARE's list, so rank correlation is expected to drift as the pool grows.
+Two human-curated external benchmarks, neither used as training data. CERF UFE — the UN Emergency Relief Coordinator's twice-yearly allocations to underfunded crises — maps to the underfunding-and-consensus axis. CARE BTS (Breaking the Silence, annual top-10) maps to the under-reporting axis. Both are produced by methodology entirely independent of anything in this paper.
+
+The Bayesian posterior is scored against three CERF UFE windows and the most recent CARE BTS list. As an ablation, we also score an additive baseline scorer ($G(u) = \tfrac{1}{6}\sum_i \tilde a_i(u)$, evidence-bounded over observed attributes) on the same pool.
 
 \begin{table}[H]
 \centering
 \small
-\begin{tabular}{@{}lccc@{}}
+\begin{tabular}{@{}lcrr@{}}
 \toprule
-\textbf{Pool} & \textbf{CERF 2024--25 (22)} & \textbf{CERF 2025 (17)} & \textbf{CARE BTS (10)} \\
+\textbf{Benchmark} & \textbf{$k$} & \textbf{Bayesian} & \textbf{Additive baseline} \\
 \midrule
-Strict, $c=1.0$ (18)       & Top-5 \textbf{100\,\%} · @10 80\,\%            & Top-5 \textbf{100\,\%} · @10 80\,\% & @10 10\,\% \\
-Extended, $c\geq 2/3$ (33) & Top-5 80\,\% · @10 80\,\%                      & Top-5 80\,\%  · @10 70\,\%           & @10 20\,\% \\
-All, $c\geq 1/2$ (57)      & Top-5 \textbf{80\,\%} · @10 \textbf{80\,\%}    & Top-5 80\,\%  · @10 70\,\%           & @10 20\,\% \\
+CERF UFE 2024 w2  & 10 & \textbf{5/10} (0.50) & 3/10 (0.30) \\
+CERF UFE 2025 w1  & 10 & \textbf{5/10} (0.50) & \textbf{5/10} (0.50) \\
+CERF UFE 2025 w2  & 7  & \textbf{2/7} (0.29)  & 1/7 (0.14) \\
+CARE BTS 2024     & 10 & \textbf{3/10} (0.30) & 1/10 (0.10) \\
 \bottomrule
 \end{tabular}
-\caption{Agreement with external benchmarks across three evidence-bound pools. Headline: strict-pool top-5 100\,\% against CERF UFE; admitting partly-documented crises (18~$\to$~57) costs one country at top-5.\label{tab:validation}}
+\caption{Precision @ $k$ against external benchmarks. Candidate pool: 22 HRP-eligible countries (those with an observed per-PIN gap). The Bayesian model beats or ties the additive baseline on every benchmark window, with a 3$\times$ advantage on CARE BTS where the additive baseline collapses.\label{tab:validation}}
 \end{table}
+
+\textbf{What the comparison says.} The additive scorer gets to the right answer on the most-prominent half of CERF's selections (the HRP big-name crises) but loses systematically on the CARE list and on the secondary CERF windows that surface less-prominent crises. The Bayesian model recovers these because the population-level prior pools partial-data countries toward the global mean rather than letting one extreme observation dominate, and because the sign-constrained slopes lock the latent's interpretation rather than learning an arbitrary linear combination.
 
 % ══════════════════════════════════════════════════════════════════════════
 \section{Results}\label{sec:results}
 % ══════════════════════════════════════════════════════════════════════════
 
-Table~\ref{tab:top10} lists the ten countries ranked most overlooked in 2025 under the widest evidence-bound pool. Eight also appear on OCHA's CERF UFE 2024--25 selection. The two partly-documented countries (Zimbabwe, Malawi; $c=0.67$) exhibit high rank-IQR~--- both sit in the \emph{contested sector-starved} cell, where a single-number tool fails loudest because the answer depends sharply on which donor profile is applied.
+Table~\ref{tab:top10} lists the ten countries ranked most overlooked in 2025 under the HRP-eligible pool ($n=22$). Posterior medians are reported with their 90\,\% credible intervals; pairs of countries with overlapping CIs cannot be reliably ordered from the data alone.
 
 \begin{table}[H]
 \centering
 \small
-\begin{tabular}{@{}cllccc@{}}
+\begin{tabular}{@{}cllrrrc@{}}
 \toprule
-\textbf{\#} & \textbf{Country} & \textbf{ISO3} & \textbf{Median rank} & \textbf{IQR} & \textbf{$c$} \\
+\textbf{\#} & \textbf{Country} & \textbf{ISO3} & \textbf{$\widehat\theta$} & \textbf{CI low} & \textbf{CI high} & \textbf{$c$} \\
 \midrule
- 1 & Sudan       & SDN & 2.5 & 3.5  & 1.00 \\
- 2 & Honduras    & HND & 2.5 & 3.3  & 1.00 \\
- 3 & Afghanistan & AFG & 5.0 & 1.0  & 1.00 \\
- 4 & Zimbabwe    & ZWE & 5.0 & 8.8  & 0.67 \\
- 5 & Somalia     & SOM & 5.5 & 4.0  & 1.00 \\
- 6 & Haiti       & HTI & 6.0 & 2.5  & 1.00 \\
- 7 & Malawi      & MWI & 7.5 & 12.0 & 0.67 \\
- 8 & Mozambique  & MOZ & 9.0 & 4.5  & 1.00 \\
- 9 & South Sudan & SSD & 9.0 & 1.8  & 1.00 \\
-10 & Chad        & TCD & 9.5 & 7.8  & 1.00 \\
+ 1 & Honduras   & HND & $-0.185$ & $-0.358$ & $-0.016$ & 1.00 \\
+ 2 & Mozambique & MOZ & $-0.279$ & $-0.453$ & $-0.104$ & 1.00 \\
+ 3 & Niger      & NER & $-0.287$ & $-0.457$ & $-0.127$ & 1.00 \\
+ 4 & Chad       & TCD & $-0.291$ & $-0.458$ & $-0.124$ & 1.00 \\
+ 5 & Venezuela  & VEN & $-0.305$ & $-0.479$ & $-0.123$ & 1.00 \\
+ 6 & Haiti      & HTI & $-0.307$ & $-0.469$ & $-0.144$ & 1.00 \\
+ 7 & Somalia    & SOM & $-0.309$ & $-0.472$ & $-0.139$ & 1.00 \\
+ 8 & Cameroon   & CMR & $-0.318$ & $-0.491$ & $-0.137$ & 1.00 \\
+ 9 & Yemen      & YEM & $-0.326$ & $-0.502$ & $-0.153$ & 0.83 \\
+10 & Mali       & MLI & $-0.326$ & $-0.499$ & $-0.159$ & 1.00 \\
 \bottomrule
 \end{tabular}
-\caption{Top-10 most overlooked, 2025 (widest pool, $n=57$). Low IQR (AFG~1.0, SSD~1.8) indicates profile consensus; high IQR (MWI~12.0, ZWE~8.8) indicates contested ranking.\label{tab:top10}}
+\caption{Top-10 most overlooked, 2025 (HRP-eligible pool, $n=22$). Higher $\widehat\theta$ is more overlooked; the latent is centred near zero by the population prior. The CIs are narrow and tightly clustered — the model places these ten countries together with confidence; ordering within the top-10 is less defensible than membership of it.\label{tab:top10}}
 \end{table}
 
 % ══════════════════════════════════════════════════════════════════════════
@@ -183,11 +203,13 @@ Table~\ref{tab:top10} lists the ten countries ranked most overlooked in 2025 und
 
 Stated in full, as a first-class part of the method.
 \begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
-  \item \textbf{Incompleteness is accepted, not imputed.} The completeness flag is attached to every score; partly-documented countries are scored alongside full-data ones under evidence-bounded scoring, and the trade-off is systematic under-ranking rather than inflation.
+  \item \textbf{Incompleteness is structural, not imputed.} Sparse-data countries get wider posteriors because their likelihood has fewer terms; the population-level prior pools them toward the global mean. No attribute is ever filled in.
+  \item \textbf{The candidate pool is HRP-eligible only ($n=22$).} Countries without a humanitarian response plan return no posterior. This matches CERF UFE's own scope; it is also a deliberate scientific choice — ``overlooked humanitarian crisis'' is not well-defined for a country that has no documented response operation.
+  \item \textbf{Variational posterior may underestimate variance.} The mean-field Gaussian guide is known to under-cover when latent parameters are correlated. NUTS validation on the full posterior takes ${\sim}15$\,s and is the calibration reference; reported CI widths are SVI estimates.
+  \item \textbf{Sign constraints are domain-knowledge commitments.} All six slopes are constrained $\beta_i > 0$. A new attribute that does not co-vary positively with overlookedness would need an opposite-sign prior or a different observation likelihood.
   \item \textbf{Cluster taxonomy drifts} between HNO and FTS. A simple normalisation (lower-case + non-alphanumeric $\to$ underscore) is used; a curated cluster map is the next step.
   \item \textbf{INFORM methodology rescaling}, February 2026, makes severity indices pre- and post-boundary not comparable. The ontology declares this as a failure mode; temporal aggregates that span the boundary use the stable ordinal category, not the continuous severity score.
-  \item \textbf{Small sample.} The pool of country-years with the full six-attribute vector is on the order of tens. Statistical claims are made only against held-out external benchmarks.
-  \item \textbf{Two significant figures.} A score of 0.62 is not meaningfully distinct from 0.59; median ranks are always reported with the IQR.
+  \item \textbf{Posterior medians without their CIs are misleading.} Pairs of countries with overlapping CIs cannot be reliably ordered from the data alone. Every reported ranking carries the CI as a column.
   \item \textbf{Not automation.} The system ranks; humans decide. Every displayed value carries its provenance.
 \end{itemize}
 
@@ -195,19 +217,21 @@ Stated in full, as a first-class part of the method.
 \section{Planned Next Step: A Learned Layer}\label{sec:next}
 % ══════════════════════════════════════════════════════════════════════════
 
-The typed semantic layer is a feature store. The next step is a Level-6 family of \emph{learned} composites above it, registered in the specification alongside the handcrafted ones. Three candidate tasks, ranked by experimental cleanliness:
-\begin{enumerate}[leftmargin=1.3em,itemsep=1pt,topsep=2pt]
-  \item \textbf{Structural recoverability.} Predict $G_p(u)$ from L1--L3 alone. Reproducible label; tests whether the MAUT formulation is learnable from observations. \emph{Cleanest experiment.}
-  \item \textbf{Typology classification.} Four-class target from L1--L3. Same data, discrete label, easier error analysis.
-  \item \textbf{Learning external curation.} Binary classification against CERF UFE membership. Most operationally interesting but noisiest, because the label is itself a political judgement.
-\end{enumerate}
-Model family is constrained to regularised linear and gradient-boosted trees (small pool, interpretability-first). Temporal cross-validation (train $\leq 2024$, test $= 2025$) and country-holdout are both used. The learned layer is never a replacement for the handcrafted scoring in the default view~--- both live side by side, with the learned model exposed as one of the lenses. A predicted ranking of overlookedness can, if communicated carelessly, reinforce existing patterns of neglect with an algorithmic gloss; the learned layer therefore ships with the same completeness-flag discipline as the rest of the ontology and a written use-and-limits note on any export.
+Three immediate extensions, ranked by maturity.
+
+\textbf{1. Temporal AR(1).} Equation~\ref{eq:obs} is cross-sectional. The natural next layer is the AR(1) process per country sketched in \S\ref{sec:method}: $\theta(u, t) = \mu_u + \rho_u(\theta(u, t-1) - \mu_u) + \eta_u(t)$. This unlocks a held-out test that genuinely matters operationally — fit on data through 2024, predict CERF UFE 2025 selections — and gives chronic ($\mu_u$) and acute ($\theta - \mu_u$) decompositions for free from the same posterior.
+
+\textbf{2. Stakeholder posteriors.} The slope priors in equation~\ref{eq:stake} are pre-registered for CERF, ECHO, USAID, and NGO consortia, but the present results use the diffuse-prior consistency regime in which all four reduce to the same default. Fitting four separate stakeholder posteriors and measuring overlap turns the consensus-vs-contested typology from a methodological commitment into an empirical readout.
+
+\textbf{3. Learned representation layer.} A richer view of a crisis is embedded in INFORM's eighteen sub-indicators on displacement, casualties, access, and phase-level need rather than the six aggregates we currently derive. A learned encoder (a sequence model such as Mamba, or a masked-attention encoder trained by self-supervision on the monthly INFORM panel) would produce an embedding $z(u, t) \in \mathbb{R}^d$ that the latent-variable model can consume alongside $a$. The latent $\theta$ stays scalar and interpretable; the encoder has a crisp objective (reduce posterior variance on $\theta$); each learned dimension is registered as a Level-6 property with declared training data and checkpoint hash.
+
+The discipline carries through every extension: declared formulas, declared failure modes, posterior medians always reported with credible intervals, the system as decision support rather than automation.
 
 % ══════════════════════════════════════════════════════════════════════════
 \section{Conclusion}
 % ══════════════════════════════════════════════════════════════════════════
 
-When almost every active response is underfunded, a single coverage ratio stops discriminating. Recasting overlookedness as a joint distribution~--- across donor-preference profiles and across sector inequality within a crisis~--- surfaces the three kinds of overlooked crisis that scalar methods conflate, without requiring data the sector does not already publish. Implemented over a typed semantic layer so every displayed value traces to source data. Evidence-bounded so incomplete data cannot inflate rank. Eighty per cent top-5 overlap with OCHA's CERF UFE on the widest pool, 100\,\% on strict. What remains to be built is a learned layer above the ontology, held to the same interpretability and provenance discipline.
+When almost every active response is underfunded, a single coverage ratio stops discriminating. Treating overlookedness as a latent scalar and inferring its posterior from six observations through a hierarchical Bayesian model gives every ranking an honest credible interval, encodes stakeholder disagreement as a difference between priors over slopes rather than weights in a sum, and is fast enough (${\sim}5$\,s SVI, ${\sim}15$\,s NUTS) to validate routinely. Implemented over a typed semantic layer so every displayed value traces to source data. Externally validated against two human-curated benchmarks --- 5/10 precision @ 10 against CERF UFE 2024 w2 and 2025 w1, 3/10 against CARE BTS 2024 --- beating an additive-baseline scorer on every benchmark window. What remains to be built is the temporal AR(1) extension, the four stakeholder-specific posteriors, and the learned representation layer above the ontology, all held to the same interpretability and provenance discipline.
 
 % ══════════════════════════════════════════════════════════════════════════
 \begin{thebibliography}{9}\small

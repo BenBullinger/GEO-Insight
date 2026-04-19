@@ -104,7 +104,7 @@ with $\kappa_0 = -\infty$ and $\kappa_5 = +\infty$. The cut-points are parameter
 
 For each (country, month) and each attribute, we record whether the attribute is observed. If not, there is no likelihood contribution for that (country, month, attribute) triple. The posterior on $\theta(u, t)$ for a country-month with only two attributes observed will be wider than the posterior for a country-month with six. No imputation is performed; the conditional distribution of $\theta$ given the data simply reflects less evidence.
 
-This is the mathematical version of the "evidence-bounded" commitment we introduced heuristically in the earlier MAUT formulation. Here it is structural.
+Sparse-data countries get wider posteriors structurally — not because we down-weight them by hand, but because the likelihood has fewer terms to sharpen the posterior on $\theta$.
 
 ---
 
@@ -162,11 +162,11 @@ Four stakeholder priors are pre-registered. Each is a pair of (mean, variance) v
 
 Prior variances $v_i^{(s)}$ are of order $0.3$–$0.5$ — tight enough that stakeholder priors differ meaningfully, diffuse enough that data can move the posterior away from the prior if it strongly disagrees.
 
-**What this buys us that MAUT weights do not.**
+**Three properties of stakeholders-as-priors.**
 
-1. *Falsifiability.* Each stakeholder prior is a pre-registered statistical claim. The posterior either corroborates or refutes it. If CERF's prior says $\beta_{\text{coverage}} \approx 1.5$ but the data (pooled across all crises CERF actually selects) says $\approx 0.8$, we have learned something about CERF's stated-vs-effective preference — a finding no MAUT weighted sum can produce.
+1. *Falsifiability.* Each stakeholder prior is a pre-registered statistical claim. The posterior either corroborates or refutes it. If CERF's prior says $\beta_{\text{coverage}} \approx 1.5$ but the data (pooled across all crises CERF actually selects) says $\approx 0.8$, we have learned something concrete about CERF's stated-vs-effective preference.
 
-2. *Uncertainty quantification.* We now have a posterior distribution on $\beta$, not a point estimate. Stakeholder disagreement is not a four-point spread; it is four overlapping (or non-overlapping) posterior clouds.
+2. *Uncertainty quantification.* We have a posterior distribution on $\beta$, not a point estimate. Stakeholder disagreement is not a four-point spread; it is four overlapping (or non-overlapping) posterior clouds.
 
 3. *Consistency with data density.* A stakeholder prior is a soft statement. When a country has ample data, the posterior on $\theta$ is driven by the data; when a country has sparse data, the posterior on $\theta$ is shaped more strongly by the prior — and thus by the stakeholder. Consensus vs contested thus becomes context-sensitive in a principled way.
 
@@ -214,13 +214,22 @@ Aggregated across stakeholders:
 
 ## 9 · Validation
 
-Three tests, stated in advance.
+Three tests against independent external ground truth.
 
-**Temporal held-out.** Fit on all data through December 2024; predict posterior ranks for 2025; compare against CERF UFE 2025 selections. Report top-5 and top-10 overlap, each with a 90% CI derived from the posterior samples. This is a genuine out-of-sample test because the fit never sees 2025 data.
+**External benchmarks (cross-sectional).** The model's posterior median is scored against two human-curated lists of overlooked crises. CERF Underfunded Emergencies (UN's twice-yearly allocations to underfunded crises) and CARE *Breaking the Silence* (annual top-ten under-reported crises). Both are produced by methodology independent of anything in this repo.
 
-**Attribute masking.** For a country with full six-attribute observation (say Sudan or Yemen), mask one attribute at a time and refit. The posterior median should change only modestly; the 90% CI should *widen* — by an amount predictable from the information content of the masked attribute. If masking narrows the CI, the model is miscalibrated and we investigate.
+| benchmark | k | precision @ k |
+|---|---|---|
+| CERF UFE 2024 w2 | 10 | 5/10 |
+| CERF UFE 2025 w1 | 10 | 5/10 |
+| CERF UFE 2025 w2 | 7 | 2/7 |
+| CARE BTS 2024 | 10 | 3/10 |
 
-**MAUT consistency.** Under a deliberately diffuse stakeholder prior (all $m_i^{(s)}$ equal, large $v_i^{(s)}$), the posterior median ranking should approximately reproduce the balanced-profile MAUT ranking we have shipped to date. This is a sanity check: the Bayesian approach should not disagree with the simpler method in the regime where the simpler method was defensible. If it does, one of them is wrong; we investigate before trusting either.
+The candidate pool is restricted to HRP-eligible countries (those with an observed `per_pin_gap`) — the population CERF UFE picks from.
+
+**Temporal held-out.** Fit on all data through December 2024; predict posterior ranks for 2025; compare against CERF UFE 2025 selections. Reported with a 90 % CI derived from the posterior samples. This is a genuine out-of-sample test because the fit never sees 2025 data.
+
+**Attribute masking.** For a country with full six-attribute observation (say Sudan or Yemen), mask one attribute at a time and refit. The posterior median should change only modestly; the 90 % CI should *widen* — by an amount predictable from the information content of the masked attribute. If masking narrows the CI, the model is miscalibrated and we investigate.
 
 ---
 

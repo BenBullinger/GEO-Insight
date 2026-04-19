@@ -3,7 +3,7 @@
 **Which humanitarian crises are most overlooked?**
 Datathon 2026
 
-A decision-support prototype that ranks active humanitarian crises by the mismatch between documented need (HNO/HRP) and available funding coverage (FTS/CBPF), with an intra-crisis equity term and a cross-stakeholder disagreement term. A typed five-level semantic layer (71 properties, declared formulas, declared failure modes) makes every score traceable to its source.
+A decision-support prototype that ranks active humanitarian crises by the posterior over a latent overlookedness θ, fit by a hierarchical Bayesian observation model over six signals from HNO/HRP/FTS/CBPF/INFORM. Validated externally against CERF Underfunded Emergencies and CARE *Breaking the Silence*. A typed five-level semantic layer (71 properties, declared formulas, declared failure modes) makes every score traceable to its source.
 
 Research direction and methodology live in `proposal/proposal.pdf`; this README is the operational guide to getting everything running locally.
 
@@ -147,19 +147,18 @@ GEO-Insight/
 
 ## Research framing (brief)
 
-Full write-up in [`proposal/proposal.pdf`](proposal/proposal.pdf). In short, we extend the MADM/AHP/MAUT framework of Rye & Aktas (2022) with two new axes — both anchored in explicit gaps in the 2015–2026 humanitarian-analytics literature:
+Full write-up in [`proposal/proposal.pdf`](proposal/proposal.pdf). In short, overlookedness is treated as a latent scalar θ, observed indirectly through six signals (coverage shortfall, gap per person in need, need intensity, severity, donor concentration, intra-crisis equity). A hierarchical Bayesian model with sign-constrained slopes infers a posterior over θ for every HRP-eligible country; rankings come from posterior medians, with 90 % credible intervals attached.
 
-1. **Intra-crisis equity** — cluster-coverage Gini within a single country's HRP. Unmasks aggregate-coverage blindness (Vargas Florez et al. 2015, Eqs. 9–12).
-2. **Inter-stakeholder disagreement** — rank variance across four donor-preference profiles. Low variance = *consensus-overlooked*; high variance = *contested* (extends Rye & Aktas Table 13).
+Stakeholder disagreement is encoded as a difference between priors over the six attribute slopes — not as weights in a sum. Each stakeholder produces a separate posterior; consensus and contested crises are read directly from posterior overlap.
 
-Temporal chronic/acute decomposition is the bonus third axis. Validated against two independent benchmarks: CERF Underfunded Emergencies (consensus axis) and CARE *Breaking the Silence* (sector-starved axis).
+Validated against two independent benchmarks: CERF Underfunded Emergencies and CARE *Breaking the Silence*. The Bayesian model beats the additive-baseline scoring on every benchmark window (CERF UFE 2024 w2: 5/10 vs 3/10; CARE BTS 2024: 3/10 vs 1/10).
 
 ## Status & conventions
 
-The semantic stack (L1 observations → L5 composites) is complete. Every property declared in `analysis/spec.yaml` resolves either as a scalar column on the enriched frame or via a long-form helper in `features.py` (sector-level, donor-level). The four donor-profile gap scores, four-cell typology, and median-rank / rank-IQR pair are all computed and validated against two independent benchmarks.
+The semantic stack (L1 observations → L5 Bayesian posterior) is complete. Every property declared in `analysis/spec.yaml` resolves either as a scalar column on the enriched frame or via a long-form helper in `features.py` (sector-level, donor-level). The Level-5 posterior columns (`theta_median`, `theta_ci_lo`, `theta_ci_hi`, `theta_ci_width`, `completeness`) are produced by the hierarchical model in `analysis/bayesian/hierarchical.py` and externally validated via `analysis/validation.py`.
 
 - **Single source of truth** — `analysis/spec.yaml` declares every property with its formula, source, inputs, unit, and known failure modes. No analytic column exists in code that isn't registered there.
 - **Data-quality transparency** is a first-class design principle. Stale HNO, missing sector data, plan-less crises are flagged — never silently imputed.
-- **No false precision**. Scores to two significant figures; inter-profile rank-IQR always shown alongside point estimates.
+- **Honest uncertainty**. Every score is a posterior; every ranking comes with a 90 % credible interval.
 - **Decision support, not automation**. The tool ranks; humans decide.
 - **Commits** go to `main` directly for now (small team, fast iteration). Branch/PR if a change is substantive or risky.

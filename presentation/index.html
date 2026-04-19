@@ -134,21 +134,23 @@
              ═══════════════════════════════════════════════════════════════ -->
         <section>
             <h1>How the score is computed</h1>
-            <p>For each crisis, six signals are weighted by a donor profile and summed over the attributes that are actually observed.</p>
+            <p>Overlookedness is a latent scalar $\theta(u)$ — never observed directly. Each of six signals is a noisy view of $\theta$; the model writes down what each signal looks like <em>given</em> $\theta$, and inverts.</p>
             <div class="equation-block">
-                \[G_p(u) \;=\; \sum_{i \in \mathcal{O}(u)} w_{p,i} \cdot U_i\!\left(\tilde{a}_i(u)\right)\]
+                \[a_i \mid \theta \;\sim\; \begin{cases}
+                \text{Beta}\bigl(\sigma(\alpha_i + \beta_i\theta)\,\phi_i,\; (1-\sigma(\alpha_i + \beta_i\theta))\,\phi_i\bigr) & i \in \{1,3,5,6\} \\[0.2em]
+                \text{LogNormal}(\alpha_2 + \beta_2\theta,\; \sigma_2^2) & i = 2 \\[0.2em]
+                \text{OrderedLogistic}(\alpha_4 + \beta_4\theta,\; \kappa) & i = 4
+                \end{cases}\]
             </div>
             <div class="equation-legend">
-                <div><span class="tok">G<sub>p</sub>(u)</span><span class="tok-desc">gap score for crisis <em>u</em> under profile <em>p</em></span></div>
-                <div><span class="tok">𝒪(u)</span><span class="tok-desc">the signals observed for crisis <em>u</em></span></div>
-                <div><span class="tok">w<sub>p,i</sub></span><span class="tok-desc">profile <em>p</em>'s weight on signal <em>i</em></span></div>
-                <div><span class="tok">U<sub>i</sub>(·)</span><span class="tok-desc">utility transform for signal <em>i</em></span></div>
-                <div><span class="tok">ã<sub>i</sub>(u)</span><span class="tok-desc">min–max normalised signal value</span></div>
+                <div><span class="tok">θ(u)</span><span class="tok-desc">latent overlookedness — what we want to know</span></div>
+                <div><span class="tok">a<sub>i</sub></span><span class="tok-desc">observed attribute <em>i</em>, on its natural support</span></div>
+                <div><span class="tok">β<sub>i</sub> &gt; 0</span><span class="tok-desc">slope: how strongly attribute <em>i</em> moves with θ</span></div>
+                <div><span class="tok">σ, φ, κ</span><span class="tok-desc">link function, dispersion, ordinal cut-points</span></div>
             </div>
             <p class="equation-note">
-                <strong>Six signals:</strong> coverage shortfall · gap per person in need · need intensity · severity · donor concentration · sector inequality.
-                <strong>Four donor profiles:</strong> CERF, ECHO, USAID, NGO.
-                <br><strong>Evidence-bounded.</strong> Missing signals contribute zero — they do not inflate a country's rank. A partly-observed country's maximum score is bounded by its observed weight-mass.
+                <strong>Three likelihoods, six attributes:</strong> Beta regression for the four bounded fractions (coverage shortfall, need intensity, donor concentration, sector inequality); log-normal for the per-PIN gap; ordered logistic for INFORM severity.
+                <br><strong>Honest under incompleteness.</strong> Missing observations contribute no likelihood term. The posterior on θ for a sparse-data country is wider — not shifted, not zero-imputed — because there is genuinely less evidence.
             </p>
             <div class="footer"><span>Geo-Insight</span><span>6</span></div>
         </section>
@@ -164,8 +166,8 @@
                 <div class="onto-bar r-5">
                     <span class="b-tag">L5</span>
                     <span class="b-count">9</span>
-                    <span class="b-name">Scores</span>
-                    <span class="b-desc">Composite gap scores · crisis typology · donor-profile ranks</span>
+                    <span class="b-name">Posterior</span>
+                    <span class="b-desc">Bayesian posterior over latent θ · 90% credible interval · crisis typology</span>
                 </div>
                 <div class="onto-bar r-4">
                     <span class="b-tag">L4</span>
@@ -209,30 +211,30 @@
              ═══════════════════════════════════════════════════════════════ -->
         <section>
             <h1>Four kinds of overlooked</h1>
-            <p>Two axes: <strong>donor disagreement</strong> — how much the four donor profiles rank the crisis differently — against <strong>sector inequality</strong> — how unevenly funding is spread across sectors within the crisis.</p>
+            <p>Two axes: <strong>posterior uncertainty</strong> — width of the 90 % credible interval on θ, a direct readout of how confidently the model places this crisis — against <strong>sector inequality</strong> — how unevenly funding is spread across sectors within the crisis.</p>
             <div class="quadrant">
                 <div></div>
-                <div class="col-head">DONORS AGREE</div>
-                <div class="col-head">DONORS DISAGREE</div>
+                <div class="col-head">NARROW POSTERIOR</div>
+                <div class="col-head">WIDE POSTERIOR</div>
 
                 <div class="row-head">SECTORS UNEVEN</div>
                 <div class="cell highlight">
                     <div class="label">Consensus-sector-starved</div>
-                    <div class="desc">One sector starved, others covered; donors agree. Clearest operational target.</div>
+                    <div class="desc">One sector starved, others covered; the model is confident. Clearest operational target.</div>
                 </div>
                 <div class="cell highlight">
                     <div class="label">Contested <em>and</em> sector-starved</div>
-                    <div class="desc">Sector starved <em>and</em> donors disagree. Highest advocacy priority.</div>
+                    <div class="desc">Sector starved, but the posterior is wide. Highest advocacy priority — and a flag to look at the underlying data.</div>
                 </div>
 
                 <div class="row-head">SECTORS EVEN</div>
                 <div class="cell">
                     <div class="label">Consensus-overlooked</div>
-                    <div class="desc">Evenly underfunded; everyone agrees. CERF UFE candidates.</div>
+                    <div class="desc">Evenly underfunded; the model is confident. CERF UFE candidates.</div>
                 </div>
                 <div class="cell">
                     <div class="label">Contested but balanced</div>
-                    <div class="desc">Sectors balanced; donors disagree. Reveals donor politics.</div>
+                    <div class="desc">Sectors balanced, posterior wide. The data is telling us we don't know enough yet.</div>
                 </div>
             </div>
             <div class="footer"><span>Geo-Insight</span><span>8</span></div>

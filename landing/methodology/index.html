@@ -488,16 +488,15 @@
         <h2><span class="section-number">§ 5</span>Stakeholders, as priors</h2>
 
         <p class="lede">
-            Instead of asking what weight severity should have in a formula, we ask
-            what each stakeholder <em>believes</em> about severity, a priori. The
-            difference sounds subtle. It isn't.
+            Each stakeholder is a probability distribution over how strongly the
+            six attributes reflect overlookedness. Different beliefs produce
+            different posteriors over the same data.
         </p>
 
         <p>
             CERF emphasises severity and coverage shortfall. ECHO leans on equity. USAID
-            looks at donor concentration. NGO consortia weight sector-equity. In the old
-            machinery, that was a disagreement about numbers in a weighted sum. In our
-            framing, each stakeholder $s$ is a <em>prior</em> over the six attribute
+            looks at donor concentration. NGO consortia weight sector-equity. Each
+            stakeholder $s$ is encoded as a <em>prior</em> over the six attribute
             slopes:
         </p>
 
@@ -530,12 +529,12 @@
             fitting, the posterior on $\beta$ either corroborates a stakeholder's belief
             or moves away from it. If CERF's prior centres the coverage slope at 1.5 but
             the data pull the posterior to 0.8, we have learned something concrete about
-            CERF's stated-versus-effective preference — a finding no weighted sum can
-            produce. Second, stakeholder disagreement is no longer a four-point spread;
-            it is the overlap of four posterior distributions, which we can measure
-            directly. Third, the method is honestly context-sensitive: where data is
-            abundant, all four posteriors converge; where it is sparse, stakeholder
-            differences show up more. The system adapts to how much evidence it has.
+            CERF's stated-versus-effective preference. Second, stakeholder disagreement
+            is the overlap of four posterior distributions, which we can measure
+            directly — not a four-point spread to be reconciled. Third, the method is
+            honestly context-sensitive: where data is abundant, all four posteriors
+            converge; where it is sparse, stakeholder differences show up more. The
+            system adapts to how much evidence it has.
         </p>
     </section>
 
