@@ -21,8 +21,18 @@ quadratically, which is the right tradeoff when the goal is to pull
 low-evidence countries back toward the population mean while still
 letting well-evidenced countries separate.
 
-This is the consistency regime — the validation target is a high
-Spearman rank correlation with the existing MAUT balanced score.
+Validation regime: the candidate pool is restricted to HRP-eligible
+countries (those with an observed per_pin_gap), which is the population
+CERF UFE allocations actually draw from. The latent's posterior median
+ranking is scored against:
+
+  * CERF UFE — the UN's twice-yearly underfunded-emergency allocations
+    (independent expert consensus on which crises are underfunded).
+  * CARE BTS — CARE's annual top-10 most under-reported crises.
+
+These are both human-curated and methodologically independent of any
+model in this repo, so they are valid external ground truth for the
+"overlooked humanitarian crisis" construct.
 
 Usage:
     dashboard/.venv/bin/python -m analysis.bayesian.hierarchical
@@ -54,6 +64,7 @@ from analysis.bayesian.mvp import (  # noqa: E402
     prepare_inputs,
     fit,
 )
+from analysis import validation as val  # noqa: E402
 
 
 # ─── NumPyro model (hierarchical prior on theta) ───────────────────────────
@@ -130,25 +141,29 @@ def main() -> int:
     if df is None:
         df = features.build_enriched_frame()
 
-    eligible = df["completeness"].fillna(0) >= 0.5
-    scored = df[eligible].copy()
+    # ── Candidate set ──
+    # The construct "overlooked humanitarian crisis" is only well-defined for
+    # countries with an active humanitarian response plan: per_pin_gap (= HRP
+    # gap / PIN) is undefined when no HRP exists. CERF UFE allocations draw
+    # exclusively from this pool, so external validation requires we do too.
+    # Including non-HRP countries put coverage_shortfall = 1 and donor_hhi = 1
+    # by mechanical default and pulled the latent toward those countries
+    # spuriously; restricting to HRP-eligible countries removes that artefact.
     cols = BETA_REGR_ATTRS + [
         LOGNORMAL_ATTR,
         ORDINAL_ATTR,
         "gap_score_balanced",
         "completeness",
     ]
-    scored = scored[cols]
-    attrs = BETA_REGR_ATTRS + [LOGNORMAL_ATTR, ORDINAL_ATTR]
-    obs_count = scored[attrs].notna().sum(axis=1)
-    scored = scored[obs_count >= 1]
+    scored = df[df["per_pin_gap"].notna()][cols].copy()
 
-    print(f"[hier] scored pool: {len(scored)} countries")
+    print(f"[hier] HRP-eligible candidate pool: {len(scored)} countries")
     print(
         f"[hier] completeness: min={scored['completeness'].min():.2f} "
         f"mean={scored['completeness'].mean():.2f}"
     )
 
+    attrs = BETA_REGR_ATTRS + [LOGNORMAL_ATTR, ORDINAL_ATTR]
     inputs = prepare_inputs(scored)
     print(f"[hier] prepared arrays: n={inputs['n']}")
     for attr in attrs:
@@ -177,24 +192,49 @@ def main() -> int:
         f"90% CI=[{np.percentile(sig_samples, 5):.3f}, {np.percentile(sig_samples, 95):.3f}]"
     )
 
-    # ── Consistency check against MAUT ──
+    # ── External validation against CERF UFE and CARE BTS ──
+    # The validation question is not "does the latent agree with MAUT" — both
+    # are models. The validation question is "does the latent agree with the
+    # human-curated, methodologically-independent benchmarks". CERF UFE picks
+    # from the HRP-eligible pool exactly, so it is the cleanest external
+    # signal of expert consensus on which crises are underfunded.
     iso = inputs["iso3"]
     theta_med = res["theta_median"]
     maut = scored["gap_score_balanced"].values
-    valid = ~np.isnan(maut)
-    rho, _ = spearmanr(theta_med[valid], maut[valid])
-    print()
-    print(f"[hier] Spearman ρ  (theta median vs MAUT balanced): {rho:+.3f}")
 
     bay_rank = pd.Series(-theta_med, index=iso).rank(method="average")
     maut_rank = pd.Series(-maut, index=iso).rank(method="average")
-    top10_bay = bay_rank.nsmallest(10).index.tolist()
-    top10_maut = maut_rank.nsmallest(10).index.tolist()
-    overlap = len(set(top10_bay) & set(top10_maut))
-    print(f"[hier] top-10 overlap (Bayesian vs MAUT balanced): {overlap}/10")
+
+    benchmarks = [
+        ("CERF UFE 2024 w2", set(val.load_cerf_ufe(2024).query("window == 2")["iso3"]), 10),
+        ("CERF UFE 2025 w1", set(val.load_cerf_ufe(2025).query("window == 1")["iso3"]), 10),
+        ("CERF UFE 2025 w2", set(val.load_cerf_ufe(2025).query("window == 2")["iso3"]), 7),
+        ("CARE BTS 2024",    set(val.load_care_bts(2024)["iso3"]),                       10),
+    ]
+
+    print()
+    print(
+        f"{'benchmark':<22s} {'k':>3s}   {'Bayesian':>15s}   {'MAUT balanced':>15s}"
+    )
+    print("-" * 64)
+    for name, bset, k in benchmarks:
+        bay_top = set(bay_rank.nsmallest(k).index.astype(str))
+        maut_top = set(maut_rank.nsmallest(k).index.astype(str))
+        bay_p = len(bay_top & bset) / k
+        maut_p = len(maut_top & bset) / k
+        print(
+            f"{name:<22s} {k:>3d}   "
+            f"{bay_p:>5.2f} ({len(bay_top & bset)}/{k})    "
+            f"{maut_p:>5.2f} ({len(maut_top & bset)}/{k})"
+        )
+
+    print()
+    rho, _ = spearmanr(theta_med, maut)
+    print(f"[hier] Spearman ρ (theta vs MAUT, internal cross-check): {rho:+.3f}")
 
     print()
     print("[hier] Bayesian top-10:")
+    top10_bay = bay_rank.nsmallest(10).index.tolist()
     lo, hi = res["theta_ci90"]
     for iso3 in top10_bay:
         i = inputs["iso3"].index(iso3)
