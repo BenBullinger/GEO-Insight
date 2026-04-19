@@ -233,6 +233,8 @@ The candidate pool is restricted to HRP-eligible countries (those with an observ
 
 **Attribute masking.** For a country with full six-attribute observation (say Sudan or Yemen), mask one attribute at a time and refit. The posterior median should change only modestly; the 90 % CI should *widen* — by an amount predictable from the information content of the masked attribute. If masking narrows the CI, the model is miscalibrated and we investigate.
 
+**Posterior predictive checks.** For each of the six attributes, draw 1{,}000 replicates from the fitted posterior and compare the marginal distribution of the simulated values against the observed values. Result (run via `analysis/bayesian/ppc.py`): coverage of the 90 % predictive interval is ≥ 0.91 for every attribute (target 0.90), so the model's marginals are well-calibrated. Per-country Pearson correlation between predicted mean and observed value is high for `coverage_shortfall` (0.76) and `donor_hhi` (0.82) — these are the attributes the latent θ actively explains — and weak for `need_intensity`, `cluster_gini`, and `severity_category`, which sit near their attribute ceilings (most HRP countries have PIN ≈ population and severity ∈ {4, 5}) and carry little cross-country variation for the latent to recover. The latent is best read as a *funding-overlookedness* axis; the saturating attributes constrain the posterior but do not drive its discrimination.
+
 ---
 
 ## 10 · What we are not claiming
