@@ -173,6 +173,24 @@ CARE BTS 2024     & 10 & \textbf{3/10} (0.30) & 1/10 (0.10) \\
 
 \textbf{Posterior predictive checks.} For each of the six attributes, 1{,}000 replicates are drawn from the fitted posterior and compared against the observed marginal (run via \texttt{analysis/bayesian/ppc.py}; figure available at \texttt{proposal/figures/fig\_ppc.png}). Coverage of the 90\,\% predictive interval is $\geq 0.91$ for every attribute (target 0.90) --- the model's marginals are well-calibrated. Per-country Pearson correlation between predicted mean and observed value is high for \texttt{coverage\_shortfall} (0.76) and \texttt{donor\_hhi} (0.82), and weak for \texttt{need\_intensity}, \texttt{cluster\_gini}, and \texttt{severity\_category} --- attributes that sit near their attribute ceilings (most HRP countries have PIN $\approx$ population and severity $\in \{4, 5\}$) and so carry little cross-country variation for the latent to recover. The latent is best read as a \emph{funding-overlookedness} axis; the ceiling-saturating attributes constrain the posterior but do not drive its discrimination.
 
+\textbf{Temporal held-out.} A genuine out-of-sample test: fit on the 2024 cycle data (HRP 2024, FTS through end-2024, INFORM through end-2024), then score the 2024-fit ranking against CERF UFE selections made in 2025 (Table~\ref{tab:temporal}). The 2024 fit predicts CERF's March-2025 selection at 4/10 precision @ 10 --- the same level as the concurrent 2025 fit on the older 2024-w2 selection (3--4/10) --- without ever seeing 2025 data. Year-over-year top-10 overlap is 7/10: HND, HTI, MOZ, SLV, SOM, TCD, VEN persist; ETH, MLI, SYR drop out (their 2024-cycle severity has receded in the 2025 cycle); CMR, GTM, NER enter on 2025 evidence.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lcrr@{}}
+\toprule
+\textbf{Benchmark (selection date)} & \textbf{$k$} & \textbf{2024-fit (held-out)} & \textbf{2025-fit (concurrent)} \\
+\midrule
+CERF UFE 2024 w2 (Dec 2024)  & 10 & \textbf{4/10} (0.40) & 3/10 (0.30) \\
+CERF UFE 2025 w1 (Mar 2025)  & 10 & 4/10 (0.40)          & \textbf{5/10} (0.50) \\
+CERF UFE 2025 w2 (Dec 2025)  & 7  & 2/7 (0.29)           & 2/7 (0.29) \\
+CARE BTS 2024                & 10 & 1/10 (0.10)          & 3/10 (0.30) \\
+\bottomrule
+\end{tabular}
+\caption{Temporal held-out validation. The 2024 fit uses no 2025 data; its precision against CERF UFE selections made in 2025 is a genuine out-of-sample predictive metric. Reproducible via \texttt{analysis/bayesian/temporal\_holdout.py}.\label{tab:temporal}}
+\end{table}
+
 % ══════════════════════════════════════════════════════════════════════════
 \section{Results}\label{sec:results}
 % ══════════════════════════════════════════════════════════════════════════
@@ -223,7 +241,7 @@ Stated in full, as a first-class part of the method.
 
 Three immediate extensions, ranked by maturity.
 
-\textbf{1. Temporal AR(1).} Equation~\ref{eq:obs} is cross-sectional. The natural next layer is the AR(1) process per country sketched in \S\ref{sec:method}: $\theta(u, t) = \mu_u + \rho_u(\theta(u, t-1) - \mu_u) + \eta_u(t)$. This unlocks a held-out test that genuinely matters operationally — fit on data through 2024, predict CERF UFE 2025 selections — and gives chronic ($\mu_u$) and acute ($\theta - \mu_u$) decompositions for free from the same posterior.
+\textbf{1. Temporal AR(1).} The cross-sectional fits at distinct time points (\S\ref{sec:val}) already demonstrate stable cross-cycle agreement (7/10 top-10 overlap, 2024 vs 2025) and useful held-out precision against CERF UFE 2025 picks. The natural next layer is to tie the cycles together with a per-country AR(1) on $\theta$: $\theta(u, t) = \mu_u + \rho_u(\theta(u, t-1) - \mu_u) + \eta_u(t)$. This requires more time points than the annual HRP/FTS attributes give us; INFORM severity is monthly and would anchor a partial-temporal model with the chronic ($\mu_u$) and acute ($\theta - \mu_u$) decomposition falling out of the same posterior.
 
 \textbf{2. Stakeholder posteriors.} The slope priors in equation~\ref{eq:stake} are pre-registered for CERF, ECHO, USAID, and NGO consortia, but the present results use the diffuse-prior consistency regime in which all four reduce to the same default. Fitting four separate stakeholder posteriors and measuring overlap turns the consensus-vs-contested typology from a methodological commitment into an empirical readout.
 

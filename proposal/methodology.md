@@ -229,7 +229,18 @@ The variational posterior is calibrated against NUTS on every fit. The productio
 
 The candidate pool is restricted to HRP-eligible countries (those with an observed `per_pin_gap`) — the population CERF UFE picks from.
 
-**Temporal held-out.** Fit on all data through December 2024; predict posterior ranks for 2025; compare against CERF UFE 2025 selections. Reported with a 90 % CI derived from the posterior samples. This is a genuine out-of-sample test because the fit never sees 2025 data.
+**Temporal held-out.** Fit on the 2024 cycle (HRP 2024, FTS through end-2024, INFORM through end-2024); compare the 2024-fit ranking against CERF UFE selections made in 2025. Result (run via `analysis/bayesian/temporal_holdout.py`):
+
+| benchmark (selection date) | k | 2024-fit (held-out) | 2025-fit (concurrent) |
+|---|---|---|---|
+| CERF UFE 2024 w2 (Dec 2024) | 10 | 4/10 | 3/10 |
+| CERF UFE 2025 w1 (Mar 2025) | 10 | 4/10 | 5/10 |
+| CERF UFE 2025 w2 (Dec 2025) | 7 | 2/7 | 2/7 |
+| CARE BTS 2024 | 10 | 1/10 | 3/10 |
+
+The 2024 fit predicts CERF's March-2025 selection at 4/10 precision @ 10 without seeing any 2025 data. Year-over-year top-10 overlap is 7/10 — HND, HTI, MOZ, SLV, SOM, TCD, VEN persist; ETH, MLI, SYR drop out; CMR, GTM, NER enter. The model identifies the same crisis cluster across cycles.
+
+The full AR(1) trajectory model in §5 is not yet identified by our data: the six attributes are annual (HRP, FTS), so we have at most two time points per country across 2024–2025, well below what AR(1) inference needs to discriminate persistence from noise. INFORM severity is monthly and could anchor a partial-temporal extension; that is on the explicit roadmap.
 
 **Attribute masking.** For a country with full six-attribute observation (say Sudan or Yemen), mask one attribute at a time and refit. The posterior median should change only modestly; the 90 % CI should *widen* — by an amount predictable from the information content of the masked attribute. If masking narrows the CI, the model is miscalibrated and we investigate.
 
