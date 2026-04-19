@@ -53,12 +53,13 @@ from numpyro import handlers
 from numpyro.infer import SVI, Trace_ELBO
 from numpyro.infer.autoguide import AutoNormal
 from numpyro.infer.initialization import init_to_median
-from scipy.stats import spearmanr
 
-# Allow `import features` when run from the repo root or as a module
+# `import features` is deferred into main() to avoid a circular import:
+# composites.py imports from this module to compute the posterior, and
+# features.py imports composites — so importing features at module load
+# time would cycle.
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-import features  # noqa: E402
 
 
 # ─── Attribute spec ────────────────────────────────────────────────────────
@@ -237,20 +238,22 @@ def fit(
 
 # ─── Smoke test entry ──────────────────────────────────────────────────────
 def main() -> int:
+    import features  # local import: see module docstring
+
     print("[mvp] loading enriched frame…")
     df = features.load_cached_enriched_frame()
     if df is None:
         df = features.build_enriched_frame()
 
-    # Keep only countries scored under the existing MAUT (i.e., completeness >= 0.5)
+    # Cross-sectional MVP runs on countries with at least three of six
+    # attributes observed. The hierarchical follow-up (hierarchical.py)
+    # narrows further to HRP-eligible countries — this script is the
+    # baseline machinery test, not the validated production model.
     eligible = df["completeness"].fillna(0) >= 0.5
     scored = df[eligible].copy()
 
-    # Restrict to columns we need
-    cols = BETA_REGR_ATTRS + [LOGNORMAL_ATTR, ORDINAL_ATTR, "gap_score_balanced", "completeness"]
+    cols = BETA_REGR_ATTRS + [LOGNORMAL_ATTR, ORDINAL_ATTR, "completeness"]
     scored = scored[cols]
-
-    # Drop rows where ALL six attributes are missing (safety: shouldn't happen post-eligibility)
     attrs = BETA_REGR_ATTRS + [LOGNORMAL_ATTR, ORDINAL_ATTR]
     obs_count = scored[attrs].notna().sum(axis=1)
     scored = scored[obs_count >= 1]
@@ -270,24 +273,10 @@ def main() -> int:
     print(f"[mvp] SVI took {res['elapsed_sec']:.1f}s · "
           f"final ELBO loss = {res['losses'][-1]:.2f}")
 
-    # ── Consistency check against the existing MAUT ranking ──
     iso = inputs["iso3"]
     theta_med = res["theta_median"]
-    maut = scored["gap_score_balanced"].values
-
-    # Higher theta → more overlooked; MAUT balanced score likewise (larger = more overlooked)
-    valid = ~np.isnan(maut)
-    rho, _ = spearmanr(theta_med[valid], maut[valid])
-    print()
-    print(f"[mvp] Spearman ρ  (theta median vs MAUT balanced): {rho:+.3f}")
-
-    # ── Top-10 comparison ──
     bay_rank = pd.Series(-theta_med, index=iso).rank(method="average")
-    maut_rank = pd.Series(-maut, index=iso).rank(method="average")
     top10_bay = bay_rank.nsmallest(10).index.tolist()
-    top10_maut = maut_rank.nsmallest(10).index.tolist()
-    overlap = len(set(top10_bay) & set(top10_maut))
-    print(f"[mvp] top-10 overlap (Bayesian vs MAUT balanced): {overlap}/10")
 
     print()
     print("[mvp] Bayesian top-10:")

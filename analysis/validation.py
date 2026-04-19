@@ -1,7 +1,8 @@
-"""External-benchmark validation for our composite gap score.
+"""External-benchmark validation for the Bayesian posterior over overlookedness.
 
 Loads the two curated benchmark files in Data/Third-Party/Benchmarks/ and
-provides set-overlap and rank-correlation metrics against our median_rank.
+provides set-overlap and rank-correlation metrics against a rank Series
+(typically derived from `theta_median`).
 
 Used by analysis/views/validation.py (Mode F in the analysis app).
 """

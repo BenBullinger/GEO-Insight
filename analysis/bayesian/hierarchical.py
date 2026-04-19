@@ -50,12 +50,12 @@ import numpyro
 import numpyro.distributions as dist
 import pandas as pd
 from numpyro import handlers
-from scipy.stats import spearmanr
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-import features  # noqa: E402
 
+# `import features` deferred into main() to avoid a circular import with
+# composites.py — see analysis/bayesian/mvp.py for the same pattern.
 from analysis.bayesian.mvp import (  # noqa: E402
     BETA_REGR_ATTRS,
     LOGNORMAL_ATTR,
@@ -136,6 +136,8 @@ def model(observed: dict, mask: dict, n: int):
 
 # ─── Entry point ───────────────────────────────────────────────────────────
 def main() -> int:
+    import features  # local import: see module docstring
+
     print("[hier] loading enriched frame…")
     df = features.load_cached_enriched_frame()
     if df is None:
@@ -149,12 +151,7 @@ def main() -> int:
     # Including non-HRP countries put coverage_shortfall = 1 and donor_hhi = 1
     # by mechanical default and pulled the latent toward those countries
     # spuriously; restricting to HRP-eligible countries removes that artefact.
-    cols = BETA_REGR_ATTRS + [
-        LOGNORMAL_ATTR,
-        ORDINAL_ATTR,
-        "gap_score_balanced",
-        "completeness",
-    ]
+    cols = BETA_REGR_ATTRS + [LOGNORMAL_ATTR, ORDINAL_ATTR, "completeness"]
     scored = df[df["per_pin_gap"].notna()][cols].copy()
 
     print(f"[hier] HRP-eligible candidate pool: {len(scored)} countries")
@@ -193,17 +190,13 @@ def main() -> int:
     )
 
     # ── External validation against CERF UFE and CARE BTS ──
-    # The validation question is not "does the latent agree with MAUT" — both
-    # are models. The validation question is "does the latent agree with the
-    # human-curated, methodologically-independent benchmarks". CERF UFE picks
-    # from the HRP-eligible pool exactly, so it is the cleanest external
-    # signal of expert consensus on which crises are underfunded.
+    # CERF UFE allocations and CARE BTS rankings are human-curated lists
+    # of underfunded / under-reported crises produced independently of
+    # any model in this repo. They are the only valid ground truth for
+    # the "overlooked humanitarian crisis" construct.
     iso = inputs["iso3"]
     theta_med = res["theta_median"]
-    maut = scored["gap_score_balanced"].values
-
     bay_rank = pd.Series(-theta_med, index=iso).rank(method="average")
-    maut_rank = pd.Series(-maut, index=iso).rank(method="average")
 
     benchmarks = [
         ("CERF UFE 2024 w2", set(val.load_cerf_ufe(2024).query("window == 2")["iso3"]), 10),
@@ -213,24 +206,12 @@ def main() -> int:
     ]
 
     print()
-    print(
-        f"{'benchmark':<22s} {'k':>3s}   {'Bayesian':>15s}   {'MAUT balanced':>15s}"
-    )
-    print("-" * 64)
+    print(f"{'benchmark':<22s} {'k':>3s}   {'precision @ k':>15s}")
+    print("-" * 48)
     for name, bset, k in benchmarks:
         bay_top = set(bay_rank.nsmallest(k).index.astype(str))
-        maut_top = set(maut_rank.nsmallest(k).index.astype(str))
-        bay_p = len(bay_top & bset) / k
-        maut_p = len(maut_top & bset) / k
-        print(
-            f"{name:<22s} {k:>3d}   "
-            f"{bay_p:>5.2f} ({len(bay_top & bset)}/{k})    "
-            f"{maut_p:>5.2f} ({len(maut_top & bset)}/{k})"
-        )
-
-    print()
-    rho, _ = spearmanr(theta_med, maut)
-    print(f"[hier] Spearman ρ (theta vs MAUT, internal cross-check): {rho:+.3f}")
+        prec = len(bay_top & bset) / k
+        print(f"{name:<22s} {k:>3d}   {prec:>5.2f} ({len(bay_top & bset)}/{k})")
 
     print()
     print("[hier] Bayesian top-10:")

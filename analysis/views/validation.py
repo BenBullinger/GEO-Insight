@@ -6,9 +6,8 @@ truth on two orthogonal dimensions of overlookedness. We compute
 set-overlap metrics (precision / recall at K) against CERF UFE and a
 Spearman rank correlation against CARE's 1–10 ranking.
 
-This view depends on the Level-5 `median_rank` column — available once the
-composite gap-score pipeline has run (the Geo-Insight score lens). In other
-lenses it displays a hint pointing the analyst at that lens.
+The view ranks by the posterior median of the latent overlookedness θ
+(Level 5, `theta_median`). Higher θ = more overlooked.
 """
 from __future__ import annotations
 
@@ -44,20 +43,23 @@ def _completeness_filter(enriched: pd.DataFrame) -> pd.DataFrame:
 def render(enriched: pd.DataFrame, lens, registry) -> None:
     st.title("Validation — two independent benchmarks")
     st.caption(
-        "Our composite gap score vs CERF UFE and CARE Breaking the Silence. "
-        "Independent curation on two orthogonal axes (underfunding, "
-        "under-reporting). Covered in `proposal/proposal.pdf` §8."
+        "Bayesian posterior median of overlookedness θ vs CERF UFE and CARE "
+        "Breaking the Silence. Independent human curation on two orthogonal "
+        "axes (underfunding, under-reporting). Covered in `proposal/proposal.pdf` §8."
     )
 
-    if "median_rank" not in enriched.columns or enriched["median_rank"].isna().all():
+    if "theta_median" not in enriched.columns or enriched["theta_median"].isna().all():
         st.info(
-            "No `median_rank` in the enriched frame. Switch to the **Geo-Insight score** "
-            "lens so the Level-5 pipeline runs; validation reads its output."
+            "No `theta_median` in the enriched frame. The Bayesian posterior is "
+            "computed only for HRP-eligible countries (those with an observed "
+            "per_pin_gap)."
         )
         return
 
     sub = _completeness_filter(enriched)
-    ranks = sub["median_rank"].dropna()
+    # Convert posterior median into a rank (lower rank value = more overlooked)
+    # so the existing overlap_at_k / agreement_table helpers can consume it.
+    ranks = (-sub["theta_median"].dropna()).rank(method="average")
     st.markdown(f"**Our pool after filter: {len(ranks)} countries.**")
 
     # ════════════════════════════════════════════════════════════════════
