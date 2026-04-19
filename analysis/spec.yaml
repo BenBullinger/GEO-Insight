@@ -575,61 +575,37 @@ properties:
     granularity: country
 
 
-  # ── Level 5 — Composites ────────────────────────────────────────────────
-  gap_score_balanced:
+  # ── Level 5 — Bayesian posterior over latent overlookedness θ ─────────────
+  theta_median:
     level: 5
-    description: "Our composite overlookedness score under balanced (default) donor-profile weights."
-    formula: "Σ_i w_i · U_i(ã_i),  balanced profile"
+    description: "Posterior median of the latent overlookedness θ. Higher = more overlooked. Computed only for HRP-eligible countries (those with an observed per_pin_gap)."
+    formula: "median of posterior samples θ ~ p(θ | a₁,…,a₆) under the hierarchical Bayesian model"
     inputs: [coverage_shortfall, per_pin_gap, need_intensity, severity_category, donor_hhi, cluster_gini]
-    unit: "[0,1]"
+    unit: latent_z
     granularity: country_year
 
-  gap_score_cerf_profile:
+  theta_ci_lo:
     level: 5
-    description: "Overlooked-ness score under CERF-flavoured weights (severity + magnitude emphasis)."
-    formula: "Σ_i w_i · U_i(ã_i), CERF-flavoured weights"
-    inputs: [coverage_shortfall, per_pin_gap, need_intensity, severity_category, donor_hhi, cluster_gini]
-    unit: "[0,1]"
+    description: "5th percentile of the posterior over θ — lower bound of the 90 % credible interval."
+    formula: "5th percentile of posterior samples"
+    inputs: [theta_median]
+    unit: latent_z
     granularity: country_year
 
-  gap_score_echo_profile:
+  theta_ci_hi:
     level: 5
-    description: "Overlooked-ness score under ECHO-flavoured weights (equity emphasis)."
-    formula: "Σ_i w_i · U_i(ã_i), ECHO-flavoured weights"
-    inputs: [coverage_shortfall, per_pin_gap, need_intensity, severity_category, donor_hhi, cluster_gini]
-    unit: "[0,1]"
+    description: "95th percentile of the posterior over θ — upper bound of the 90 % credible interval."
+    formula: "95th percentile of posterior samples"
+    inputs: [theta_median]
+    unit: latent_z
     granularity: country_year
 
-  gap_score_usaid_profile:
+  theta_ci_width:
     level: 5
-    description: "Overlooked-ness score under USAID-flavoured weights (donor-concentration emphasis)."
-    formula: "Σ_i w_i · U_i(ã_i), USAID-flavoured weights"
-    inputs: [coverage_shortfall, per_pin_gap, need_intensity, severity_category, donor_hhi, cluster_gini]
-    unit: "[0,1]"
-    granularity: country_year
-
-  gap_score_ngo_profile:
-    level: 5
-    description: "Overlooked-ness score under NGO-consortium-flavoured weights (cluster-equity emphasis)."
-    formula: "Σ_i w_i · U_i(ã_i), NGO-consortium-flavoured weights"
-    inputs: [coverage_shortfall, per_pin_gap, need_intensity, severity_category, donor_hhi, cluster_gini]
-    unit: "[0,1]"
-    granularity: country_year
-
-  median_rank:
-    level: 5
-    description: "Median rank across the four donor profiles — central tendency of overlookedness."
-    formula: "median of ranks across the 4 donor profiles"
-    inputs: [gap_score_cerf_profile, gap_score_echo_profile, gap_score_usaid_profile, gap_score_ngo_profile]
-    unit: rank
-    granularity: country_year
-
-  rank_iqr:
-    level: 5
-    description: "Inter-quartile range of ranks across donor profiles — size of the disagreement band."
-    formula: "IQR of ranks across the 4 donor profiles — disagreement band"
-    inputs: [gap_score_cerf_profile, gap_score_echo_profile, gap_score_usaid_profile, gap_score_ngo_profile]
-    unit: rank_spread
+    description: "Width of the 90 % credible interval over θ — direct uncertainty proxy for the country's overlookedness estimate."
+    formula: "theta_ci_hi - theta_ci_lo"
+    inputs: [theta_ci_lo, theta_ci_hi]
+    unit: latent_z_spread
     granularity: country_year
 
   inform_severity_index:
@@ -643,14 +619,11 @@ properties:
 
   completeness:
     level: 5
-    description: "Fraction of the six gap-score attributes observed for this country (1.0 = all six, 0 = none). Countries below the 0.5 threshold are withheld from the ranking."
-    formula: "count of non-null gap-score attributes / 6"
+    description: "Fraction of the six attributes observed for this country (1.0 = all six, 0 = none). Reported alongside the posterior so analysts can read CI width in context."
+    formula: "count of non-null attributes / 6"
     inputs: [coverage_shortfall, per_pin_gap, need_intensity, severity_category, donor_hhi, cluster_gini]
     unit: fraction
     granularity: country_year
-    failure_modes:
-      - "Below 0.5 threshold → gap_score_* set to NaN (no rank assigned)."
-      - "A country with completeness 0.5 is scored by weighted mean over its 3 observed attributes; the score is not directly comparable to a completeness-1.0 score."
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -701,7 +674,7 @@ lenses:
   - id: geo_insight_score
     name: Geo-Insight score
     question: "Our framework's readout"
-    properties: [median_rank, rank_iqr, gap_score_balanced, gap_score_cerf_profile, gap_score_echo_profile, gap_score_usaid_profile, gap_score_ngo_profile, completeness]
+    properties: [theta_median, theta_ci_lo, theta_ci_hi, theta_ci_width, completeness]
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -753,7 +726,7 @@ ui:
 
     - id: validation
       name: Validation
-      description: "Our median_rank vs independent external benchmarks (CERF UFE, CARE Breaking the Silence). Overlap@K, Spearman ρ, agreement table."
+      description: "Posterior median of θ vs independent external benchmarks (CERF UFE, CARE Breaking the Silence). Overlap@K, Spearman ρ, agreement table."
       requires_lens: geo_insight_score
 
 
@@ -824,7 +797,7 @@ code_architecture:
     - step: 4
       description: "aggregations.temporal adds Level-4 columns."
     - step: 5
-      description: "features.compute_gap_scores adds Level-5 columns."
+      description: "features.compute_overlookedness_posterior adds Level-5 columns (Bayesian posterior over θ)."
     - step: 6
       description: "Enriched frame persisted to analysis/enriched.parquet (audit + fast reload)."
     - step: 7
@@ -860,12 +833,12 @@ build_phases:
     duration_estimate_hours: 4
 
   - phase: 3
-    name: "Gap score (Lens 8) + Cross-lens view (Mode E)"
-    goal: "Close the loop; gap score lives inside the ontology as one lens among many."
+    name: "Geo-Insight score lens + Cross-lens view (Mode E)"
+    goal: "Close the loop; the Bayesian posterior lives inside the ontology as one lens among many."
     steps:
-      - "Implement gap-score pipeline (Level-5 composite) as compute_fn on each gap_score_* property."
-      - "views/cross_lens.py radar + contested-crisis detection."
-      - "Integration test against proposal's four-cell typology."
+      - "Implement Bayesian posterior pipeline (Level-5) via aggregations/composites.compute_overlookedness_posterior."
+      - "views/cross_lens.py radar + contested-crisis detection (CI overlap)."
+      - "External validation against CERF UFE and CARE BTS."
     duration_estimate_hours: 4
 
 
@@ -891,5 +864,5 @@ benchmarks:
     axis: consensus
   - name: CARE Breaking the Silence
     url: https://reliefweb.int/report/angola/breaking-silence-10-most-under-reported-humanitarian-crises-2023
-    maps_to_lens: severity_composition
-    axis: sector_starved
+    maps_to_lens: geo_insight_score
+    axis: under_reported

@@ -63,9 +63,10 @@ def render(enriched: pd.DataFrame, lens, registry) -> None:
         thr = {"Strict": 1.0, "High": 4 / 6, "All": 0.5}[mode.split(" ", 1)[0]]
         view = view[view["completeness"] >= thr - 1e-9]
 
-    # Sort: by median_rank ascending if present, else by first numeric column descending
-    if "median_rank" in view.columns:
-        view = view.sort_values("median_rank", ascending=True, na_position="last")
+    # Sort: by posterior median (descending — higher = more overlooked) if
+    # present, else by first numeric column descending
+    if "theta_median" in view.columns:
+        view = view.sort_values("theta_median", ascending=False, na_position="last")
     else:
         first_num = next(
             (c for c in cols if pd.api.types.is_numeric_dtype(view[c])), None

@@ -22,7 +22,7 @@ The purpose of this discipline is **defensibility**: any claim we make from an a
 - Weighted composite is opaque without pillar-level decomposition.
 - Monthly re-assessments can shift a crisis's score by ~0.5 on minor indicator revisions.
 
-**Our handling.** We treat the continuous index as **secondary**. Primary severity signal is the ordinal category (see next card). For sub-analyses we decompose further — see *INFORM Sub-indicators* card below. In any across-time analysis we annotate the Feb-2026 discontinuity and refuse to compute deltas that straddle it.
+**Our handling.** We treat the continuous index as **secondary**. Primary severity signal is the ordinal category (see next card), which feeds attribute $a_4$ in the Bayesian model via an ordered-logistic likelihood (§7). For sub-analyses we decompose further — see *INFORM Sub-indicators* card below. In any across-time analysis we annotate the Feb-2026 discontinuity and refuse to compute deltas that straddle it.
 
 ---
 
@@ -38,7 +38,7 @@ The purpose of this discipline is **defensibility**: any claim we make from an a
 - Five-level ordinal loses granularity compared to the continuous score.
 - Tie-breaking between (e.g.) `3.4` and `3.6` is not meaningful — ordinal transitions are the only semantically valid comparison.
 
-**Our handling.** Primary severity signal for time-series analysis. Feeds attribute `a₄` when we span the Feb-2026 boundary.
+**Our handling.** Primary severity signal. Feeds attribute $a_4$ in the Bayesian model via an ordered-logistic likelihood (§7), with cut-points inferred from data rather than assumed equally spaced. Stable across the Feb-2026 boundary.
 
 ---
 
@@ -63,7 +63,7 @@ The purpose of this discipline is **defensibility**: any claim we make from an a
 - Definitions of "affected" and "displaced" vary slightly across country teams (harmonised by ACAPS guidelines but not perfectly).
 - Imputation where source data missing (flagged in the `Data Reliability` sheet per indicator).
 
-**Our handling.** Treated as first-class features. When we claim "deterioration" or "sector starvation", we show the sub-indicator that justifies it, not the composite. `pin_level_4 + pin_level_5` population is our preferred "severe+ humanitarian conditions" count.
+**Our handling.** Treated as first-class features for explanation and audit, not as direct inputs to the Bayesian model (the six modelled attributes are higher-level aggregates). When we claim "deterioration" or "sector starvation", we show the sub-indicator that justifies it, not the composite. `pin_level_4 + pin_level_5` is our preferred "severe+ humanitarian conditions" count. These primitives anchor the planned learned representation layer (proposal §7).
 
 ---
 
@@ -86,11 +86,11 @@ where $F(u,t)$ = reported funding received for crisis $u$ in year $t$, $R(u,t)$ 
 - Private-sector contributions are systematically under-reported.
 
 **Failure modes.**
-- $C$ near 100% can hide sector-level starvation → our Gini term compensates.
-- $C > 100%$ occurs (over-funding) → should be capped for ranking.
+- $C$ near 100% can hide sector-level starvation → cluster Gini ($a_6$, §6) is the model's complementary signal.
+- $C > 100%$ occurs (over-funding) → capped at 1.0 before being passed to the Beta-regression likelihood for $a_1$.
 - Plan revisions mid-year can make $C_t > C_{t-1}$ without any real funding change.
 
-**Our handling.** Report $F$, $R$, and $C$ side-by-side; never $C$ alone. Cap $C$ at 1.5 in visualisations, 1.0 in rankings. Use *current* (revised) requirements. Flag crises with mid-year plan revisions.
+**Our handling.** Coverage shortfall $a_1 = 1 - \min(C, 1)$ feeds the Bayesian model via a Beta-regression likelihood (§7). Posterior predictive coverage on $a_1$ is calibrated; per-country Pearson $r = 0.76$ between predicted and observed values — coverage shortfall is one of the two attributes the latent θ actively recovers. Display $F$, $R$, and $C$ side-by-side; never $C$ alone.
 
 ---
 
@@ -115,7 +115,7 @@ Range $[1/|D|, 1]$. 1 = single donor, lower = diversified.
 - Hides which donor matters. Three donors at 50/30/20 and 80/10/10 can both return similar HHI values — but the stories are different.
 - Zero-reporting bias: a crisis with one reported donor and many pledged-but-unreported donors looks overconcentrated.
 
-**Our handling.** Report **HHI + top-1 donor share + number of donors** together — never HHI alone. Flag `single-donor-risk` when $|D| = 1$. Use only crises with $|D| \geq 2$ for HHI numeric comparisons.
+**Our handling.** Donor HHI feeds attribute $a_5$ in the Bayesian model via a Beta-regression likelihood (§7). Posterior predictive Pearson $r = 0.82$ — donor concentration is the other attribute (alongside coverage shortfall) that the latent θ actively recovers. Always report **HHI + top-1 donor share + number of donors** together for explanation; flag `single-donor-risk` when $|D| = 1$.
 
 ---
 
@@ -141,37 +141,43 @@ PIN-weighted Gini of cluster coverage ratios $r_c = F_c / R_c$.
 - A crisis with one overfunded cluster ($r=1.5$) and many uniformly underfunded ($r \approx 0.3$) can return similar Gini to one with moderate, varied coverage.
 - Does not account for absolute PIN magnitude of the affected cluster.
 
-**Our handling.** Always render cluster-by-cluster coverage alongside the Gini. Explicitly name the lowest-$r_c$ cluster in output. Gini enters the gap score as one of six attributes, never alone.
+**Our handling.** Cluster Gini feeds attribute $a_6$ in the Bayesian model via a Beta-regression likelihood (§7). Posterior predictive checks confirm marginal calibration but reveal weak per-country correlation (Pearson $r = 0.26$) — Gini constrains the latent posterior without strongly differentiating between countries; for ranking explanations, always render cluster-by-cluster coverage alongside the Gini and name the lowest-$r_c$ cluster.
 
 ---
 
-## 7. Geo-Insight Gap Score $G_p(u)$ — Our Composite
+## 7. Posterior over latent overlookedness $\theta$ — the Geo-Insight readout
 
-**Source.** Defined in `proposal/proposal.pdf` §5. Builds on Rye & Aktas (2022) MADM/AHP/MAUT framework.
+**Source.** Defined in `proposal/proposal.pdf` §3 and `proposal/methodology.md` §3–6. Implemented in `analysis/bayesian/hierarchical.py`; cached at Level 5 of the typed semantic layer (`theta_median`, `theta_ci_lo`, `theta_ci_hi`, `theta_ci_width`).
 
-**Definition.**
+**Definition.** For each HRP-eligible country $u$, $\theta(u)$ is the latent scalar overlookedness, inferred from a hierarchical Bayesian model. The six observed attributes link to $\theta$ through generalised-linear likelihoods matched to each attribute's support:
 
 $$
-G_p(u) \;=\; \sum_{i=1}^{6} w_{p,i} \cdot U_i(\tilde a_i(u))
+a_i(u) \mid \theta(u) \;\sim\; \begin{cases}
+\text{Beta}(\sigma(\alpha_i + \beta_i\theta)\phi_i,\; (1-\sigma(\alpha_i+\beta_i\theta))\phi_i) & i \in \{a_1, a_3, a_5, a_6\} \\
+\text{LogNormal}(\alpha_2 + \beta_2\theta,\; \sigma_2^2) & i = a_2 \\
+\text{OrderedLogistic}(\alpha_4 + \beta_4\theta,\; \kappa) & i = a_4
+\end{cases}
 $$
 
-Weighted sum of six utility-transformed attributes under donor-profile $p \in \{\text{CERF, ECHO, USAID, NGO-consortium}\}$.
+Slopes $\beta_i$ are sign-constrained positive ($\beta_i > 0$) so that the latent has the natural interpretation: higher $\theta$ = more overlooked. A population-level prior on $\theta(u)$ pools partial-data countries toward the global mean. Inference is variational (NumPyro `AutoNormal` + `init_to_median`), validated against NUTS on a sub-sample.
 
-**Deliberate decomposition.** The scalar score is **never** the primary output:
-- Four profiles → four ranks per crisis.
-- Median rank + IQR across profiles = the *disagreement band*.
-- Disagreement × intra-crisis Gini = the *four-cell typology* (consensus-overlooked, contested, sector-starved, combinations).
+**Outputs per country.** Posterior median, 5th and 95th percentiles (90 % CI), CI width.
+
+**Candidate pool.** HRP-eligible countries only — those with an observed `per_pin_gap` (i.e., an active humanitarian response plan). Other countries return NaN, since the construct "overlooked humanitarian crisis" is not well-defined for them and CERF UFE allocations themselves draw from this pool.
+
+**Validation.** External, against CERF UFE and CARE BTS. Precision @ 10: 5/10 on CERF UFE 2025 w1 (tied with additive baseline); 3/10 on CERF UFE 2024 w2 (tied); 2/7 on CERF UFE 2025 w2 (vs 1/7); 3/10 on CARE BTS 2024 (vs 1/10). Posterior calibrated against NUTS: Spearman ρ = 0.89 on theta medians, CI widths within 2× of NUTS.
 
 **Known discontinuities.**
-- Changes to the attribute set, profile weights, or utility transforms shift all rankings.
-- Normalisation is min-max over the current snapshot; adding/removing crises from the pool shifts all scores.
+- Changes to the prior, model structure, or candidate pool shift the posterior.
+- The model is fit on the current snapshot; adding new countries refits the population-level prior, which can move other countries' posteriors.
+- Variational inference may underestimate posterior variance; NUTS validation is the calibration reference.
 
 **Failure modes.**
-- Without disagreement surfacing, would hide weight-sensitivity. We refuse to collapse.
-- Normalisation is scale-dependent — same real underfunding yields different $G_p$ depending on the comparison set.
-- Profile weights are *illustrative*, not institutional endorsements.
+- Sign constraints encode the assumption that all six attributes co-vary positively with overlookedness. A new attribute that does not satisfy this would need an opposite-sign prior or a different observation likelihood.
+- Countries with very few observations get wide CIs structurally — but a wide CI is not a flag of "noise"; it is an honest statement of uncertainty that downstream users should respect.
+- The "overlookedness" label is itself a modelling commitment; the posterior is a posterior over what the chosen six observations *imply*, not a direct measurement of the political concept.
 
-**Our handling.** Always report median rank, IQR, typology cell — not the scalar score. Preferred output mode is rank-based, not score-value comparison. Weight-sensitivity sweeps are standard.
+**Our handling.** Always report posterior median *with* 90 % CI; never present the median alone. Rankings derived from the posterior should carry the CI as a column. Where two countries' CIs overlap heavily, "A is more overlooked than B" is not a defensible claim from the model.
 
 ---
 

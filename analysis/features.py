@@ -22,7 +22,7 @@ from aggregations.concentration import (
 )
 from aggregations import sectoral
 from aggregations.temporal import build_temporal_frame
-from aggregations.composites import compute_gap_scores, four_cell_typology
+from aggregations.composites import compute_overlookedness_posterior, four_cell_typology
 
 DATA = Path(__file__).resolve().parent.parent / "Data"
 
@@ -218,8 +218,8 @@ def build_enriched_frame(year: int = 2025) -> pd.DataFrame:
              phase_45_share_{baseline_12m,delta_3m},
              access_restricted_{baseline_12m,delta_3m}, persistence_P4_plus,
              coverage_{baseline_3y,trend_3y}, displaced_growth_12m
-    Level 5: gap_score_{balanced,cerf,echo,usaid,ngo}_profile, median_rank,
-             rank_iqr, completeness, typology_cell
+    Level 5: theta_median, theta_ci_lo, theta_ci_hi, theta_ci_width,
+             completeness, typology_cell
 
     Multi-row properties (pin_by_sector, requirements_by_sector,
     funding_by_sector, coverage_by_sector, funding_by_donor) are available
@@ -249,10 +249,10 @@ def build_enriched_frame(year: int = 2025) -> pd.DataFrame:
     df = df[has_req | has_sev]
 
     # ── Level 5 ──
-    gap = compute_gap_scores(df)
-    df = df.join(gap, how="left")
+    posterior = compute_overlookedness_posterior(df)
+    df = df.join(posterior, how="left")
 
-    # Four-cell typology — classification based on cluster_gini × rank_iqr
+    # Four-cell typology — cluster_gini × posterior CI width
     df["typology_cell"] = four_cell_typology(df)
 
     # inform_severity_index is the same value as severity_index, re-exported

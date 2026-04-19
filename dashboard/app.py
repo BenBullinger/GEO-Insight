@@ -666,9 +666,10 @@ section = st.sidebar.radio(
 
 st.sidebar.markdown("---")
 st.sidebar.caption(
-    "Analytic views — sector equity, donor concentration, gap scores — live on the "
-    "**semantic-analysis** surface at http://localhost:8502. This app is the "
-    "provenance layer underneath it.\n\n"
+    "Analytic views — Bayesian posterior over latent overlookedness, four-cell "
+    "typology, external benchmark validation — live on the **semantic-analysis** "
+    "surface at http://localhost:8502. This app is the provenance layer underneath "
+    "it.\n\n"
     "Raw data: `Data/` (reproduce with `python3 Data/download.py`).\n\n"
     "Methodology: `proposal/proposal.pdf`."
 )

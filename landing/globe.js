@@ -8,24 +8,30 @@
 (function () {
     "use strict";
 
-    // ─── Top-10 overlooked (from proposal Table — Strict pool + All pool
-    //     evidence-bounded output). Coordinates are country centroids. ──
+    // ─── Top-10 overlooked (HRP-eligible pool, n=22, 2025 cycle).
+    //     `rank` is position in the posterior-median ordering (1 = most
+    //     overlooked). `ci_width` is the 90 % credible interval width on
+    //     the latent — the model's uncertainty about this country.
+    //     `cerf` is membership in any CERF UFE allocation 2024–2025. ──
     const OVERLOOKED = [
-        { iso: "SDN", name: "Sudan",        rank: 2.5, iqr: 3.5,  type: "consensus · sector-starved", cerf: true,  lat: 15.0,  lon:  30.2 },
-        { iso: "HND", name: "Honduras",     rank: 2.5, iqr: 3.3,  type: "consensus · sector-starved", cerf: true,  lat: 15.2,  lon: -86.2 },
-        { iso: "AFG", name: "Afghanistan",  rank: 5.0, iqr: 1.0,  type: "consensus · overlooked",     cerf: true,  lat: 33.9,  lon:  67.7 },
-        { iso: "ZWE", name: "Zimbabwe",     rank: 5.0, iqr: 8.8,  type: "contested · sector-starved", cerf: false, lat: -19.0, lon:  29.9 },
-        { iso: "SOM", name: "Somalia",      rank: 5.5, iqr: 4.0,  type: "consensus · overlooked",     cerf: true,  lat:  5.2,  lon:  46.2 },
-        { iso: "HTI", name: "Haiti",        rank: 6.0, iqr: 2.5,  type: "consensus · sector-starved", cerf: true,  lat: 18.9,  lon: -72.3 },
-        { iso: "MWI", name: "Malawi",       rank: 7.5, iqr: 12.0, type: "contested · sector-starved", cerf: true,  lat: -13.3, lon:  34.3 },
-        { iso: "MOZ", name: "Mozambique",   rank: 9.0, iqr: 4.5,  type: "consensus · overlooked",     cerf: true,  lat: -18.7, lon:  35.5 },
-        { iso: "SSD", name: "South Sudan",  rank: 9.0, iqr: 1.8,  type: "consensus · overlooked",     cerf: false, lat:  6.9,  lon:  31.3 },
-        { iso: "TCD", name: "Chad",         rank: 9.5, iqr: 7.8,  type: "contested · balanced",       cerf: true,  lat: 15.5,  lon:  18.7 },
+        { iso: "HND", name: "Honduras",      rank:  1, ci_width: 0.55, type: "contested · sector-starved", cerf: true,  lat: 15.2,  lon: -86.2 },
+        { iso: "SLV", name: "El Salvador",   rank:  2, ci_width: 0.53, type: "contested · sector-starved", cerf: false, lat: 13.8,  lon: -88.9 },
+        { iso: "MOZ", name: "Mozambique",    rank:  3, ci_width: 0.52, type: "contested · balanced",       cerf: true,  lat: -18.7, lon:  35.5 },
+        { iso: "SOM", name: "Somalia",       rank:  4, ci_width: 0.51, type: "consensus · overlooked",     cerf: true,  lat:  5.2,  lon:  46.2 },
+        { iso: "GTM", name: "Guatemala",     rank:  5, ci_width: 0.58, type: "contested · sector-starved", cerf: false, lat: 15.5,  lon: -90.3 },
+        { iso: "NER", name: "Niger",         rank:  6, ci_width: 0.50, type: "consensus · overlooked",     cerf: true,  lat: 17.6,  lon:   8.1 },
+        { iso: "HTI", name: "Haiti",         rank:  7, ci_width: 0.53, type: "contested · sector-starved", cerf: true,  lat: 18.9,  lon: -72.3 },
+        { iso: "CMR", name: "Cameroon",      rank:  8, ci_width: 0.51, type: "consensus · sector-starved", cerf: true,  lat:  7.4,  lon:  12.4 },
+        { iso: "VEN", name: "Venezuela",     rank:  9, ci_width: 0.49, type: "consensus · overlooked",     cerf: true,  lat:  6.4,  lon: -66.6 },
+        { iso: "TCD", name: "Chad",          rank: 10, ci_width: 0.48, type: "consensus · overlooked",     cerf: true,  lat: 15.5,  lon:  18.7 },
     ];
 
-    // Default rotation: Sudan is #1, also geographically central on a
-    // Europe/Africa/Middle-East view → nice anchor for first impression.
-    const DEFAULT_ROTATION = [-30, -15, 0];
+    const POOL_SIZE = 22;  // HRP-eligible pool, 2025 cycle
+
+    // Default rotation: anchored on Honduras (#1), then drifting east on
+    // load. Frames the Latin-America / West-Africa cluster the model
+    // surfaces.
+    const DEFAULT_ROTATION = [80, -10, 0];
 
     const COLORS = {
         ocean:     "#ffffff",
@@ -104,7 +110,7 @@
         .attr("fill", "rgba(124, 29, 29, 0.12)")
         .attr("stroke", "none");
 
-    let selectedIso = "SDN";
+    let selectedIso = "HND";
 
     function render() {
         gSphere.attr("d", path({type: "Sphere"}));
@@ -237,8 +243,8 @@
 
     // ─── Selection + sidecar panel ─────────────────────────────────────
     const ISO_NUMERIC = {
-        SDN: "729", HND: "340", AFG: "004", ZWE: "716", SOM: "706",
-        HTI: "332", MWI: "454", MOZ: "508", SSD: "728", TCD: "148",
+        HND: "340", SLV: "222", MOZ: "508", SOM: "706", GTM: "320",
+        NER: "562", HTI: "332", CMR: "120", VEN: "862", TCD: "148",
     };
 
     function select(iso) {
@@ -256,8 +262,8 @@
 
     function panelHTML(d) {
         const cerf = d.cerf
-            ? `<span class="panel-chip chip-on">Also on CERF UFE</span>`
-            : `<span class="panel-chip chip-off">Not on CERF UFE</span>`;
+            ? `<span class="panel-chip chip-on">CERF UFE pick (2024–25)</span>`
+            : `<span class="panel-chip chip-off">Not picked by CERF UFE</span>`;
         return `
             <div class="panel-eyebrow">Selected country</div>
             <div class="panel-name">${d.name}</div>
@@ -265,12 +271,12 @@
 
             <div class="panel-grid">
                 <div class="panel-metric">
-                    <div class="panel-metric-label">Median rank</div>
-                    <div class="panel-metric-value">${d.rank.toFixed(1)}</div>
+                    <div class="panel-metric-label">Posterior rank</div>
+                    <div class="panel-metric-value">${d.rank}<span style="font-size: 0.55em; color: var(--muted); font-weight: 400; margin-left: 4px;">of ${POOL_SIZE}</span></div>
                 </div>
                 <div class="panel-metric">
-                    <div class="panel-metric-label">Donor disagreement</div>
-                    <div class="panel-metric-value">${d.iqr.toFixed(1)}</div>
+                    <div class="panel-metric-label">90 % CI width</div>
+                    <div class="panel-metric-value">${d.ci_width.toFixed(2)}</div>
                 </div>
             </div>
 
@@ -278,8 +284,11 @@
             <div class="panel-chips">${cerf}</div>
 
             <p class="panel-note">
-                Position among ${OVERLOOKED.length} most-overlooked crises in the 2025
-                all-pool evidence-bounded ranking.
+                Position in the 2025-cycle Bayesian posterior across ${POOL_SIZE} HRP-eligible
+                countries (those with an active humanitarian response plan). The 90 % CI width
+                on the latent says how confidently the model places this crisis — wide bands
+                mean the data alone cannot reliably distinguish this country from its neighbours
+                in the ranking.
             </p>
         `;
     }
@@ -288,7 +297,7 @@
     const tt = document.getElementById("globe-tooltip");
     function tooltipShow(ev, d) {
         if (!tt) return;
-        tt.textContent = `${d.name} · median rank ${d.rank.toFixed(1)}`;
+        tt.textContent = `${d.name} · rank ${d.rank} of ${POOL_SIZE}`;
         tt.style.opacity = "1";
         tooltipMove(ev);
     }

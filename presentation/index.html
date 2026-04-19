@@ -109,7 +109,7 @@
              6 · From one number to a distribution
              ═══════════════════════════════════════════════════════════════ -->
         <section>
-            <h1>From one score to a distribution</h1>
+            <h1>From one score to a posterior</h1>
             <div class="before-after">
                 <div class="side before">
                     <div class="label">Existing tools</div>
@@ -119,13 +119,13 @@
                 <div class="arrow">→</div>
                 <div class="side after">
                     <div class="label">Geo-Insight</div>
-                    <div class="axis">equity within a crisis</div>
-                    <div class="axis">× disagreement across donors</div>
-                    <div class="axis axis-sub">over a six-signal gap score</div>
-                    <p class="sub">A joint distribution that separates <em>forgotten</em>, <em>contested</em>, and <em>sector-starved</em>.</p>
+                    <div class="axis">posterior median $\widehat\theta$</div>
+                    <div class="axis">+ 90 % credible interval</div>
+                    <div class="axis axis-sub">over a latent overlookedness scalar</div>
+                    <p class="sub">A posterior that separates <em>forgotten</em>, <em>contested</em>, and <em>sector-starved</em> — and tells you when it can't.</p>
                 </div>
             </div>
-            <p class="caption">Both axes fill explicit gaps in the 2015–2026 humanitarian-analytics literature.</p>
+            <p class="caption">Latent-variable inference replaces multi-attribute scoring; the typology axes become posterior properties.</p>
             <div class="footer"><span>Geo-Insight</span><span>5</span></div>
         </section>
 
@@ -134,21 +134,23 @@
              ═══════════════════════════════════════════════════════════════ -->
         <section>
             <h1>How the score is computed</h1>
-            <p>For each crisis, six signals are weighted by a donor profile and summed over the attributes that are actually observed.</p>
+            <p>Overlookedness is a latent scalar $\theta(u)$ — never observed directly. Each of six signals is a noisy view of $\theta$; the model writes down what each signal looks like <em>given</em> $\theta$, and inverts.</p>
             <div class="equation-block">
-                \[G_p(u) \;=\; \sum_{i \in \mathcal{O}(u)} w_{p,i} \cdot U_i\!\left(\tilde{a}_i(u)\right)\]
+                \[a_i \mid \theta \;\sim\; \begin{cases}
+                \text{Beta}\bigl(\sigma(\alpha_i + \beta_i\theta)\,\phi_i,\; (1-\sigma(\alpha_i + \beta_i\theta))\,\phi_i\bigr) & i \in \{1,3,5,6\} \\[0.2em]
+                \text{LogNormal}(\alpha_2 + \beta_2\theta,\; \sigma_2^2) & i = 2 \\[0.2em]
+                \text{OrderedLogistic}(\alpha_4 + \beta_4\theta,\; \kappa) & i = 4
+                \end{cases}\]
             </div>
             <div class="equation-legend">
-                <div><span class="tok">G<sub>p</sub>(u)</span><span class="tok-desc">gap score for crisis <em>u</em> under profile <em>p</em></span></div>
-                <div><span class="tok">𝒪(u)</span><span class="tok-desc">the signals observed for crisis <em>u</em></span></div>
-                <div><span class="tok">w<sub>p,i</sub></span><span class="tok-desc">profile <em>p</em>'s weight on signal <em>i</em></span></div>
-                <div><span class="tok">U<sub>i</sub>(·)</span><span class="tok-desc">utility transform for signal <em>i</em></span></div>
-                <div><span class="tok">ã<sub>i</sub>(u)</span><span class="tok-desc">min–max normalised signal value</span></div>
+                <div><span class="tok">θ(u)</span><span class="tok-desc">latent overlookedness — what we want to know</span></div>
+                <div><span class="tok">a<sub>i</sub></span><span class="tok-desc">observed attribute <em>i</em>, on its natural support</span></div>
+                <div><span class="tok">β<sub>i</sub> &gt; 0</span><span class="tok-desc">slope: how strongly attribute <em>i</em> moves with θ</span></div>
+                <div><span class="tok">σ, φ, κ</span><span class="tok-desc">link function, dispersion, ordinal cut-points</span></div>
             </div>
             <p class="equation-note">
-                <strong>Six signals:</strong> coverage shortfall · gap per person in need · need intensity · severity · donor concentration · sector inequality.
-                <strong>Four donor profiles:</strong> CERF, ECHO, USAID, NGO.
-                <br><strong>Evidence-bounded.</strong> Missing signals contribute zero — they do not inflate a country's rank. A partly-observed country's maximum score is bounded by its observed weight-mass.
+                <strong>Three likelihoods, six attributes:</strong> Beta regression for the four bounded fractions (coverage shortfall, need intensity, donor concentration, sector inequality); log-normal for the per-PIN gap; ordered logistic for INFORM severity.
+                <br><strong>Honest under incompleteness.</strong> Missing observations contribute no likelihood term. The posterior on θ for a sparse-data country is wider — not shifted, not zero-imputed — because there is genuinely less evidence.
             </p>
             <div class="footer"><span>Geo-Insight</span><span>6</span></div>
         </section>
@@ -164,8 +166,8 @@
                 <div class="onto-bar r-5">
                     <span class="b-tag">L5</span>
                     <span class="b-count">9</span>
-                    <span class="b-name">Scores</span>
-                    <span class="b-desc">Composite gap scores · crisis typology · donor-profile ranks</span>
+                    <span class="b-name">Posterior</span>
+                    <span class="b-desc">Bayesian posterior over latent θ · 90% credible interval · crisis typology</span>
                 </div>
                 <div class="onto-bar r-4">
                     <span class="b-tag">L4</span>
@@ -209,30 +211,30 @@
              ═══════════════════════════════════════════════════════════════ -->
         <section>
             <h1>Four kinds of overlooked</h1>
-            <p>Two axes: <strong>donor disagreement</strong> — how much the four donor profiles rank the crisis differently — against <strong>sector inequality</strong> — how unevenly funding is spread across sectors within the crisis.</p>
+            <p>Two axes: <strong>posterior uncertainty</strong> — width of the 90 % credible interval on θ, a direct readout of how confidently the model places this crisis — against <strong>sector inequality</strong> — how unevenly funding is spread across sectors within the crisis.</p>
             <div class="quadrant">
                 <div></div>
-                <div class="col-head">DONORS AGREE</div>
-                <div class="col-head">DONORS DISAGREE</div>
+                <div class="col-head">NARROW POSTERIOR</div>
+                <div class="col-head">WIDE POSTERIOR</div>
 
                 <div class="row-head">SECTORS UNEVEN</div>
                 <div class="cell highlight">
                     <div class="label">Consensus-sector-starved</div>
-                    <div class="desc">One sector starved, others covered; donors agree. Clearest operational target.</div>
+                    <div class="desc">One sector starved, others covered; the model is confident. Clearest operational target.</div>
                 </div>
                 <div class="cell highlight">
                     <div class="label">Contested <em>and</em> sector-starved</div>
-                    <div class="desc">Sector starved <em>and</em> donors disagree. Highest advocacy priority.</div>
+                    <div class="desc">Sector starved, but the posterior is wide. Highest advocacy priority — and a flag to look at the underlying data.</div>
                 </div>
 
                 <div class="row-head">SECTORS EVEN</div>
                 <div class="cell">
                     <div class="label">Consensus-overlooked</div>
-                    <div class="desc">Evenly underfunded; everyone agrees. CERF UFE candidates.</div>
+                    <div class="desc">Evenly underfunded; the model is confident. CERF UFE candidates.</div>
                 </div>
                 <div class="cell">
                     <div class="label">Contested but balanced</div>
-                    <div class="desc">Sectors balanced; donors disagree. Reveals donor politics.</div>
+                    <div class="desc">Sectors balanced, posterior wide. The data is telling us we don't know enough yet.</div>
                 </div>
             </div>
             <div class="footer"><span>Geo-Insight</span><span>8</span></div>
@@ -303,21 +305,21 @@
         <section>
             <h1>The ten most overlooked, 2025</h1>
             <table>
-                <thead><tr><th>#</th><th>Country</th><th>Rank</th><th>Donor<br>disagreement</th><th>Data<br>completeness</th><th>Type</th></tr></thead>
+                <thead><tr><th>#</th><th>Country</th><th>$\widehat\theta$</th><th>90 % CI</th><th>Type</th></tr></thead>
                 <tbody>
-                    <tr><td>1</td><td><strong>Sudan</strong></td><td>2.5</td><td>3.5</td><td>100 %</td><td>consensus · sector-starved</td></tr>
-                    <tr><td>2</td><td><strong>Honduras</strong></td><td>2.5</td><td>3.3</td><td>100 %</td><td>consensus · sector-starved</td></tr>
-                    <tr><td>3</td><td><strong>Afghanistan</strong></td><td>5.0</td><td>1.0</td><td>100 %</td><td>consensus · overlooked</td></tr>
-                    <tr><td>4</td><td>Zimbabwe</td><td>5.0</td><td>8.8</td><td class="partial">67 %</td><td>contested · sector-starved</td></tr>
-                    <tr><td>5</td><td><strong>Somalia</strong></td><td>5.5</td><td>4.0</td><td>100 %</td><td>consensus · overlooked</td></tr>
-                    <tr><td>6</td><td><strong>Haiti</strong></td><td>6.0</td><td>2.5</td><td>100 %</td><td>consensus · sector-starved</td></tr>
-                    <tr><td>7</td><td><strong>Malawi</strong></td><td>7.5</td><td>12.0</td><td class="partial">67 %</td><td>contested · sector-starved</td></tr>
-                    <tr><td>8</td><td><strong>Mozambique</strong></td><td>9.0</td><td>4.5</td><td>100 %</td><td>consensus · overlooked</td></tr>
-                    <tr><td>9</td><td>South Sudan</td><td>9.0</td><td>1.8</td><td>100 %</td><td>consensus · overlooked</td></tr>
-                    <tr><td>10</td><td><strong>Chad</strong></td><td>9.5</td><td>7.8</td><td>100 %</td><td>contested · balanced</td></tr>
+                    <tr><td>1</td><td><strong>Honduras</strong></td><td>−0.11</td><td>[−0.37, +0.18]</td><td>contested · sector-starved</td></tr>
+                    <tr><td>2</td><td>El Salvador</td><td>−0.24</td><td>[−0.51, +0.02]</td><td>contested · sector-starved</td></tr>
+                    <tr><td>3</td><td><strong>Mozambique</strong></td><td>−0.25</td><td>[−0.51, +0.01]</td><td>contested · balanced</td></tr>
+                    <tr><td>4</td><td><strong>Somalia</strong></td><td>−0.26</td><td>[−0.52, −0.01]</td><td>consensus · overlooked</td></tr>
+                    <tr><td>5</td><td>Guatemala</td><td>−0.27</td><td>[−0.55, +0.03]</td><td>contested · sector-starved</td></tr>
+                    <tr><td>6</td><td><strong>Niger</strong></td><td>−0.27</td><td>[−0.52, −0.02]</td><td>consensus · overlooked</td></tr>
+                    <tr><td>7</td><td><strong>Haiti</strong></td><td>−0.27</td><td>[−0.54, −0.01]</td><td>contested · sector-starved</td></tr>
+                    <tr><td>8</td><td><strong>Cameroon</strong></td><td>−0.29</td><td>[−0.53, −0.02]</td><td>consensus · sector-starved</td></tr>
+                    <tr><td>9</td><td><strong>Venezuela</strong></td><td>−0.29</td><td>[−0.53, −0.03]</td><td>consensus · overlooked</td></tr>
+                    <tr><td>10</td><td><strong>Chad</strong></td><td>−0.30</td><td>[−0.55, −0.07]</td><td>consensus · overlooked</td></tr>
                 </tbody>
             </table>
-            <p class="slide-footnote"><strong>Bold</strong> — also on OCHA's CERF Underfunded Emergencies list 2024–25 (8 of 10 overlap). <strong>Partial completeness</strong> — four of six signals observed; ranked alongside full observations under evidence-bounded scoring. Lower donor disagreement means the four donor profiles rank the crisis similarly.</p>
+            <p class="slide-footnote">HRP-eligible pool ($n = 22$, those with an active humanitarian response plan). Higher $\widehat\theta$ is more overlooked. <strong>Bold</strong> — also picked by CERF UFE in 2024 or 2025 (7 of 10). The 90 % credible intervals overlap substantially across the top-10: set membership is the defensible claim, ordering within it is less so.</p>
             <div class="footer"><span>Geo-Insight</span><span>11</span></div>
         </section>
 
@@ -329,37 +331,43 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Countries scored</th>
-                        <th>vs. CERF 2024–25 (22)</th>
-                        <th>vs. CERF 2025 (17)</th>
-                        <th>vs. CARE Silence (10)</th>
+                        <th>Benchmark (selection date)</th>
+                        <th>$k$</th>
+                        <th>Bayesian</th>
+                        <th>Additive baseline</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td><strong>Strict</strong> — full data only (18)</td>
-                        <td>Top-5 <strong>100 %</strong>, top-10 80 %</td>
-                        <td>Top-5 <strong>100 %</strong>, top-10 80 %</td>
-                        <td>Top-10 10 %</td>
+                        <td>CERF UFE 2024 w2 (Dec 2024)</td>
+                        <td>10</td>
+                        <td>3/10</td>
+                        <td>3/10</td>
                     </tr>
                     <tr>
-                        <td>Extended (33)</td>
-                        <td>Top-5 80 %, top-10 80 %</td>
-                        <td>Top-5 80 %, top-10 70 %</td>
-                        <td>Top-10 20 %</td>
+                        <td>CERF UFE 2025 w1 (Mar 2025)</td>
+                        <td>10</td>
+                        <td><strong>5/10</strong></td>
+                        <td><strong>5/10</strong></td>
                     </tr>
                     <tr>
-                        <td><strong>All</strong> — at least half observed (57)</td>
-                        <td>Top-5 <strong>80 %</strong>, top-10 <strong>80 %</strong></td>
-                        <td>Top-5 80 %, top-10 70 %</td>
-                        <td>Top-10 20 %</td>
+                        <td>CERF UFE 2025 w2 (Dec 2025)</td>
+                        <td>7</td>
+                        <td><strong>2/7</strong></td>
+                        <td>1/7</td>
+                    </tr>
+                    <tr>
+                        <td>CARE BTS 2024</td>
+                        <td>10</td>
+                        <td><strong>3/10</strong></td>
+                        <td>1/10</td>
                     </tr>
                 </tbody>
             </table>
             <div class="callout">
-                Tripling the pool from 18 to 57 countries — by admitting partly-documented crises — costs one country out of the top five against the CERF benchmark (100 % → 80 %). The method is robust to incompleteness.
+                Held-out test: a 2024-only fit predicts CERF's March-2025 selections at 4/10 without seeing any 2025 data. Year-over-year top-10 overlap: 7/10. The variational fit is calibrated against NUTS on every run (Spearman $\rho = 0.89$).
             </div>
-            <p class="slide-footnote">Agreement with CARE's list is expected to drift as the pool grows: CARE ranks media attention, not funding. High-attention crises such as Sudan top our ranking but are by construction not "under-reported", and therefore do not appear on CARE's list.</p>
+            <p class="slide-footnote">Candidate pool throughout: 22 HRP-eligible countries (per_pin_gap observed) — the same pool CERF UFE allocations are drawn from. Posterior predictive coverage at the 90 % level is ${\geq}\,0.91$ across all six attributes.</p>
             <div class="footer"><span>Geo-Insight</span><span>12</span></div>
         </section>
 

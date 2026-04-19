@@ -7,6 +7,13 @@
     <link rel="stylesheet" href="shared.css">
     <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [["$", "$"], ["\\(", "\\)"]] },
+            svg: { fontCache: "global" }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
     <style>
         /* ══════════════════════════════════════════════════════════════
            LANDING LAYOUT — five-section scrolling narrative.
@@ -449,6 +456,290 @@
         .method-links a:hover { color: var(--accent-dim); }
 
         /* ══════════════════════════════════════════════════════════════
+           §3.5 — THE BAYESIAN MODEL
+           ══════════════════════════════════════════════════════════════ */
+        .model {
+            padding: var(--s-8) 0;
+        }
+        .model-header { margin-bottom: var(--s-6); }
+        .model h2 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+            color: var(--ink);
+            margin: 0 0 var(--s-3) 0;
+            line-height: 1.1;
+        }
+        .model-header .section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: var(--s-3);
+        }
+        .model-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+            gap: var(--s-7);
+            align-items: start;
+        }
+        .model-equations {
+            font-size: 0.92rem;
+            color: var(--text);
+            line-height: 1.7;
+        }
+        .model-equations p {
+            margin: 0 0 var(--s-4) 0;
+        }
+        .model-equations p strong { color: var(--ink); font-weight: 600; }
+        .model-equations p em { color: var(--accent); font-style: normal; font-weight: 500; }
+        .eq-stack {
+            background: var(--surface);
+            border-left: 3px solid var(--accent);
+            padding: var(--s-4) var(--s-5);
+            margin: var(--s-4) 0;
+            border-radius: 0 4px 4px 0;
+            font-size: 0.92rem;
+            line-height: 1.6;
+        }
+        .eq-row {
+            padding: 6px 0;
+        }
+        .eq-row + .eq-row {
+            border-top: 1px solid var(--rule);
+            margin-top: 6px;
+        }
+        .eq-tag {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            font-weight: 500;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-right: var(--s-2);
+            min-width: 8.5em;
+        }
+        .model-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--s-3);
+            margin-top: var(--s-5);
+            padding-top: var(--s-4);
+            border-top: 1px solid var(--rule);
+        }
+        .model-stat {
+            font-size: 0.75rem;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+        .model-stat-value {
+            display: block;
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 1.4rem;
+            color: var(--ink);
+            font-weight: 500;
+            letter-spacing: -0.02em;
+            margin-bottom: 2px;
+        }
+        .model-figure {
+            margin: 0;
+        }
+        .model-figure img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border: 1px solid var(--rule);
+            border-radius: 3px;
+        }
+        .model-figure figcaption {
+            margin-top: var(--s-3);
+            font-size: 0.78rem;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+        .model-figure figcaption .fig-tag {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            color: var(--accent);
+            font-weight: 600;
+            margin-right: var(--s-1);
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           §3.7 — WHAT THE POSTERIOR SAYS (rank forest)
+           ══════════════════════════════════════════════════════════════ */
+        .ranking {
+            background: var(--surface);
+            padding: var(--s-8) 0;
+            margin: 0 calc(50% - 50vw);
+            padding-left: calc(50vw - 50%);
+            padding-right: calc(50vw - 50%);
+        }
+        .ranking-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--s-5);
+        }
+        .ranking .section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: var(--s-3);
+        }
+        .ranking h2 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+            color: var(--ink);
+            margin: 0 0 var(--s-6) 0;
+            line-height: 1.1;
+        }
+        .ranking-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+            gap: var(--s-7);
+            align-items: start;
+        }
+        .ranking-prose p {
+            font-size: 0.92rem;
+            color: var(--text);
+            line-height: 1.7;
+            margin: 0 0 var(--s-4) 0;
+        }
+        .ranking-prose p strong { color: var(--ink); font-weight: 600; }
+        .ranking-prose p em { color: var(--accent); font-style: normal; font-weight: 500; }
+        .ranking-callout {
+            margin-top: var(--s-5);
+            padding: var(--s-4) var(--s-5);
+            background: var(--background);
+            border-left: 3px solid var(--accent);
+            border-radius: 0 4px 4px 0;
+            font-size: 0.86rem;
+            color: var(--text);
+            line-height: 1.65;
+        }
+        .ranking-callout strong { color: var(--ink); font-weight: 600; }
+        .ranking-figure { margin: 0; }
+        .ranking-figure img {
+            width: 100%;
+            height: auto;
+            display: block;
+            background: white;
+            border: 1px solid var(--rule);
+            border-radius: 3px;
+        }
+        .ranking-figure figcaption {
+            margin-top: var(--s-3);
+            font-size: 0.78rem;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           §3.8 — STAKEHOLDERS, CONSENSUS, CONTESTED
+           ══════════════════════════════════════════════════════════════ */
+        .stakeholders {
+            padding: var(--s-8) 0;
+        }
+        .stakeholders-header { margin-bottom: var(--s-6); }
+        .stakeholders h2 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+            color: var(--ink);
+            margin: 0 0 var(--s-3) 0;
+            line-height: 1.1;
+        }
+        .stakeholders-header .section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: var(--s-3);
+        }
+        .stakeholders-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+            gap: var(--s-7);
+            align-items: start;
+        }
+        .stakeholders-prose p {
+            font-size: 0.92rem;
+            color: var(--text);
+            line-height: 1.7;
+            margin: 0 0 var(--s-4) 0;
+        }
+        .stakeholders-prose p strong { color: var(--ink); font-weight: 600; }
+        .stakeholders-prose p em { color: var(--accent); font-style: normal; font-weight: 500; }
+        .consensus-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--s-3);
+            margin-top: var(--s-5);
+            padding-top: var(--s-4);
+            border-top: 1px solid var(--rule);
+        }
+        .consensus-tile {
+            padding: var(--s-3) var(--s-4);
+            border-radius: 3px;
+        }
+        .consensus-tile.tile-consensus {
+            background: var(--accent-wash);
+            border-left: 3px solid var(--accent);
+        }
+        .consensus-tile.tile-contested {
+            background: var(--surface);
+            border-left: 3px solid var(--subtle);
+        }
+        .consensus-tile-label {
+            font-size: 0.62rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-weight: 600;
+            margin-bottom: var(--s-1);
+        }
+        .tile-consensus .consensus-tile-label { color: var(--accent); }
+        .tile-contested .consensus-tile-label { color: var(--muted); }
+        .consensus-tile-iso {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--ink);
+            line-height: 1.4;
+            letter-spacing: 0.04em;
+        }
+        .consensus-tile-count {
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 1.1rem;
+            color: var(--ink);
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        .stakeholders-figure { margin: 0; }
+        .stakeholders-figure img {
+            width: 100%;
+            height: auto;
+            display: block;
+            background: white;
+            border: 1px solid var(--rule);
+            border-radius: 3px;
+        }
+        .stakeholders-figure figcaption {
+            margin-top: var(--s-3);
+            font-size: 0.78rem;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
            §4 — THE EVIDENCE
            ══════════════════════════════════════════════════════════════ */
         .evidence {
@@ -619,7 +910,11 @@
             .hero-top,
             .globe-row,
             .method-grid,
+            .model-grid,
+            .ranking-grid,
+            .stakeholders-grid,
             .evidence-grid { grid-template-columns: 1fr; gap: var(--s-5); }
+            .consensus-list { grid-template-columns: 1fr; }
             .hero-title-block h1 { font-size: 3.2rem; }
             .problem-quote { font-size: 2rem; padding-left: var(--s-4); }
             .hero-number { font-size: 6.5rem; }
@@ -649,7 +944,7 @@
             </div>
             <div class="hero-abstract-block">
                 <p class="abstract">
-                    When nearly every response is underfunded, a single coverage ratio no longer discriminates between crises. Geo-Insight reframes overlookedness as a <strong>joint distribution</strong> over four donor-preference profiles, with an <em>intra-crisis equity</em> term and a <em>cross-stakeholder disagreement</em> term. Validated against two independent human-curated benchmarks.
+                    When nearly every response is underfunded, a single coverage ratio no longer discriminates between crises. Geo-Insight treats overlookedness as a <strong>latent scalar θ</strong> and infers its posterior from six observed signals through a <em>hierarchical Bayesian observation model</em>. Every ranking carries a calibrated 90 % credible interval; the variational fit is validated against NUTS on every run. Externally validated against CERF Underfunded Emergencies and CARE <em>Breaking the Silence</em>.
                 </p>
                 <p class="paper-link">
                     Full methodology: <a href="methodology/">read on this site</a> <span class="paper-link-sep">·</span> <a href="proposal.pdf" target="_blank">download PDF</a>
@@ -715,7 +1010,7 @@
                 <div class="funnel-row lvl-5">
                     <span class="f-tag">L5</span>
                     <span class="f-count">9</span>
-                    <span><span class="f-name">Scores</span><span class="f-desc">composite gap scores, typology</span></span>
+                    <span><span class="f-name">Posterior</span><span class="f-desc">Bayesian posterior over θ · 90 % CI · typology</span></span>
                 </div>
                 <div class="funnel-row lvl-4">
                     <span class="f-tag">L4</span>
@@ -740,19 +1035,219 @@
             </div>
             <div class="method-prose">
                 <p>
-                    Seventy-one properties in <strong>five derivation levels</strong>. Every derived value declares its formula, its source dataset, and its known failure modes before a score is computed.
+                    Seventy-one properties in <strong>five derivation levels</strong>. Every derived value declares its formula, its source dataset, and its known failure modes before any value is computed.
                 </p>
                 <p>
-                    Aggregation is <em>evidence-bounded</em>: missing signals contribute zero rather than being rescaled, so missing data cannot inflate a country's rank. Four donor-preference profiles produce four ranks per crisis; the median and the inter-quartile range are reported side by side.
+                    The Level-5 outputs are not a weighted sum. They are the posterior over the latent overlookedness θ, fit by a <em>hierarchical Bayesian observation model</em> with sign-constrained slopes and a population-level prior that pools partial-data countries. Three likelihoods, matched to attribute support: Beta regression for the four bounded fractions, log-normal for the per-PIN gap, ordered logistic for INFORM severity.
                 </p>
                 <p>
-                    This is the substrate on which every ranking and every lens view in the analysis site is built — nothing appears on screen that isn't registered in the ontology.
+                    Variational inference (AutoMultivariateNormal) runs in three seconds and is calibrated against NUTS on every fit (Spearman ρ = 0.89 on posterior medians). Sparse-data countries get wider posteriors structurally — not because we down-weight them by hand, but because the likelihood has fewer terms to sharpen the posterior on θ.
                 </p>
                 <div class="method-links">
-                    <a href="proposal.pdf#page=9" target="_blank">Methodology · proposal §7.1 →</a>
+                    <a href="methodology/" target="_blank">Methodology · in-depth walkthrough →</a>
+                    <a href="proposal.pdf" target="_blank">Methodology · proposal §3 →</a>
                     <a href="http://localhost:8502" target="_blank">Explore the semantic layer · localhost:8502 →</a>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════
+         §3.5 — THE BAYESIAN MODEL
+         ════════════════════════════════════════════════════════════ -->
+    <section id="model" class="model" data-index data-index-label="The model" data-fade>
+        <div class="model-header">
+            <div class="section-label">§ 3 · The model</div>
+            <h2>One latent. Three likelihoods. A calibrated posterior.</h2>
+        </div>
+        <div class="model-grid">
+            <div class="model-equations">
+                <p>
+                    Overlookedness is a <strong>latent scalar $\theta(u)$</strong>, never observed
+                    directly. Each of six attributes links to $\theta$ through a likelihood
+                    matched to its support. Slopes are sign-constrained positive, so larger
+                    attribute values mean more overlooked.
+                </p>
+
+                <div class="eq-stack">
+                    <div class="eq-row">
+                        <span class="eq-tag">Beta regression</span>
+                        $a_i \mid \theta \sim \mathrm{Beta}\bigl(\sigma(\alpha_i + \beta_i\theta)\,\phi_i,\;(1-\sigma(\alpha_i + \beta_i\theta))\,\phi_i\bigr)$
+                    </div>
+                    <div class="eq-row">
+                        <span class="eq-tag">Log-normal</span>
+                        $\log a_2 \mid \theta \sim \mathcal{N}(\alpha_2 + \beta_2\theta,\,\sigma_2^2)$
+                    </div>
+                    <div class="eq-row">
+                        <span class="eq-tag">Ordered logistic</span>
+                        $a_4 \mid \theta \sim \mathrm{OrderedLogistic}(\alpha_4 + \beta_4\theta,\,\kappa)$
+                    </div>
+                </div>
+
+                <p>
+                    A Gaussian population prior on $\theta$ pools partial-data countries toward
+                    the global mean — sparse-data countries get wider posteriors structurally,
+                    not because we down-weight them by hand. Inference is variational
+                    (<em>AutoMultivariateNormal</em>, 3 s on CPU); every fit is calibrated
+                    against NUTS, the gold-standard MCMC reference, on the same model.
+                </p>
+
+                <div class="model-stats">
+                    <div class="model-stat">
+                        <span class="model-stat-value">ρ = 0.89</span>
+                        Spearman correlation, SVI vs NUTS posterior medians.
+                    </div>
+                    <div class="model-stat">
+                        <span class="model-stat-value">≥ 0.91</span>
+                        Posterior predictive coverage at 90 %, every attribute.
+                    </div>
+                </div>
+            </div>
+
+            <figure class="model-figure">
+                <img src="methodology/figures/fig_ppc.png"
+                     alt="Six-panel posterior predictive check overlaying observed and simulated marginals for each of the six attributes">
+                <figcaption>
+                    <span class="fig-tag">Fig.</span>
+                    Posterior predictive check across the six attributes. Filled: 1{,}000
+                    posterior predictive replicates. Outline: observed marginals.
+                    Coverage of the 90 % predictive interval is at or above 0.91 for every
+                    attribute. Per-country Pearson $r$ against the predictive mean: 0.76 for
+                    coverage shortfall, 0.82 for donor concentration — the latent reads as a
+                    funding-overlookedness axis. <a href="methodology/" style="color: var(--accent); border-bottom: 1px solid var(--accent-soft);">Full methodology →</a>
+                </figcaption>
+            </figure>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════
+         §3.7 — WHAT THE POSTERIOR SAYS (rank forest)
+         ════════════════════════════════════════════════════════════ -->
+    <section id="ranking" class="ranking" data-index data-index-label="The ranking" data-fade>
+        <div class="ranking-inner">
+            <div class="section-label">§ 4 · What the posterior says</div>
+            <h2>Twenty-two crises on a single funding-overlookedness axis.</h2>
+            <div class="ranking-grid">
+                <div class="ranking-prose">
+                    <p>
+                        The model places every HRP-eligible country on a single latent axis,
+                        with a credible interval that says how confident it is. The
+                        <em>top ten</em> in oxblood are the countries the model most
+                        confidently identifies as overlooked relative to the rest of the
+                        active-response pool.
+                    </p>
+                    <p>
+                        <strong>What the axis means.</strong> The horizontal scale is the
+                        posterior median of $\theta$, recentered on the median country.
+                        Positive (right) is more overlooked; the absolute number has no
+                        operational meaning — only ordering and CI overlap matter. The
+                        latent has no global anchor, so it tells us where each crisis sits
+                        within the HRP-eligible pool, not against an external "underfunded"
+                        threshold.
+                    </p>
+                    <p>
+                        <strong>Why intervals overlap.</strong> The 90 % credible intervals
+                        overlap substantially across the top ten — the model is honest that
+                        within-top-10 ordering is not strongly supported by the data. The
+                        defensible claim is <em>set membership</em>: these ten crises are
+                        the ones the data-plus-model places at the overlooked end, with
+                        comparable evidence behind each.
+                    </p>
+                    <p>
+                        <strong>The story.</strong> The latent reads as a
+                        <em>funding-overlookedness axis</em>: high coverage shortfall and
+                        concentrated donors drive it most strongly (per-country Pearson
+                        $r = 0.76$ and $0.82$). Need intensity, sectoral equity, and
+                        severity sit near attribute ceilings — most HRP countries have PIN
+                        $\approx$ population and severity $\in \{4, 5\}$ — so they
+                        constrain the posterior without differentiating between countries.
+                    </p>
+                    <div class="ranking-callout">
+                        <strong>Connection to expert consensus:</strong> seven of the ten
+                        countries highlighted here also appear on the United Nations CERF
+                        Underfunded Emergencies allocations across 2024–25. The model
+                        recovers the same crisis cluster that humans converge on — and
+                        attaches a credible interval to each pick.
+                    </div>
+                </div>
+                <figure class="ranking-figure">
+                    <img src="methodology/figures/fig_posterior_ranking.png"
+                         alt="Forest plot of 22 HRP-eligible countries with their posterior medians and 90 percent credible intervals; top-10 highlighted in oxblood">
+                    <figcaption>
+                        Posterior median (dot) and 90 % credible interval (bar) for every
+                        HRP-eligible country in the 2025 cycle. Recentered on the median
+                        country so the scale reads "deviation from typical." Generated from
+                        the production fit; reproducible via
+                        <code>analysis/bayesian/hierarchical.py</code>.
+                    </figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════
+         §3.8 — STAKEHOLDERS, CONSENSUS, CONTESTED
+         ════════════════════════════════════════════════════════════ -->
+    <section id="stakeholders" class="stakeholders" data-index data-index-label="Stakeholders" data-fade>
+        <div class="stakeholders-header">
+            <div class="section-label">§ 5 · Stakeholders, consensus, contested</div>
+            <h2>Whose priors? The same data through four different lenses.</h2>
+        </div>
+        <div class="stakeholders-grid">
+            <div class="stakeholders-prose">
+                <p>
+                    Stakeholder disagreement is encoded as a difference between
+                    <strong>priors over the six attribute slopes</strong> $\beta$ — not as
+                    weights in a sum. Each stakeholder is a different probability
+                    distribution over how strongly each attribute should reflect
+                    overlookedness. We pre-register four: <em>CERF</em> (severity and
+                    magnitude emphasis), <em>ECHO</em> (sectoral equity), <em>USAID</em>
+                    (donor concentration), <em>NGO consortia</em> (cluster equity). Each
+                    produces a separate posterior over $\theta$.
+                </p>
+                <p>
+                    <strong>What we read off.</strong> A country is <em>consensus</em>
+                    when it sits in the top-10 under all four stakeholder posteriors —
+                    the data overrides whatever the priors emphasise, and every lens
+                    converges on the same crisis. A country is <em>contested</em> when it
+                    appears in the top-10 under some priors but not others — the answer
+                    depends on whose preferences you apply, and that disagreement is
+                    itself the operational signal.
+                </p>
+                <p>
+                    Five countries cross every stakeholder's threshold; eleven appear in
+                    at least one but not all. The consensus picks are the safe bets the
+                    method would recommend regardless of donor lens; the contested set
+                    is where stakeholder dialogue would have the most effect on
+                    allocation.
+                </p>
+
+                <div class="consensus-list">
+                    <div class="consensus-tile tile-consensus">
+                        <div class="consensus-tile-label">Consensus · all four agree</div>
+                        <span class="consensus-tile-count">5</span>
+                        <div class="consensus-tile-iso">HND · SLV · GTM · HTI · SOM</div>
+                    </div>
+                    <div class="consensus-tile tile-contested">
+                        <div class="consensus-tile-label">Contested · some, not all</div>
+                        <span class="consensus-tile-count">11</span>
+                        <div class="consensus-tile-iso">BFA · CMR · COL · MLI · MMR · MOZ · NER · NGA · TCD · VEN · YEM</div>
+                    </div>
+                </div>
+            </div>
+
+            <figure class="stakeholders-figure">
+                <img src="methodology/figures/fig_stakeholder_consensus.png"
+                     alt="Per-country posterior medians under four stakeholder priors with 90 percent credible intervals; consensus crises marked with a check mark">
+                <figcaption>
+                    Posterior medians and 90 % CIs under each of the four stakeholder
+                    priors, recentered per stakeholder so absolute scale shifts (a
+                    consequence of different prior emphases) don't distort the visual
+                    comparison. ✓ marks countries that appear in the top-10 under
+                    <em>all four</em> stakeholders. Reproducible via
+                    <code>analysis/bayesian/stakeholders.py</code>.
+                </figcaption>
+            </figure>
         </div>
     </section>
 
@@ -761,40 +1256,45 @@
          ════════════════════════════════════════════════════════════ -->
     <section id="evidence" class="evidence" data-index data-index-label="The evidence" data-fade>
         <div class="evidence-inner">
-            <div class="section-label">§ 3 · The evidence</div>
+            <div class="section-label">§ 6 · The evidence</div>
             <h2>Agreement with independent human judgement.</h2>
             <div class="evidence-grid">
                 <div>
                     <div class="hero-number-block">
-                        <span class="hero-number" data-count-target="80" data-count-duration="1400">0</span><span class="hero-number-unit">%</span>
+                        <span class="hero-number" data-count-target="5" data-count-duration="900">0</span><span class="hero-number-unit">/10</span>
                     </div>
                     <p class="hero-number-caption">
-                        top-5 overlap with <strong>OCHA's CERF Underfunded Emergencies</strong> list, on the widest evidence-bounded pool of 57 countries. Eight of our top ten appear on OCHA's selection, reached independently through the methodology described here.
+                        precision @ 10 against <strong>CERF UFE 2025 w1</strong>: half of the United Nations' March-2025 underfunded-emergency selections appear in our independent top-10. The variational posterior is calibrated against NUTS on every fit (Spearman ρ = 0.89 on posterior medians).
                     </p>
                 </div>
                 <div class="evidence-table">
                     <div class="row head">
-                        <span>Pool (scored countries)</span>
-                        <span class="cell-num">Top-5</span>
-                        <span class="cell-num">Top-10</span>
+                        <span>External benchmark</span>
+                        <span class="cell-num">Bayesian</span>
+                        <span class="cell-num">Additive baseline</span>
                     </div>
                     <div class="row">
-                        <span class="cell-label"><strong>Strict</strong> — full data only (18)</span>
-                        <span class="cell-num">100 %</span>
-                        <span class="cell-num">80 %</span>
+                        <span class="cell-label"><strong>CERF UFE 2024 w2</strong> · top-10</span>
+                        <span class="cell-num">3/10</span>
+                        <span class="cell-num">3/10</span>
                     </div>
                     <div class="row">
-                        <span class="cell-label">Extended (33)</span>
-                        <span class="cell-num">80 %</span>
-                        <span class="cell-num">80 %</span>
+                        <span class="cell-label"><strong>CERF UFE 2025 w1</strong> · top-10</span>
+                        <span class="cell-num">5/10</span>
+                        <span class="cell-num">5/10</span>
                     </div>
                     <div class="row">
-                        <span class="cell-label"><strong>All</strong> — ≥ half observed (57)</span>
-                        <span class="cell-num">80 %</span>
-                        <span class="cell-num">80 %</span>
+                        <span class="cell-label"><strong>CERF UFE 2025 w2</strong> · top-7</span>
+                        <span class="cell-num">2/7</span>
+                        <span class="cell-num">1/7</span>
+                    </div>
+                    <div class="row">
+                        <span class="cell-label"><strong>CARE BTS 2024</strong> · top-10</span>
+                        <span class="cell-num">3/10</span>
+                        <span class="cell-num">1/10</span>
                     </div>
                     <p class="evidence-footnote">
-                        Tripling the pool by admitting partly-documented crises costs one country out of the top five. The method surfaces incompleteness explicitly; partly-observed crises are never assigned a higher rank than their evidence supports.
+                        Candidate pool: 22 HRP-eligible countries (those with an active humanitarian response plan), the population CERF UFE itself draws from. Held-out test: a 2024-only fit predicts CERF's March-2025 selections at 4/10 without seeing any 2025 data.
                     </p>
                 </div>
             </div>
@@ -805,7 +1305,7 @@
          §5 — SURFACES + FOOTER
          ════════════════════════════════════════════════════════════ -->
     <section id="surfaces" class="surfaces" data-index data-index-label="Surfaces" data-fade>
-        <div class="section-label">§ 4 · Surfaces</div>
+        <div class="section-label">§ 7 · Surfaces</div>
         <div class="cards">
             <a class="card" href="http://localhost:8000" target="_blank" rel="noopener">
                 <span class="card-arrow">→</span>
