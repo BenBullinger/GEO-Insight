@@ -641,6 +641,105 @@
         }
 
         /* ══════════════════════════════════════════════════════════════
+           §3.8 — STAKEHOLDERS, CONSENSUS, CONTESTED
+           ══════════════════════════════════════════════════════════════ */
+        .stakeholders {
+            padding: var(--s-8) 0;
+        }
+        .stakeholders-header { margin-bottom: var(--s-6); }
+        .stakeholders h2 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+            color: var(--ink);
+            margin: 0 0 var(--s-3) 0;
+            line-height: 1.1;
+        }
+        .stakeholders-header .section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: var(--s-3);
+        }
+        .stakeholders-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+            gap: var(--s-7);
+            align-items: start;
+        }
+        .stakeholders-prose p {
+            font-size: 0.92rem;
+            color: var(--text);
+            line-height: 1.7;
+            margin: 0 0 var(--s-4) 0;
+        }
+        .stakeholders-prose p strong { color: var(--ink); font-weight: 600; }
+        .stakeholders-prose p em { color: var(--accent); font-style: normal; font-weight: 500; }
+        .consensus-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--s-3);
+            margin-top: var(--s-5);
+            padding-top: var(--s-4);
+            border-top: 1px solid var(--rule);
+        }
+        .consensus-tile {
+            padding: var(--s-3) var(--s-4);
+            border-radius: 3px;
+        }
+        .consensus-tile.tile-consensus {
+            background: var(--accent-wash);
+            border-left: 3px solid var(--accent);
+        }
+        .consensus-tile.tile-contested {
+            background: var(--surface);
+            border-left: 3px solid var(--subtle);
+        }
+        .consensus-tile-label {
+            font-size: 0.62rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-weight: 600;
+            margin-bottom: var(--s-1);
+        }
+        .tile-consensus .consensus-tile-label { color: var(--accent); }
+        .tile-contested .consensus-tile-label { color: var(--muted); }
+        .consensus-tile-iso {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--ink);
+            line-height: 1.4;
+            letter-spacing: 0.04em;
+        }
+        .consensus-tile-count {
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 1.1rem;
+            color: var(--ink);
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        .stakeholders-figure { margin: 0; }
+        .stakeholders-figure img {
+            width: 100%;
+            height: auto;
+            display: block;
+            background: white;
+            border: 1px solid var(--rule);
+            border-radius: 3px;
+        }
+        .stakeholders-figure figcaption {
+            margin-top: var(--s-3);
+            font-size: 0.78rem;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
            §4 — THE EVIDENCE
            ══════════════════════════════════════════════════════════════ */
         .evidence {
@@ -813,7 +912,9 @@
             .method-grid,
             .model-grid,
             .ranking-grid,
+            .stakeholders-grid,
             .evidence-grid { grid-template-columns: 1fr; gap: var(--s-5); }
+            .consensus-list { grid-template-columns: 1fr; }
             .hero-title-block h1 { font-size: 3.2rem; }
             .problem-quote { font-size: 2rem; padding-left: var(--s-4); }
             .hero-number { font-size: 6.5rem; }
@@ -1085,11 +1186,77 @@
     </section>
 
     <!-- ════════════════════════════════════════════════════════════
+         §3.8 — STAKEHOLDERS, CONSENSUS, CONTESTED
+         ════════════════════════════════════════════════════════════ -->
+    <section id="stakeholders" class="stakeholders" data-index data-index-label="Stakeholders" data-fade>
+        <div class="stakeholders-header">
+            <div class="section-label">§ 5 · Stakeholders, consensus, contested</div>
+            <h2>Whose priors? The same data through four different lenses.</h2>
+        </div>
+        <div class="stakeholders-grid">
+            <div class="stakeholders-prose">
+                <p>
+                    Stakeholder disagreement is encoded as a difference between
+                    <strong>priors over the six attribute slopes</strong> $\beta$ — not as
+                    weights in a sum. Each stakeholder is a different probability
+                    distribution over how strongly each attribute should reflect
+                    overlookedness. We pre-register four: <em>CERF</em> (severity and
+                    magnitude emphasis), <em>ECHO</em> (sectoral equity), <em>USAID</em>
+                    (donor concentration), <em>NGO consortia</em> (cluster equity). Each
+                    produces a separate posterior over $\theta$.
+                </p>
+                <p>
+                    <strong>What we read off.</strong> A country is <em>consensus</em>
+                    when it sits in the top-10 under all four stakeholder posteriors —
+                    the data overrides whatever the priors emphasise, and every lens
+                    converges on the same crisis. A country is <em>contested</em> when it
+                    appears in the top-10 under some priors but not others — the answer
+                    depends on whose preferences you apply, and that disagreement is
+                    itself the operational signal.
+                </p>
+                <p>
+                    Five countries cross every stakeholder's threshold; eleven appear in
+                    at least one but not all. The consensus picks are the safe bets the
+                    method would recommend regardless of donor lens; the contested set
+                    is where stakeholder dialogue would have the most effect on
+                    allocation.
+                </p>
+
+                <div class="consensus-list">
+                    <div class="consensus-tile tile-consensus">
+                        <div class="consensus-tile-label">Consensus · all four agree</div>
+                        <span class="consensus-tile-count">5</span>
+                        <div class="consensus-tile-iso">HND · SLV · GTM · HTI · SOM</div>
+                    </div>
+                    <div class="consensus-tile tile-contested">
+                        <div class="consensus-tile-label">Contested · some, not all</div>
+                        <span class="consensus-tile-count">11</span>
+                        <div class="consensus-tile-iso">BFA · CMR · COL · MLI · MMR · MOZ · NER · NGA · TCD · VEN · YEM</div>
+                    </div>
+                </div>
+            </div>
+
+            <figure class="stakeholders-figure">
+                <img src="methodology/figures/fig_stakeholder_consensus.png"
+                     alt="Per-country posterior medians under four stakeholder priors with 90 percent credible intervals; consensus crises marked with a check mark">
+                <figcaption>
+                    Posterior medians and 90 % CIs under each of the four stakeholder
+                    priors, recentered per stakeholder so absolute scale shifts (a
+                    consequence of different prior emphases) don't distort the visual
+                    comparison. ✓ marks countries that appear in the top-10 under
+                    <em>all four</em> stakeholders. Reproducible via
+                    <code>analysis/bayesian/stakeholders.py</code>.
+                </figcaption>
+            </figure>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════
          §4 — THE EVIDENCE
          ════════════════════════════════════════════════════════════ -->
     <section id="evidence" class="evidence" data-index data-index-label="The evidence" data-fade>
         <div class="evidence-inner">
-            <div class="section-label">§ 5 · The evidence</div>
+            <div class="section-label">§ 6 · The evidence</div>
             <h2>Agreement with independent human judgement.</h2>
             <div class="evidence-grid">
                 <div>
@@ -1138,7 +1305,7 @@
          §5 — SURFACES + FOOTER
          ════════════════════════════════════════════════════════════ -->
     <section id="surfaces" class="surfaces" data-index data-index-label="Surfaces" data-fade>
-        <div class="section-label">§ 6 · Surfaces</div>
+        <div class="section-label">§ 7 · Surfaces</div>
         <div class="cards">
             <a class="card" href="http://localhost:8000" target="_blank" rel="noopener">
                 <span class="card-arrow">→</span>

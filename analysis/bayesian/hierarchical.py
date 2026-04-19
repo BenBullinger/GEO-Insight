@@ -70,6 +70,99 @@ from analysis.bayesian.mvp import (  # noqa: E402
 from analysis import validation as val  # noqa: E402
 
 
+# ─── Stakeholder priors over the six attribute slopes ─────────────────────
+# Each stakeholder is encoded as a HalfNormal scale per attribute. Larger
+# scale = stakeholder thinks this attribute moves more strongly with
+# overlookedness. The "diffuse" prior is the default consistency-regime
+# prior used elsewhere in the file. The four others are pre-registered
+# in proposal/methodology.md §6.2 — they are illustrative, not calibrated
+# from any institution's stated policy.
+STAKEHOLDER_PRIORS = {
+    "diffuse": {
+        "coverage_shortfall": 1.5, "per_pin_gap": 1.5, "need_intensity": 1.5,
+        "severity_category": 1.5, "donor_hhi": 1.5, "cluster_gini": 1.5,
+    },
+    "cerf": {  # severity + magnitude emphasis
+        "coverage_shortfall": 1.5, "per_pin_gap": 0.75, "need_intensity": 1.0,
+        "severity_category": 1.25, "donor_hhi": 0.25, "cluster_gini": 0.25,
+    },
+    "echo": {  # equity emphasis
+        "coverage_shortfall": 1.25, "per_pin_gap": 1.0, "need_intensity": 0.75,
+        "severity_category": 0.75, "donor_hhi": 0.25, "cluster_gini": 1.0,
+    },
+    "usaid": {  # donor-concentration emphasis
+        "coverage_shortfall": 1.0, "per_pin_gap": 0.75, "need_intensity": 0.75,
+        "severity_category": 0.75, "donor_hhi": 1.25, "cluster_gini": 0.5,
+    },
+    "ngo": {  # cluster-equity emphasis
+        "coverage_shortfall": 1.0, "per_pin_gap": 0.75, "need_intensity": 0.75,
+        "severity_category": 0.5, "donor_hhi": 0.5, "cluster_gini": 1.5,
+    },
+}
+
+
+def make_model(prior_means: dict | None = None):
+    """Build a model closure with the given stakeholder prior means.
+
+    If prior_means is None, returns the diffuse-prior production model.
+    """
+    if prior_means is None:
+        prior_means = STAKEHOLDER_PRIORS["diffuse"]
+
+    def _stakeholder_model(observed: dict, mask: dict, n: int):
+        # Hierarchical prior on theta — same in every stakeholder regime.
+        mu_theta = numpyro.sample("mu_theta", dist.Normal(0.0, 0.3))
+        sigma_theta = numpyro.sample("sigma_theta", dist.HalfNormal(0.5))
+        theta = numpyro.sample(
+            "theta",
+            dist.Normal(loc=mu_theta, scale=sigma_theta).expand([n]).to_event(1),
+        )
+
+        # Beta-regressed attributes
+        for attr in BETA_REGR_ATTRS:
+            alpha = numpyro.sample(f"alpha_{attr}", dist.Normal(0.0, 1.0))
+            beta = numpyro.sample(f"beta_{attr}", dist.HalfNormal(prior_means[attr]))
+            phi = numpyro.sample(f"phi_{attr}", dist.HalfNormal(10.0))
+            mu = jax.nn.sigmoid(alpha + beta * theta)
+            with handlers.mask(mask=mask[attr]):
+                numpyro.sample(
+                    f"obs_{attr}",
+                    dist.Beta(mu * phi, (1.0 - mu) * phi),
+                    obs=observed[attr],
+                )
+
+        # Log-normal attribute
+        alpha_ln = numpyro.sample("alpha_per_pin_gap", dist.Normal(4.0, 2.0))
+        beta_ln = numpyro.sample("beta_per_pin_gap", dist.HalfNormal(prior_means[LOGNORMAL_ATTR]))
+        sigma_ln = numpyro.sample("sigma_per_pin_gap", dist.HalfNormal(1.0))
+        loc_ln = alpha_ln + beta_ln * theta
+        with handlers.mask(mask=mask[LOGNORMAL_ATTR]):
+            numpyro.sample(
+                f"obs_{LOGNORMAL_ATTR}",
+                dist.LogNormal(loc=loc_ln, scale=sigma_ln),
+                obs=observed[LOGNORMAL_ATTR],
+            )
+
+        # Ordered logistic
+        cut_base = numpyro.sample("cut_base", dist.Normal(0.0, 2.0))
+        cut_delta = numpyro.sample(
+            "cut_delta", dist.HalfNormal(1.5).expand([ORDINAL_LEVELS - 2]).to_event(1)
+        )
+        cutpoints = jnp.concatenate([cut_base[None], cut_base + jnp.cumsum(cut_delta)])
+
+        alpha_sev = numpyro.sample("alpha_severity_category", dist.Normal(0.0, 1.0))
+        beta_sev = numpyro.sample("beta_severity_category", dist.HalfNormal(prior_means[ORDINAL_ATTR]))
+        predictor = alpha_sev + beta_sev * theta
+        with handlers.mask(mask=mask[ORDINAL_ATTR]):
+            numpyro.sample(
+                f"obs_{ORDINAL_ATTR}",
+                dist.OrderedLogistic(predictor, cutpoints=cutpoints),
+                obs=observed[ORDINAL_ATTR],
+            )
+
+    return _stakeholder_model
+
+
 # ─── NumPyro model (hierarchical prior on theta) ───────────────────────────
 def model(observed: dict, mask: dict, n: int):
     """Same observation model as ``mvp.model`` but with a pooled prior on theta.
