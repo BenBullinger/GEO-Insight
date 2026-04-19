@@ -10,9 +10,10 @@ Surfaces:
   - Most contested crises (largest spread of lens-rank fractions)
   - Most consensus crises (smallest spread)
 
-Lens rank is a Phase-3 concept and depends on lenses being wired; Phase-3
-lens (`geo_insight_score`) is included automatically once gap_score columns
-land in the enriched frame.
+Lens rank is a Phase-3 concept and depends on lenses being wired; the
+`geo_insight_score` lens reads the Bayesian posterior columns (theta_median
+and the 90% CI bounds) from the Level-5 stack, so it lights up once the
+HRP-eligible countries are fitted at frame-build time.
 """
 from __future__ import annotations
 
@@ -122,8 +123,8 @@ def render(enriched: pd.DataFrame, lens, registry) -> None:
     if "typology_cell" in enriched.columns and enriched["typology_cell"].notna().any():
         st.markdown("#### Four-cell typology")
         st.caption(
-            "Classification against sector-coverage inequality × donor-rank disagreement "
-            "(median splits). See proposal §5.7."
+            "Classification against sector-coverage inequality (cluster_gini) × "
+            "posterior CI width (theta_ci_width), median splits. See proposal §3."
         )
 
         def _prettify(raw: str) -> str:

@@ -95,11 +95,11 @@ st.sidebar.caption(
 
 # ─── Featured-views shortcut strip ─────────────────────────────────────────
 FEATURED = [
-    ("Top ten overlooked",          "Headline gap-score ranking",              "geo_insight_score", "atlas"),
-    ("Validation",                  "Against CERF UFE and CARE Silence",        "geo_insight_score", "validation"),
-    ("Four-cell typology",          "Consensus × sector-uneven matrix",         "geo_insight_score", "cross_lens"),
-    ("Country profile",             "Drill into one crisis across the layers",  "geo_insight_score", "profile"),
-    ("Funding pressure",            "Ranked by coverage-gap intensity",         "funding_pressure",  "atlas"),
+    ("Top ten overlooked",          "Bayesian posterior ranking on the HRP-eligible pool",  "geo_insight_score", "atlas"),
+    ("Validation",                  "vs CERF UFE and CARE Breaking the Silence",            "geo_insight_score", "validation"),
+    ("Four-cell typology",          "Sectoral inequality × posterior CI width",             "geo_insight_score", "cross_lens"),
+    ("Country profile",             "Drill into one crisis across the layers",              "geo_insight_score", "profile"),
+    ("Funding pressure",            "Ranked by coverage-gap intensity",                     "funding_pressure",  "atlas"),
 ]
 
 

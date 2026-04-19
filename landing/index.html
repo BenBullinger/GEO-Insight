@@ -649,7 +649,7 @@
             </div>
             <div class="hero-abstract-block">
                 <p class="abstract">
-                    When nearly every response is underfunded, a single coverage ratio no longer discriminates between crises. Geo-Insight reframes overlookedness as a <strong>joint distribution</strong> over four donor-preference profiles, with an <em>intra-crisis equity</em> term and a <em>cross-stakeholder disagreement</em> term. Validated against two independent human-curated benchmarks.
+                    When nearly every response is underfunded, a single coverage ratio no longer discriminates between crises. Geo-Insight treats overlookedness as a <strong>latent scalar θ</strong> and infers its posterior from six observed signals through a <em>hierarchical Bayesian observation model</em>. Every ranking carries a calibrated 90 % credible interval; the variational fit is validated against NUTS on every run. Externally validated against CERF Underfunded Emergencies and CARE <em>Breaking the Silence</em>.
                 </p>
                 <p class="paper-link">
                     Full methodology: <a href="methodology/">read on this site</a> <span class="paper-link-sep">·</span> <a href="proposal.pdf" target="_blank">download PDF</a>
@@ -715,7 +715,7 @@
                 <div class="funnel-row lvl-5">
                     <span class="f-tag">L5</span>
                     <span class="f-count">9</span>
-                    <span><span class="f-name">Scores</span><span class="f-desc">composite gap scores, typology</span></span>
+                    <span><span class="f-name">Posterior</span><span class="f-desc">Bayesian posterior over θ · 90 % CI · typology</span></span>
                 </div>
                 <div class="funnel-row lvl-4">
                     <span class="f-tag">L4</span>
@@ -740,16 +740,17 @@
             </div>
             <div class="method-prose">
                 <p>
-                    Seventy-one properties in <strong>five derivation levels</strong>. Every derived value declares its formula, its source dataset, and its known failure modes before a score is computed.
+                    Seventy-one properties in <strong>five derivation levels</strong>. Every derived value declares its formula, its source dataset, and its known failure modes before any value is computed.
                 </p>
                 <p>
-                    Aggregation is <em>evidence-bounded</em>: missing signals contribute zero rather than being rescaled, so missing data cannot inflate a country's rank. Four donor-preference profiles produce four ranks per crisis; the median and the inter-quartile range are reported side by side.
+                    The Level-5 outputs are not a weighted sum. They are the posterior over the latent overlookedness θ, fit by a <em>hierarchical Bayesian observation model</em> with sign-constrained slopes and a population-level prior that pools partial-data countries. Three likelihoods, matched to attribute support: Beta regression for the four bounded fractions, log-normal for the per-PIN gap, ordered logistic for INFORM severity.
                 </p>
                 <p>
-                    This is the substrate on which every ranking and every lens view in the analysis site is built — nothing appears on screen that isn't registered in the ontology.
+                    Variational inference (AutoMultivariateNormal) runs in three seconds and is calibrated against NUTS on every fit (Spearman ρ = 0.89 on posterior medians). Sparse-data countries get wider posteriors structurally — not because we down-weight them by hand, but because the likelihood has fewer terms to sharpen the posterior on θ.
                 </p>
                 <div class="method-links">
-                    <a href="proposal.pdf#page=9" target="_blank">Methodology · proposal §7.1 →</a>
+                    <a href="methodology/" target="_blank">Methodology · in-depth walkthrough →</a>
+                    <a href="proposal.pdf" target="_blank">Methodology · proposal §3 →</a>
                     <a href="http://localhost:8502" target="_blank">Explore the semantic layer · localhost:8502 →</a>
                 </div>
             </div>
@@ -766,35 +767,40 @@
             <div class="evidence-grid">
                 <div>
                     <div class="hero-number-block">
-                        <span class="hero-number" data-count-target="80" data-count-duration="1400">0</span><span class="hero-number-unit">%</span>
+                        <span class="hero-number" data-count-target="5" data-count-duration="900">0</span><span class="hero-number-unit">/10</span>
                     </div>
                     <p class="hero-number-caption">
-                        top-5 overlap with <strong>OCHA's CERF Underfunded Emergencies</strong> list, on the widest evidence-bounded pool of 57 countries. Eight of our top ten appear on OCHA's selection, reached independently through the methodology described here.
+                        precision @ 10 against <strong>CERF UFE 2025 w1</strong>: half of the United Nations' March-2025 underfunded-emergency selections appear in our independent top-10. The variational posterior is calibrated against NUTS on every fit (Spearman ρ = 0.89 on posterior medians).
                     </p>
                 </div>
                 <div class="evidence-table">
                     <div class="row head">
-                        <span>Pool (scored countries)</span>
-                        <span class="cell-num">Top-5</span>
-                        <span class="cell-num">Top-10</span>
+                        <span>External benchmark</span>
+                        <span class="cell-num">Bayesian</span>
+                        <span class="cell-num">Additive baseline</span>
                     </div>
                     <div class="row">
-                        <span class="cell-label"><strong>Strict</strong> — full data only (18)</span>
-                        <span class="cell-num">100 %</span>
-                        <span class="cell-num">80 %</span>
+                        <span class="cell-label"><strong>CERF UFE 2024 w2</strong> · top-10</span>
+                        <span class="cell-num">3/10</span>
+                        <span class="cell-num">3/10</span>
                     </div>
                     <div class="row">
-                        <span class="cell-label">Extended (33)</span>
-                        <span class="cell-num">80 %</span>
-                        <span class="cell-num">80 %</span>
+                        <span class="cell-label"><strong>CERF UFE 2025 w1</strong> · top-10</span>
+                        <span class="cell-num">5/10</span>
+                        <span class="cell-num">5/10</span>
                     </div>
                     <div class="row">
-                        <span class="cell-label"><strong>All</strong> — ≥ half observed (57)</span>
-                        <span class="cell-num">80 %</span>
-                        <span class="cell-num">80 %</span>
+                        <span class="cell-label"><strong>CERF UFE 2025 w2</strong> · top-7</span>
+                        <span class="cell-num">2/7</span>
+                        <span class="cell-num">1/7</span>
+                    </div>
+                    <div class="row">
+                        <span class="cell-label"><strong>CARE BTS 2024</strong> · top-10</span>
+                        <span class="cell-num">3/10</span>
+                        <span class="cell-num">1/10</span>
                     </div>
                     <p class="evidence-footnote">
-                        Tripling the pool by admitting partly-documented crises costs one country out of the top five. The method surfaces incompleteness explicitly; partly-observed crises are never assigned a higher rank than their evidence supports.
+                        Candidate pool: 22 HRP-eligible countries (those with an active humanitarian response plan), the population CERF UFE itself draws from. Held-out test: a 2024-only fit predicts CERF's March-2025 selections at 4/10 without seeing any 2025 data.
                     </p>
                 </div>
             </div>

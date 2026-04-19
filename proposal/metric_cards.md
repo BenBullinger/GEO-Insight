@@ -22,7 +22,7 @@ The purpose of this discipline is **defensibility**: any claim we make from an a
 - Weighted composite is opaque without pillar-level decomposition.
 - Monthly re-assessments can shift a crisis's score by ~0.5 on minor indicator revisions.
 
-**Our handling.** We treat the continuous index as **secondary**. Primary severity signal is the ordinal category (see next card). For sub-analyses we decompose further — see *INFORM Sub-indicators* card below. In any across-time analysis we annotate the Feb-2026 discontinuity and refuse to compute deltas that straddle it.
+**Our handling.** We treat the continuous index as **secondary**. Primary severity signal is the ordinal category (see next card), which feeds attribute $a_4$ in the Bayesian model via an ordered-logistic likelihood (§7). For sub-analyses we decompose further — see *INFORM Sub-indicators* card below. In any across-time analysis we annotate the Feb-2026 discontinuity and refuse to compute deltas that straddle it.
 
 ---
 
@@ -38,7 +38,7 @@ The purpose of this discipline is **defensibility**: any claim we make from an a
 - Five-level ordinal loses granularity compared to the continuous score.
 - Tie-breaking between (e.g.) `3.4` and `3.6` is not meaningful — ordinal transitions are the only semantically valid comparison.
 
-**Our handling.** Primary severity signal for time-series analysis. Feeds attribute `a₄` when we span the Feb-2026 boundary.
+**Our handling.** Primary severity signal. Feeds attribute $a_4$ in the Bayesian model via an ordered-logistic likelihood (§7), with cut-points inferred from data rather than assumed equally spaced. Stable across the Feb-2026 boundary.
 
 ---
 
@@ -63,7 +63,7 @@ The purpose of this discipline is **defensibility**: any claim we make from an a
 - Definitions of "affected" and "displaced" vary slightly across country teams (harmonised by ACAPS guidelines but not perfectly).
 - Imputation where source data missing (flagged in the `Data Reliability` sheet per indicator).
 
-**Our handling.** Treated as first-class features. When we claim "deterioration" or "sector starvation", we show the sub-indicator that justifies it, not the composite. `pin_level_4 + pin_level_5` population is our preferred "severe+ humanitarian conditions" count.
+**Our handling.** Treated as first-class features for explanation and audit, not as direct inputs to the Bayesian model (the six modelled attributes are higher-level aggregates). When we claim "deterioration" or "sector starvation", we show the sub-indicator that justifies it, not the composite. `pin_level_4 + pin_level_5` is our preferred "severe+ humanitarian conditions" count. These primitives anchor the planned learned representation layer (proposal §7).
 
 ---
 
@@ -86,11 +86,11 @@ where $F(u,t)$ = reported funding received for crisis $u$ in year $t$, $R(u,t)$ 
 - Private-sector contributions are systematically under-reported.
 
 **Failure modes.**
-- $C$ near 100% can hide sector-level starvation → our Gini term compensates.
-- $C > 100%$ occurs (over-funding) → should be capped for ranking.
+- $C$ near 100% can hide sector-level starvation → cluster Gini ($a_6$, §6) is the model's complementary signal.
+- $C > 100%$ occurs (over-funding) → capped at 1.0 before being passed to the Beta-regression likelihood for $a_1$.
 - Plan revisions mid-year can make $C_t > C_{t-1}$ without any real funding change.
 
-**Our handling.** Report $F$, $R$, and $C$ side-by-side; never $C$ alone. Cap $C$ at 1.5 in visualisations, 1.0 in rankings. Use *current* (revised) requirements. Flag crises with mid-year plan revisions.
+**Our handling.** Coverage shortfall $a_1 = 1 - \min(C, 1)$ feeds the Bayesian model via a Beta-regression likelihood (§7). Posterior predictive coverage on $a_1$ is calibrated; per-country Pearson $r = 0.76$ between predicted and observed values — coverage shortfall is one of the two attributes the latent θ actively recovers. Display $F$, $R$, and $C$ side-by-side; never $C$ alone.
 
 ---
 
@@ -115,7 +115,7 @@ Range $[1/|D|, 1]$. 1 = single donor, lower = diversified.
 - Hides which donor matters. Three donors at 50/30/20 and 80/10/10 can both return similar HHI values — but the stories are different.
 - Zero-reporting bias: a crisis with one reported donor and many pledged-but-unreported donors looks overconcentrated.
 
-**Our handling.** Report **HHI + top-1 donor share + number of donors** together — never HHI alone. Flag `single-donor-risk` when $|D| = 1$. Use only crises with $|D| \geq 2$ for HHI numeric comparisons.
+**Our handling.** Donor HHI feeds attribute $a_5$ in the Bayesian model via a Beta-regression likelihood (§7). Posterior predictive Pearson $r = 0.82$ — donor concentration is the other attribute (alongside coverage shortfall) that the latent θ actively recovers. Always report **HHI + top-1 donor share + number of donors** together for explanation; flag `single-donor-risk` when $|D| = 1$.
 
 ---
 
@@ -141,7 +141,7 @@ PIN-weighted Gini of cluster coverage ratios $r_c = F_c / R_c$.
 - A crisis with one overfunded cluster ($r=1.5$) and many uniformly underfunded ($r \approx 0.3$) can return similar Gini to one with moderate, varied coverage.
 - Does not account for absolute PIN magnitude of the affected cluster.
 
-**Our handling.** Always render cluster-by-cluster coverage alongside the Gini. Explicitly name the lowest-$r_c$ cluster in output. Gini enters the gap score as one of six attributes, never alone.
+**Our handling.** Cluster Gini feeds attribute $a_6$ in the Bayesian model via a Beta-regression likelihood (§7). Posterior predictive checks confirm marginal calibration but reveal weak per-country correlation (Pearson $r = 0.26$) — Gini constrains the latent posterior without strongly differentiating between countries; for ranking explanations, always render cluster-by-cluster coverage alongside the Gini and name the lowest-$r_c$ cluster.
 
 ---
 

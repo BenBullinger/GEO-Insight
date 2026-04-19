@@ -864,5 +864,5 @@ benchmarks:
     axis: consensus
   - name: CARE Breaking the Silence
     url: https://reliefweb.int/report/angola/breaking-silence-10-most-under-reported-humanitarian-crises-2023
-    maps_to_lens: severity_composition
-    axis: sector_starved
+    maps_to_lens: geo_insight_score
+    axis: under_reported

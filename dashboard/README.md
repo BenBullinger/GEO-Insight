@@ -32,19 +32,16 @@ Stop with `Ctrl-C` in the terminal. Streamlit auto-reloads on file save, so edit
 | **Cross-dataset coverage** | Which countries appear in HNO ∩ HRP ∩ FTS (global + cluster) for a chosen year — the set of crises we can reason about with the full methodology |
 | **Needs (HNO)** | Choropleth of PIN, top-20 countries, per-country cluster breakdown |
 | **Funding (FTS)** | Coverage-ratio choropleth, lowest-coverage countries ≥ $100M need, multi-country time-series |
-| **Sector equity preview** | Cluster-level coverage ratios for a selected country + **computed unweighted cluster Gini** (full methodology uses PIN-weighted; this is a signal preview) |
-| **Donors (FTS)** | Top-20 global donors, per-country donor pie + **computed HHI** for single-destination transactions |
+| **Severity (INFORM)** | INFORM Severity Index choropleth, ordinal category distribution, monthly time-series |
 | **Pooled funds (CBPF)** | Top pooled funds, top CBPF donors |
 | **Plans (HRP)** | Active plans by year, requirements, plan metadata table |
 
 ## Known shortcuts / caveats
 
 - **HNO**: PIN is summed across clusters for country totals. The HNO file mixes country-level and admin1/2 granularities; we filter to country-level aggregates where possible and fall back to summing all rows otherwise.
-- **Sector equity Gini shown here is unweighted** across clusters — the proposal uses a **PIN-weighted** Gini. The unweighted version is a fast proxy for the signal.
-- **Donor HHI** is computed only on FTS incoming rows where `destLocations` is a single ISO3. Multi-country rows need a proper allocation rule (see proposal §4.3).
 - **CBPF country mapping** in the overview page is crude (prefix of fund name); the real ISO3 ↔ fund mapping lives in the project-level data.
 
-These are known and documented in the proposal. The dashboard's purpose is to surface the data, not compute the final scores.
+These are known and documented in the proposal. The dashboard's purpose is to surface the upstream data; the Bayesian model and analytic views live on the semantic-analysis surface at `localhost:8502`.
 
 ## Files
 

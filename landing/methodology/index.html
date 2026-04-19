@@ -415,7 +415,7 @@
                 Four families of observation. <strong>(a)</strong> Bounded fractions: beta
                 regression with a logit link. <strong>(b)</strong> The per-person gap:
                 log-normal, because financial gaps scale multiplicatively.
-                <strong>(c)</strong> Severity: ordered probit, with cut-points inferred
+                <strong>(c)</strong> Severity: ordered logistic, with cut-points inferred
                 from data rather than assumed equally spaced. <strong>(d)</strong> Missing
                 observations widen the posterior on $\theta$ rather than shifting it.
             </figcaption>
@@ -427,9 +427,11 @@
             $a_i \mid \theta \sim \mathrm{Beta}\bigl(\mu_i\phi_i,\,(1-\mu_i)\phi_i\bigr)$
             with $\mu_i = \sigma(\alpha_i + \beta_i\theta)$. For the per-person gap,
             $\log a_2 \sim \mathcal{N}(\alpha_2 + \beta_2\theta,\,\sigma_2^2)$. For
-            severity, ordered probit with four cut-points
+            severity, ordered logistic with four cut-points
             $\kappa_1 < \kappa_2 < \kappa_3 < \kappa_4$ we infer alongside everything
-            else — we let the data say how INFORM actually spaces its labels.
+            else — we let the data say how INFORM actually spaces its labels. The
+            slopes $\beta_i$ are sign-constrained positive throughout: every attribute
+            is defined so that larger values mean more overlooked.
         </p>
 
         <p>
@@ -447,12 +449,12 @@
 
         <p class="lede">
             Sudan in April 2025 is not independent of Sudan in March 2025. The model
-            needs to know this.
+            should know this. The shape of that knowledge is an AR(1) per country.
         </p>
 
         <p>
-            A country's overlookedness has a baseline and has episodes. The simplest
-            honest way to say so is an AR(1) with country-specific parameters:
+            A country's overlookedness has a baseline and has episodes. The honest
+            way to say so is:
         </p>
 
         <p>
@@ -465,20 +467,32 @@
         </p>
 
         <p>
-            Three quantities fall out. $\mu_u$ is the country's long-run baseline — the
-            <em>chronic</em> component. The deviation $\theta(u, t) - \mu_u$ is the
-            <em>acute</em> component — how this month compares to the country's usual
-            level. $\rho_u$ says how long shocks persist. None is computed separately;
-            all three come from the same posterior.
+            Three quantities fall out of the same posterior. $\mu_u$ is the country's
+            long-run baseline — the <em>chronic</em> component. The deviation
+            $\theta(u, t) - \mu_u$ is the <em>acute</em> component — how this month
+            compares to the country's usual level. $\rho_u$ says how long shocks
+            persist.
         </p>
+
+        <div class="callout-note">
+            <div class="callout-label">What is and isn't shipped</div>
+            The cross-sectional fit (§3) is shipped and externally validated.
+            The AR(1) extension above is the next layer: it requires more time
+            points than the annual HRP/FTS attributes give us. INFORM severity
+            is monthly and would anchor a partial-temporal model. In the
+            meantime, fitting the cross-sectional model on consecutive
+            cycles already gives a 7/10 year-over-year top-10 overlap and a
+            held-out 4/10 against CERF UFE March-2025 from a 2024-only fit.
+        </div>
 
         <figure>
             <img src="figures/fig3_temporal_dynamics.png"
                  alt="Smoothed AR(1) trajectory over five years with chronic baseline dashed and a 90 percent credible interval band">
             <figcaption>
                 <span class="fig-tag">Fig 3.</span>
-                One country's trajectory over five years. Dashed line: chronic baseline
-                $\mu_u$. Shaded band: 90 % credible interval on $\theta$.
+                What an AR(1) trajectory will look like once monthly attributes
+                support it: chronic baseline $\mu_u$ (dashed), acute deviations
+                bunching around it, 90 % credible interval as the shaded band.
             </figcaption>
         </figure>
     </section>
@@ -543,15 +557,21 @@
         <h2><span class="section-number">§ 6</span>What comes out</h2>
 
         <p class="lede">
-            Every rank comes with its uncertainty, and every rank can be decomposed
-            into the signals that produced it.
+            Every rank comes with its uncertainty. The posterior median is the
+            point estimate; the 90 % credible interval is the honest statement of
+            what the evidence can support.
         </p>
 
         <p>
-            For each country, month, and stakeholder, we take posterior samples and read
-            off: a posterior median rank, a 90 % credible interval on that rank, an
-            attribute-level contribution decomposition showing which signals drove it, and
-            a stakeholder-aggregated consensus/contested score.
+            For each HRP-eligible country, we read posterior samples to extract:
+            a posterior median $\widehat\theta$, a 90 % credible interval on $\theta$,
+            and (with stakeholder priors plugged in) a per-stakeholder posterior whose
+            overlap defines consensus and contested. The latent is best read as a
+            <em>funding-overlookedness</em> axis: posterior predictive checks (next
+            section) show coverage shortfall and donor concentration drive the latent
+            most strongly, while need intensity and severity sit near attribute
+            ceilings and constrain the posterior without differentiating between
+            countries.
         </p>
 
         <figure>
@@ -559,10 +579,10 @@
                  alt="Forest plot of ten countries with their median ranks and 90 percent credible intervals">
             <figcaption>
                 <span class="fig-tag">Fig 6.</span>
-                Ten most-overlooked countries in 2025. Dot: posterior median rank.
-                Bar: 90 % credible interval. Zimbabwe and Malawi (marked *) have partial
-                completeness — the widened bars are the model being honest about what
-                the evidence can support.
+                Top-10 most-overlooked countries (HRP-eligible pool, 2025). Dot:
+                posterior median rank. Bar: 90 % credible interval. The bars
+                substantially overlap — the model is honest that within-top-10
+                ordering is less defensible than membership of it.
             </figcaption>
         </figure>
 
@@ -594,35 +614,120 @@
         <h2><span class="section-number">§ 7</span>Validation, and what we are not claiming</h2>
 
         <p class="lede">
-            A model's job is not to feel right. It is to agree with reality, or fail
-            noisily.
+            Three validations. External benchmarks, posterior predictive checks,
+            temporal held-out. Each falsifies a different claim; each must pass on
+            its own terms.
         </p>
 
         <p>
-            We validate in three pre-registered ways. <strong>Temporal held-out</strong>:
-            fit on data through December 2024, predict 2025 posterior ranks, compare against
-            OCHA's CERF Underfunded Emergencies selections for 2025; report top-$K$ overlap
-            and rank correlation with credible intervals. <strong>Attribute masking</strong>:
-            take a fully-observed country, mask each attribute in turn, confirm that the
-            credible interval on the rank widens predictably. <strong>Consistency</strong>:
-            under a diffuse stakeholder prior the posterior median ranking should reproduce
-            the weighted-sum ranking we shipped in the first version of the system.
+            <strong>External benchmarks.</strong> The model's posterior median ranking
+            is scored against two human-curated lists, both produced by methodology
+            entirely independent of anything in this paper: CERF Underfunded
+            Emergencies (the UN Emergency Relief Coordinator's twice-yearly
+            allocations) and CARE <em>Breaking the Silence</em> (annual top-ten
+            most under-reported crises). The Bayesian model ties an additive
+            baseline on the larger CERF windows and beats it on the smaller windows
+            and on CARE BTS, where the baseline collapses.
+        </p>
+
+        <table class="validation-table" style="width: 100%; border-collapse: collapse; margin: 1.5em 0; font-size: 0.92em;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--ink); text-align: left;">
+                    <th style="padding: 8px 0;">Benchmark</th>
+                    <th style="padding: 8px; text-align: right;">$k$</th>
+                    <th style="padding: 8px; text-align: right;">Bayesian</th>
+                    <th style="padding: 8px; text-align: right;">Additive baseline</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="border-bottom: 1px solid var(--rule);">
+                    <td style="padding: 6px 0;">CERF UFE 2024 w2 (Dec 2024)</td>
+                    <td style="padding: 6px; text-align: right;">10</td>
+                    <td style="padding: 6px; text-align: right;">3/10</td>
+                    <td style="padding: 6px; text-align: right;">3/10</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--rule);">
+                    <td style="padding: 6px 0;">CERF UFE 2025 w1 (Mar 2025)</td>
+                    <td style="padding: 6px; text-align: right;">10</td>
+                    <td style="padding: 6px; text-align: right;"><strong>5/10</strong></td>
+                    <td style="padding: 6px; text-align: right;"><strong>5/10</strong></td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--rule);">
+                    <td style="padding: 6px 0;">CERF UFE 2025 w2 (Dec 2025)</td>
+                    <td style="padding: 6px; text-align: right;">7</td>
+                    <td style="padding: 6px; text-align: right;"><strong>2/7</strong></td>
+                    <td style="padding: 6px; text-align: right;">1/7</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px 0;">CARE BTS 2024</td>
+                    <td style="padding: 6px; text-align: right;">10</td>
+                    <td style="padding: 6px; text-align: right;"><strong>3/10</strong></td>
+                    <td style="padding: 6px; text-align: right;">1/10</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>
+            <strong>Posterior predictive checks.</strong> For each of the six attributes,
+            we draw 1{,}000 replicates from the fitted posterior and overlay them on the
+            observed marginal. Coverage of the 90 % predictive interval is at or above
+            0.91 for every attribute (target 0.90) — the model's marginals are
+            calibrated. The per-country Pearson correlation between predicted mean and
+            observed value is high for coverage shortfall (0.76) and donor concentration
+            (0.82), and weaker for need intensity, intra-crisis equity, and severity —
+            attributes that sit near their ceilings (most HRP countries have PIN $\approx$
+            population and severity $\in \{4, 5\}$) and so carry little cross-country
+            variation for the latent to recover.
+        </p>
+
+        <figure>
+            <img src="figures/fig_ppc.png"
+                 alt="Six-panel posterior predictive check overlaying observed and simulated marginals for each attribute">
+            <figcaption>
+                <span class="fig-tag">Fig 7.</span>
+                Posterior predictive check on the six attributes. Filled: 1{,}000
+                posterior predictive replicates. Outline: observed marginals. The
+                90 % predictive intervals cover ${\geq}\,0.91$ of observations across
+                all six attributes; the latent is best read as a funding-overlookedness
+                axis (see body text).
+            </figcaption>
+        </figure>
+
+        <p>
+            <strong>Temporal held-out.</strong> Fit the model on the 2024 cycle alone
+            (HRP 2024, FTS through end-2024, INFORM through end-2024); score the
+            2024-fit ranking against CERF UFE selections made in 2025. The 2024 fit
+            predicts CERF's March-2025 selection at 4/10 precision @ 10 — without
+            seeing any 2025 data. Year-over-year top-10 overlap is 7/10. The model
+            identifies the same crisis cluster across cycles; turnover at the boundary
+            reflects real cycle-to-cycle shifts.
         </p>
 
         <p>
-            What the system <em>does</em> is produce ranked posteriors, traceable to source
-            data, with declared uncertainty. What it does <em>not</em> do is equally
-            important. It does not forecast — the next layer handles that. It does not make
-            causal claims; the observation model is association, not intervention. It does
-            not replace judgement; it produces a ranked list, a coordinator decides. The
-            benchmarks we validate against — CERF UFE, CARE's <em>Breaking the Silence</em> —
-            are themselves imperfect proxies, reflecting political process and media
-            attention respectively. The stakeholder priors are judgement, not calibration;
-            regressing actual selections on the attributes to recover a stakeholder's
-            <em>effective</em> prior is a natural extension we have not done yet. And
-            fundamentally, $\theta$ is never directly observed — every posterior statement
-            is contingent on the observation model being approximately correct. Validation
-            gives us evidence. It does not give us proof.
+            <strong>Calibration.</strong> The variational posterior is checked against
+            NUTS, the gold-standard MCMC reference, on every fit. The production
+            <code>AutoMultivariateNormal</code> guide runs in three seconds and
+            recovers NUTS posterior medians at Spearman $\rho = 0.89$, with credible
+            intervals within $2\times$ of NUTS. The simpler mean-field
+            <code>AutoNormal</code> guide gives $\rho = 0.68$ and underestimates
+            posterior variance by ${\sim}3\times$ — a finding that surfaced only
+            because we ran NUTS, and the reason we ship the multivariate guide.
+        </p>
+
+        <p>
+            What the system <em>does</em> is produce ranked posteriors, traceable to
+            source data, with declared uncertainty. What it does <em>not</em> do is
+            equally important. It does not forecast — the temporal layer above is the
+            handle for that. It does not make causal claims; the observation model is
+            association, not intervention. It does not replace judgement; it produces
+            a ranked list, a coordinator decides. The benchmarks themselves are
+            imperfect proxies, reflecting political process and media attention. The
+            stakeholder priors are judgement, not calibration; regressing actual
+            selections on the attributes to recover a stakeholder's <em>effective</em>
+            prior is a natural extension we have not done yet. And fundamentally,
+            $\theta$ is never directly observed — every posterior statement is
+            contingent on the observation model being approximately correct.
+            Validation gives us evidence. It does not give us proof.
         </p>
     </section>
 
