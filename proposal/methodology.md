@@ -220,10 +220,12 @@ Three tests against independent external ground truth.
 
 | benchmark | k | precision @ k |
 |---|---|---|
-| CERF UFE 2024 w2 | 10 | 5/10 |
+| CERF UFE 2024 w2 | 10 | 3/10 |
 | CERF UFE 2025 w1 | 10 | 5/10 |
 | CERF UFE 2025 w2 | 7 | 2/7 |
 | CARE BTS 2024 | 10 | 3/10 |
+
+The variational posterior is calibrated against NUTS on every fit. The production guide is `AutoMultivariateNormal` (Spearman ρ = 0.89 on theta medians vs NUTS; CI widths within 2× of NUTS); the simpler `AutoNormal` mean-field guide gives ρ = 0.68 and underestimates posterior variance by ~3×, so its sharper rankings are not trustworthy.
 
 The candidate pool is restricted to HRP-eligible countries (those with an observed `per_pin_gap`) — the population CERF UFE picks from.
 

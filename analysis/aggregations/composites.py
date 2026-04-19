@@ -77,7 +77,12 @@ def compute_overlookedness_posterior(enriched: pd.DataFrame) -> pd.DataFrame:
         return out
 
     inputs = prepare_inputs(hrp)
-    res = fit(inputs, model_fn=hierarchical.model, num_steps=6000, learning_rate=3e-3)
+    # 8000 steps gets the AutoMultivariateNormal guide to ~0.9 Spearman
+    # against NUTS on theta medians, with CI widths within ~2x of NUTS.
+    # Cheaper configurations under-converge the MVN covariance and degrade
+    # the calibration meaningfully. See analysis/bayesian/hierarchical.py
+    # main() for the SVI-vs-NUTS calibration check that justifies this.
+    res = fit(inputs, model_fn=hierarchical.model, num_steps=8000, learning_rate=3e-3)
 
     iso = inputs["iso3"]
     theta_med = res["theta_median"]

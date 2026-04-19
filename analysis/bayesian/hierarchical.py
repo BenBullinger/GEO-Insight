@@ -50,6 +50,9 @@ import numpyro
 import numpyro.distributions as dist
 import pandas as pd
 from numpyro import handlers
+from numpyro.infer import MCMC, NUTS
+from numpyro.infer.initialization import init_to_median
+from scipy.stats import spearmanr
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -134,6 +137,84 @@ def model(observed: dict, mask: dict, n: int):
         )
 
 
+# ─── NUTS reference fit ────────────────────────────────────────────────────
+def fit_nuts(
+    inputs: dict,
+    model_fn=model,
+    num_warmup: int = 1000,
+    num_samples: int = 2000,
+    num_chains: int = 4,
+    seed: int = 0,
+) -> dict:
+    """Run NUTS on the same model and inputs as ``fit`` for SVI calibration.
+
+    Returns a dict with ``samples`` (posterior samples by site name),
+    ``theta_median``, ``theta_ci90`` (5th / 95th percentiles), and
+    ``elapsed_sec``. The schema matches ``fit`` so downstream comparison
+    code can consume either one interchangeably.
+    """
+    numpyro.set_platform("cpu")
+    kernel = NUTS(model_fn, init_strategy=init_to_median)
+    mcmc = MCMC(
+        kernel,
+        num_warmup=num_warmup,
+        num_samples=num_samples,
+        num_chains=num_chains,
+        chain_method="vectorized",
+        progress_bar=False,
+    )
+    t0 = time.time()
+    mcmc.run(
+        jax.random.PRNGKey(seed),
+        observed=inputs["observed"],
+        mask=inputs["mask"],
+        n=inputs["n"],
+    )
+    elapsed = time.time() - t0
+
+    samples = mcmc.get_samples()
+    theta_samples = np.asarray(samples["theta"])
+    theta_median = np.median(theta_samples, axis=0)
+    theta_ci90 = np.percentile(theta_samples, [5, 95], axis=0)
+
+    return {
+        "samples": samples,
+        "theta_median": theta_median,
+        "theta_ci90": theta_ci90,
+        "elapsed_sec": elapsed,
+    }
+
+
+def compare_svi_nuts(svi_res: dict, nuts_res: dict) -> dict:
+    """SVI-vs-NUTS calibration metrics on the same posterior.
+
+    Returns a dict of summary stats. The interpretation:
+      * Spearman ρ on theta medians: should be > 0.95. Lower means SVI
+        is recovering a different point estimate, not just a noisier one.
+      * mean ratio of CI widths (NUTS / SVI): 1.0 = SVI is calibrated;
+        > 1 = SVI underestimates posterior variance (the canonical
+        mean-field-Gaussian failure mode); < 1 = SVI is overconfident
+        in the wrong direction.
+      * max absolute median deviation: a single-country worst case.
+    """
+    svi_med = np.asarray(svi_res["theta_median"])
+    nut_med = np.asarray(nuts_res["theta_median"])
+    rho, _ = spearmanr(svi_med, nut_med)
+
+    svi_lo, svi_hi = svi_res["theta_ci90"]
+    nut_lo, nut_hi = nuts_res["theta_ci90"]
+    svi_w = svi_hi - svi_lo
+    nut_w = nut_hi - nut_lo
+    width_ratio = nut_w / np.where(svi_w > 0, svi_w, np.nan)
+
+    return {
+        "spearman_medians":     float(rho),
+        "max_median_dev":       float(np.max(np.abs(svi_med - nut_med))),
+        "mean_width_ratio":     float(np.nanmean(width_ratio)),
+        "median_width_ratio":   float(np.nanmedian(width_ratio)),
+    }
+
+
 # ─── Entry point ───────────────────────────────────────────────────────────
 def main() -> int:
     import features  # local import: see module docstring
@@ -167,14 +248,26 @@ def main() -> int:
         n_obs = int(np.asarray(inputs["mask"][attr]).sum())
         print(f"        {attr:<24s}  observed in {n_obs}/{inputs['n']}")
 
-    print("[hier] fitting SVI (6000 steps, hierarchical prior)…")
+    print("[hier] fitting SVI (8000 steps, AutoMultivariateNormal guide)…")
     t0 = time.time()
-    res = fit(inputs, model_fn=model, num_steps=6000, learning_rate=3e-3)
+    res = fit(inputs, model_fn=model, num_steps=8000, learning_rate=3e-3)
     print(
         f"[hier] SVI took {res['elapsed_sec']:.1f}s · "
         f"final ELBO loss = {res['losses'][-1]:.2f} "
         f"(wall total {time.time() - t0:.1f}s)"
     )
+
+    print("[hier] fitting NUTS (1000 warmup + 2000 samples × 4 chains)…")
+    nuts_res = fit_nuts(inputs, model_fn=model)
+    cal = compare_svi_nuts(res, nuts_res)
+    print(f"[hier] NUTS took {nuts_res['elapsed_sec']:.1f}s")
+    print(f"[hier] SVI ↔ NUTS calibration:")
+    print(f"        Spearman ρ on theta medians  : {cal['spearman_medians']:+.3f}  "
+          f"(target > 0.95)")
+    print(f"        max |SVI median − NUTS median|: {cal['max_median_dev']:.3f}")
+    print(f"        mean CI-width ratio NUTS/SVI : {cal['mean_width_ratio']:.2f}  "
+          f"(1.0 = SVI calibrated; > 1 = SVI underestimates variance)")
+    print(f"        median CI-width ratio        : {cal['median_width_ratio']:.2f}")
 
     # ── Population-level hyperparameters ──
     mu_samples = np.asarray(res["samples"]["mu_theta"])

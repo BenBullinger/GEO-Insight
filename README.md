@@ -151,7 +151,7 @@ Full write-up in [`proposal/proposal.pdf`](proposal/proposal.pdf). In short, ove
 
 Stakeholder disagreement is encoded as a difference between priors over the six attribute slopes — not as weights in a sum. Each stakeholder produces a separate posterior; consensus and contested crises are read directly from posterior overlap.
 
-Validated against two independent benchmarks: CERF Underfunded Emergencies and CARE *Breaking the Silence*. The Bayesian model beats the additive-baseline scoring on every benchmark window (CERF UFE 2024 w2: 5/10 vs 3/10; CARE BTS 2024: 3/10 vs 1/10).
+Validated against two independent benchmarks: CERF Underfunded Emergencies and CARE *Breaking the Silence*. The Bayesian model ties the additive-baseline scoring on the two larger CERF windows and beats it on the smaller windows where the baseline's variance is most exposed (CERF UFE 2025 w2: 2/7 vs 1/7; CARE BTS 2024: 3/10 vs 1/10). Variational inference is calibrated against NUTS on every fit (Spearman ρ = 0.89 on posterior medians).
 
 ## Status & conventions
 

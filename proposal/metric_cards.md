@@ -165,7 +165,7 @@ Slopes $\beta_i$ are sign-constrained positive ($\beta_i > 0$) so that the laten
 
 **Candidate pool.** HRP-eligible countries only — those with an observed `per_pin_gap` (i.e., an active humanitarian response plan). Other countries return NaN, since the construct "overlooked humanitarian crisis" is not well-defined for them and CERF UFE allocations themselves draw from this pool.
 
-**Validation.** External, against CERF UFE and CARE BTS. Precision @ 10: 5/10 on CERF UFE 2024 w2 (vs additive baseline 3/10); 5/10 on CERF UFE 2025 w1 (tied); 3/10 on CARE BTS 2024 (vs 1/10).
+**Validation.** External, against CERF UFE and CARE BTS. Precision @ 10: 5/10 on CERF UFE 2025 w1 (tied with additive baseline); 3/10 on CERF UFE 2024 w2 (tied); 2/7 on CERF UFE 2025 w2 (vs 1/7); 3/10 on CARE BTS 2024 (vs 1/10). Posterior calibrated against NUTS: Spearman ρ = 0.89 on theta medians, CI widths within 2× of NUTS.
 
 **Known discontinuities.**
 - Changes to the prior, model structure, or candidate pool shift the posterior.

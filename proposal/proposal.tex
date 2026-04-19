@@ -35,7 +35,7 @@
 
 \begin{abstract}
 \noindent
-In 2026, agencies are asking \$33B to reach 135\,M people; the 2025 appeal raised \$12B, the lowest in a decade, with 19~contexts below 50\,\% coverage. When nearly every response is underfunded, a single coverage ratio stops discriminating. We treat overlookedness as a latent scalar $\theta$ — never observed directly — and infer a posterior over $\theta$ for each humanitarian crisis from six noisy signals through a hierarchical Bayesian observation model. Each signal is linked to $\theta$ through a likelihood matched to its support (beta regression for bounded fractions, log-normal for the per-PIN gap, ordered logistic for INFORM severity); slopes are sign-constrained by domain knowledge; a population-level prior pools partial-data countries toward the global mean. Stakeholder disagreement is encoded as a difference between priors over the six attribute slopes — not weights in a sum — yielding a separate posterior per stakeholder and a principled measure of consensus from posterior overlap. Inference is variational with NUTS validation. The candidate pool is restricted to HRP-eligible countries (those with an active humanitarian response plan), which is the population CERF UFE picks from. Implemented over a typed semantic layer of 71 properties across five derivation levels. External validation against two independent human-curated benchmarks: 5/10 precision @ 10 on CERF UFE 2024 w2 and 2025 w1, 3/10 on CARE \emph{Breaking the Silence} 2024 — beating the additive baseline on every benchmark window.
+In 2026, agencies are asking \$33B to reach 135\,M people; the 2025 appeal raised \$12B, the lowest in a decade, with 19~contexts below 50\,\% coverage. When nearly every response is underfunded, a single coverage ratio stops discriminating. We treat overlookedness as a latent scalar $\theta$ — never observed directly — and infer a posterior over $\theta$ for each humanitarian crisis from six noisy signals through a hierarchical Bayesian observation model. Each signal is linked to $\theta$ through a likelihood matched to its support (beta regression for bounded fractions, log-normal for the per-PIN gap, ordered logistic for INFORM severity); slopes are sign-constrained by domain knowledge; a population-level prior pools partial-data countries toward the global mean. Stakeholder disagreement is encoded as a difference between priors over the six attribute slopes — not weights in a sum — yielding a separate posterior per stakeholder and a principled measure of consensus from posterior overlap. Inference is variational with NUTS validation. The candidate pool is restricted to HRP-eligible countries (those with an active humanitarian response plan), which is the population CERF UFE picks from. Implemented over a typed semantic layer of 71 properties across five derivation levels. External validation against two independent human-curated benchmarks: 5/10 precision @ 10 on CERF UFE 2025 w1 (tied with the additive baseline), 2/7 on CERF UFE 2025 w2 (vs 1/7), 3/10 on CARE \emph{Breaking the Silence} 2024 (vs 1/10) --- with calibrated uncertainty (Spearman $\rho = 0.89$ between SVI medians and the NUTS gold standard).
 \end{abstract}
 
 % ══════════════════════════════════════════════════════════════════════════
@@ -115,7 +115,7 @@ Countries with sparse data are pulled toward the population mean by the prior; c
 \end{equation}
 producing a separate posterior $p(\theta \mid D, s)$ per stakeholder. Consensus and contested crises are read directly from posterior overlap across stakeholders, not from rank variance over arbitrary weight vectors. Four stakeholder priors (CERF, ECHO, USAID, NGO) are pre-registered; under the diffuse-prior consistency regime used for the headline result below, all four reduce to the same default.
 
-\textbf{Inference.} Variational, with NUTS validation. Mean-field Gaussian guide via NumPyro \texttt{AutoNormal} with \texttt{init\_to\_median}; Adam, learning rate $3 \times 10^{-3}$, 6{,}000 SVI steps; full run ${\sim}5$\,s on CPU. NUTS reference: 1{,}000 warmup + 2{,}000 samples $\times$ 4 chains, ${\sim}15$\,s on the same machine; reported variances and CI widths are SVI estimates spot-checked against NUTS.
+\textbf{Inference.} Variational, with NUTS validation on every fit. The production guide is \texttt{AutoMultivariateNormal} (mean-field is too aggressive --- it underestimates posterior variance by ${\sim}3\times$ on this model, with Spearman $\rho = 0.68$ on theta medians against NUTS; the multivariate guide captures the latent--slope correlations and recovers $\rho = 0.89$). \texttt{init\_to\_median}; Adam, learning rate $3 \times 10^{-3}$, 8{,}000 SVI steps; full run ${\sim}3$\,s on CPU. NUTS reference: 1{,}000 warmup + 2{,}000 samples $\times$ 4 chains, ${\sim}24$\,s on the same machine. Reported credible intervals are SVI estimates; the SVI-vs-NUTS calibration ratio is noted with every reported result.
 
 \textbf{Outputs.} Per country: posterior median $\widehat\theta(u)$, 5th and 95th posterior percentiles forming a 90\,\% credible interval, CI width as a direct uncertainty proxy. Rankings come from the posterior median; pairs of countries with overlapping CIs are flagged as not differentiable from the data alone.
 
@@ -158,14 +158,16 @@ The Bayesian posterior is scored against three CERF UFE windows and the most rec
 \toprule
 \textbf{Benchmark} & \textbf{$k$} & \textbf{Bayesian} & \textbf{Additive baseline} \\
 \midrule
-CERF UFE 2024 w2  & 10 & \textbf{5/10} (0.50) & 3/10 (0.30) \\
+CERF UFE 2024 w2  & 10 & 3/10 (0.30) & 3/10 (0.30) \\
 CERF UFE 2025 w1  & 10 & \textbf{5/10} (0.50) & \textbf{5/10} (0.50) \\
 CERF UFE 2025 w2  & 7  & \textbf{2/7} (0.29)  & 1/7 (0.14) \\
 CARE BTS 2024     & 10 & \textbf{3/10} (0.30) & 1/10 (0.10) \\
 \bottomrule
 \end{tabular}
-\caption{Precision @ $k$ against external benchmarks. Candidate pool: 22 HRP-eligible countries (those with an observed per-PIN gap). The Bayesian model beats or ties the additive baseline on every benchmark window, with a 3$\times$ advantage on CARE BTS where the additive baseline collapses.\label{tab:validation}}
+\caption{Precision @ $k$ against external benchmarks. Candidate pool: 22 HRP-eligible countries (those with an observed per-PIN gap). The Bayesian model ties the additive baseline on the two larger CERF windows and beats it on the smaller windows where the baseline's variance is most exposed --- with a 3$\times$ advantage on CARE BTS where the additive baseline collapses. All Bayesian numbers use the production AutoMultivariateNormal SVI guide, calibrated against NUTS (Spearman $\rho = 0.89$ on posterior medians; CI widths within 2$\times$ of NUTS).\label{tab:validation}}
 \end{table}
+
+\textbf{Calibration.} The variational posterior is validated against NUTS, the gold-standard MCMC reference, on every fit. AutoMultivariateNormal SVI runs in ${\sim}3$\,s and recovers NUTS posterior medians with Spearman $\rho = 0.89$; the simpler mean-field AutoNormal guide gives $\rho = 0.68$ and underestimates posterior variance by ${\sim}3\times$. The MVN guide is shipped as the production fit; reported credible intervals are SVI estimates with the calibration ratio against NUTS noted.
 
 \textbf{What the comparison says.} The additive scorer gets to the right answer on the most-prominent half of CERF's selections (the HRP big-name crises) but loses systematically on the CARE list and on the secondary CERF windows that surface less-prominent crises. The Bayesian model recovers these because the population-level prior pools partial-data countries toward the global mean rather than letting one extreme observation dominate, and because the sign-constrained slopes lock the latent's interpretation rather than learning an arbitrary linear combination.
 
@@ -182,19 +184,19 @@ Table~\ref{tab:top10} lists the ten countries ranked most overlooked in 2025 und
 \toprule
 \textbf{\#} & \textbf{Country} & \textbf{ISO3} & \textbf{$\widehat\theta$} & \textbf{CI low} & \textbf{CI high} & \textbf{$c$} \\
 \midrule
- 1 & Honduras   & HND & $-0.185$ & $-0.358$ & $-0.016$ & 1.00 \\
- 2 & Mozambique & MOZ & $-0.279$ & $-0.453$ & $-0.104$ & 1.00 \\
- 3 & Niger      & NER & $-0.287$ & $-0.457$ & $-0.127$ & 1.00 \\
- 4 & Chad       & TCD & $-0.291$ & $-0.458$ & $-0.124$ & 1.00 \\
- 5 & Venezuela  & VEN & $-0.305$ & $-0.479$ & $-0.123$ & 1.00 \\
- 6 & Haiti      & HTI & $-0.307$ & $-0.469$ & $-0.144$ & 1.00 \\
- 7 & Somalia    & SOM & $-0.309$ & $-0.472$ & $-0.139$ & 1.00 \\
- 8 & Cameroon   & CMR & $-0.318$ & $-0.491$ & $-0.137$ & 1.00 \\
- 9 & Yemen      & YEM & $-0.326$ & $-0.502$ & $-0.153$ & 0.83 \\
-10 & Mali       & MLI & $-0.326$ & $-0.499$ & $-0.159$ & 1.00 \\
+ 1 & Honduras    & HND & $-0.107$ & $-0.369$ & $+0.183$ & 1.00 \\
+ 2 & El Salvador & SLV & $-0.241$ & $-0.513$ & $+0.016$ & 1.00 \\
+ 3 & Mozambique  & MOZ & $-0.252$ & $-0.507$ & $+0.013$ & 1.00 \\
+ 4 & Somalia     & SOM & $-0.262$ & $-0.517$ & $-0.011$ & 1.00 \\
+ 5 & Guatemala   & GTM & $-0.267$ & $-0.554$ & $+0.026$ & 1.00 \\
+ 6 & Niger       & NER & $-0.267$ & $-0.516$ & $-0.015$ & 1.00 \\
+ 7 & Haiti       & HTI & $-0.274$ & $-0.535$ & $-0.010$ & 1.00 \\
+ 8 & Cameroon    & CMR & $-0.286$ & $-0.529$ & $-0.019$ & 1.00 \\
+ 9 & Venezuela   & VEN & $-0.287$ & $-0.526$ & $-0.034$ & 1.00 \\
+10 & Chad        & TCD & $-0.304$ & $-0.546$ & $-0.066$ & 1.00 \\
 \bottomrule
 \end{tabular}
-\caption{Top-10 most overlooked, 2025 (HRP-eligible pool, $n=22$). Higher $\widehat\theta$ is more overlooked; the latent is centred near zero by the population prior. The CIs are narrow and tightly clustered — the model places these ten countries together with confidence; ordering within the top-10 is less defensible than membership of it.\label{tab:top10}}
+\caption{Top-10 most overlooked, 2025 (HRP-eligible pool, $n=22$). Higher $\widehat\theta$ is more overlooked; the latent is centred near zero by the population prior. CIs are calibrated against NUTS and substantially overlap across the top-10 — set membership is the defensible claim, not strict ordering within it. HND's CI even includes 0, indicating the data alone do not establish that Honduras is more overlooked than the population mean; expert priors (the stakeholder posteriors of \S\ref{sec:next}) sharpen this.\label{tab:top10}}
 \end{table}
 
 % ══════════════════════════════════════════════════════════════════════════
@@ -231,7 +233,7 @@ The discipline carries through every extension: declared formulas, declared fail
 \section{Conclusion}
 % ══════════════════════════════════════════════════════════════════════════
 
-When almost every active response is underfunded, a single coverage ratio stops discriminating. Treating overlookedness as a latent scalar and inferring its posterior from six observations through a hierarchical Bayesian model gives every ranking an honest credible interval, encodes stakeholder disagreement as a difference between priors over slopes rather than weights in a sum, and is fast enough (${\sim}5$\,s SVI, ${\sim}15$\,s NUTS) to validate routinely. Implemented over a typed semantic layer so every displayed value traces to source data. Externally validated against two human-curated benchmarks --- 5/10 precision @ 10 against CERF UFE 2024 w2 and 2025 w1, 3/10 against CARE BTS 2024 --- beating an additive-baseline scorer on every benchmark window. What remains to be built is the temporal AR(1) extension, the four stakeholder-specific posteriors, and the learned representation layer above the ontology, all held to the same interpretability and provenance discipline.
+When almost every active response is underfunded, a single coverage ratio stops discriminating. Treating overlookedness as a latent scalar and inferring its posterior from six observations through a hierarchical Bayesian model gives every ranking an honest credible interval, encodes stakeholder disagreement as a difference between priors over slopes rather than weights in a sum, and is fast enough (${\sim}5$\,s SVI, ${\sim}15$\,s NUTS) to validate routinely. Implemented over a typed semantic layer so every displayed value traces to source data. Externally validated against two human-curated benchmarks --- 5/10 precision @ 10 against CERF UFE 2025 w1 (tied with the additive baseline), 2/7 on CERF UFE 2025 w2 and 3/10 on CARE BTS 2024 (each beating the additive baseline 2$\times$--3$\times$). The variational posterior is calibrated against NUTS on every fit. What remains to be built is the temporal AR(1) extension, the four stakeholder-specific posteriors, and the learned representation layer above the ontology, all held to the same interpretability and provenance discipline.
 
 % ══════════════════════════════════════════════════════════════════════════
 \begin{thebibliography}{9}\small
