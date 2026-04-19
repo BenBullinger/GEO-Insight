@@ -569,6 +569,78 @@
         }
 
         /* ══════════════════════════════════════════════════════════════
+           §3.7 — WHAT THE POSTERIOR SAYS (rank forest)
+           ══════════════════════════════════════════════════════════════ */
+        .ranking {
+            background: var(--surface);
+            padding: var(--s-8) 0;
+            margin: 0 calc(50% - 50vw);
+            padding-left: calc(50vw - 50%);
+            padding-right: calc(50vw - 50%);
+        }
+        .ranking-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--s-5);
+        }
+        .ranking .section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: var(--s-3);
+        }
+        .ranking h2 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+            color: var(--ink);
+            margin: 0 0 var(--s-6) 0;
+            line-height: 1.1;
+        }
+        .ranking-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+            gap: var(--s-7);
+            align-items: start;
+        }
+        .ranking-prose p {
+            font-size: 0.92rem;
+            color: var(--text);
+            line-height: 1.7;
+            margin: 0 0 var(--s-4) 0;
+        }
+        .ranking-prose p strong { color: var(--ink); font-weight: 600; }
+        .ranking-prose p em { color: var(--accent); font-style: normal; font-weight: 500; }
+        .ranking-callout {
+            margin-top: var(--s-5);
+            padding: var(--s-4) var(--s-5);
+            background: var(--background);
+            border-left: 3px solid var(--accent);
+            border-radius: 0 4px 4px 0;
+            font-size: 0.86rem;
+            color: var(--text);
+            line-height: 1.65;
+        }
+        .ranking-callout strong { color: var(--ink); font-weight: 600; }
+        .ranking-figure { margin: 0; }
+        .ranking-figure img {
+            width: 100%;
+            height: auto;
+            display: block;
+            background: white;
+            border: 1px solid var(--rule);
+            border-radius: 3px;
+        }
+        .ranking-figure figcaption {
+            margin-top: var(--s-3);
+            font-size: 0.78rem;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
            §4 — THE EVIDENCE
            ══════════════════════════════════════════════════════════════ */
         .evidence {
@@ -740,6 +812,7 @@
             .globe-row,
             .method-grid,
             .model-grid,
+            .ranking-grid,
             .evidence-grid { grid-template-columns: 1fr; gap: var(--s-5); }
             .hero-title-block h1 { font-size: 3.2rem; }
             .problem-quote { font-size: 2rem; padding-left: var(--s-4); }
@@ -947,11 +1020,76 @@
     </section>
 
     <!-- ════════════════════════════════════════════════════════════
+         §3.7 — WHAT THE POSTERIOR SAYS (rank forest)
+         ════════════════════════════════════════════════════════════ -->
+    <section id="ranking" class="ranking" data-index data-index-label="The ranking" data-fade>
+        <div class="ranking-inner">
+            <div class="section-label">§ 4 · What the posterior says</div>
+            <h2>Twenty-two crises on a single funding-overlookedness axis.</h2>
+            <div class="ranking-grid">
+                <div class="ranking-prose">
+                    <p>
+                        The model places every HRP-eligible country on a single latent axis,
+                        with a credible interval that says how confident it is. The
+                        <em>top ten</em> in oxblood are the countries the model most
+                        confidently identifies as overlooked relative to the rest of the
+                        active-response pool.
+                    </p>
+                    <p>
+                        <strong>What the axis means.</strong> The horizontal scale is the
+                        posterior median of $\theta$, recentered on the median country.
+                        Positive (right) is more overlooked; the absolute number has no
+                        operational meaning — only ordering and CI overlap matter. The
+                        latent has no global anchor, so it tells us where each crisis sits
+                        within the HRP-eligible pool, not against an external "underfunded"
+                        threshold.
+                    </p>
+                    <p>
+                        <strong>Why intervals overlap.</strong> The 90 % credible intervals
+                        overlap substantially across the top ten — the model is honest that
+                        within-top-10 ordering is not strongly supported by the data. The
+                        defensible claim is <em>set membership</em>: these ten crises are
+                        the ones the data-plus-model places at the overlooked end, with
+                        comparable evidence behind each.
+                    </p>
+                    <p>
+                        <strong>The story.</strong> The latent reads as a
+                        <em>funding-overlookedness axis</em>: high coverage shortfall and
+                        concentrated donors drive it most strongly (per-country Pearson
+                        $r = 0.76$ and $0.82$). Need intensity, sectoral equity, and
+                        severity sit near attribute ceilings — most HRP countries have PIN
+                        $\approx$ population and severity $\in \{4, 5\}$ — so they
+                        constrain the posterior without differentiating between countries.
+                    </p>
+                    <div class="ranking-callout">
+                        <strong>Connection to expert consensus:</strong> seven of the ten
+                        countries highlighted here also appear on the United Nations CERF
+                        Underfunded Emergencies allocations across 2024–25. The model
+                        recovers the same crisis cluster that humans converge on — and
+                        attaches a credible interval to each pick.
+                    </div>
+                </div>
+                <figure class="ranking-figure">
+                    <img src="methodology/figures/fig_posterior_ranking.png"
+                         alt="Forest plot of 22 HRP-eligible countries with their posterior medians and 90 percent credible intervals; top-10 highlighted in oxblood">
+                    <figcaption>
+                        Posterior median (dot) and 90 % credible interval (bar) for every
+                        HRP-eligible country in the 2025 cycle. Recentered on the median
+                        country so the scale reads "deviation from typical." Generated from
+                        the production fit; reproducible via
+                        <code>analysis/bayesian/hierarchical.py</code>.
+                    </figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════
          §4 — THE EVIDENCE
          ════════════════════════════════════════════════════════════ -->
     <section id="evidence" class="evidence" data-index data-index-label="The evidence" data-fade>
         <div class="evidence-inner">
-            <div class="section-label">§ 4 · The evidence</div>
+            <div class="section-label">§ 5 · The evidence</div>
             <h2>Agreement with independent human judgement.</h2>
             <div class="evidence-grid">
                 <div>
@@ -1000,7 +1138,7 @@
          §5 — SURFACES + FOOTER
          ════════════════════════════════════════════════════════════ -->
     <section id="surfaces" class="surfaces" data-index data-index-label="Surfaces" data-fade>
-        <div class="section-label">§ 5 · Surfaces</div>
+        <div class="section-label">§ 6 · Surfaces</div>
         <div class="cards">
             <a class="card" href="http://localhost:8000" target="_blank" rel="noopener">
                 <span class="card-arrow">→</span>

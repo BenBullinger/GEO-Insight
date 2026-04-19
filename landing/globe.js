@@ -9,21 +9,24 @@
     "use strict";
 
     // ─── Top-10 overlooked (HRP-eligible pool, n=22, 2025 cycle).
-    //     Posterior median θ̂ and 90 % credible interval from the
-    //     hierarchical Bayesian model. CERF flag: appears on at least one
-    //     CERF UFE allocation in 2024–2025. ──────────────────────────────
+    //     `rank` is position in the posterior-median ordering (1 = most
+    //     overlooked). `ci_width` is the 90 % credible interval width on
+    //     the latent — the model's uncertainty about this country.
+    //     `cerf` is membership in any CERF UFE allocation 2024–2025. ──
     const OVERLOOKED = [
-        { iso: "HND", name: "Honduras",      theta: -0.107, ci_lo: -0.369, ci_hi:  0.183, type: "contested · sector-starved", cerf: true,  lat: 15.2, lon: -86.2 },
-        { iso: "SLV", name: "El Salvador",   theta: -0.241, ci_lo: -0.513, ci_hi:  0.016, type: "contested · sector-starved", cerf: false, lat: 13.8, lon: -88.9 },
-        { iso: "MOZ", name: "Mozambique",    theta: -0.252, ci_lo: -0.507, ci_hi:  0.013, type: "contested · balanced",       cerf: true,  lat: -18.7, lon:  35.5 },
-        { iso: "SOM", name: "Somalia",       theta: -0.262, ci_lo: -0.517, ci_hi: -0.011, type: "consensus · overlooked",     cerf: true,  lat:  5.2, lon:  46.2 },
-        { iso: "GTM", name: "Guatemala",     theta: -0.267, ci_lo: -0.554, ci_hi:  0.026, type: "contested · sector-starved", cerf: false, lat: 15.5, lon: -90.3 },
-        { iso: "NER", name: "Niger",         theta: -0.267, ci_lo: -0.516, ci_hi: -0.015, type: "consensus · overlooked",     cerf: true,  lat: 17.6, lon:   8.1 },
-        { iso: "HTI", name: "Haiti",         theta: -0.274, ci_lo: -0.535, ci_hi: -0.010, type: "contested · sector-starved", cerf: true,  lat: 18.9, lon: -72.3 },
-        { iso: "CMR", name: "Cameroon",      theta: -0.286, ci_lo: -0.529, ci_hi: -0.019, type: "consensus · sector-starved", cerf: true,  lat:  7.4, lon:  12.4 },
-        { iso: "VEN", name: "Venezuela",     theta: -0.287, ci_lo: -0.526, ci_hi: -0.034, type: "consensus · overlooked",     cerf: true,  lat:  6.4, lon: -66.6 },
-        { iso: "TCD", name: "Chad",          theta: -0.304, ci_lo: -0.546, ci_hi: -0.066, type: "consensus · overlooked",     cerf: true,  lat: 15.5, lon:  18.7 },
+        { iso: "HND", name: "Honduras",      rank:  1, ci_width: 0.55, type: "contested · sector-starved", cerf: true,  lat: 15.2,  lon: -86.2 },
+        { iso: "SLV", name: "El Salvador",   rank:  2, ci_width: 0.53, type: "contested · sector-starved", cerf: false, lat: 13.8,  lon: -88.9 },
+        { iso: "MOZ", name: "Mozambique",    rank:  3, ci_width: 0.52, type: "contested · balanced",       cerf: true,  lat: -18.7, lon:  35.5 },
+        { iso: "SOM", name: "Somalia",       rank:  4, ci_width: 0.51, type: "consensus · overlooked",     cerf: true,  lat:  5.2,  lon:  46.2 },
+        { iso: "GTM", name: "Guatemala",     rank:  5, ci_width: 0.58, type: "contested · sector-starved", cerf: false, lat: 15.5,  lon: -90.3 },
+        { iso: "NER", name: "Niger",         rank:  6, ci_width: 0.50, type: "consensus · overlooked",     cerf: true,  lat: 17.6,  lon:   8.1 },
+        { iso: "HTI", name: "Haiti",         rank:  7, ci_width: 0.53, type: "contested · sector-starved", cerf: true,  lat: 18.9,  lon: -72.3 },
+        { iso: "CMR", name: "Cameroon",      rank:  8, ci_width: 0.51, type: "consensus · sector-starved", cerf: true,  lat:  7.4,  lon:  12.4 },
+        { iso: "VEN", name: "Venezuela",     rank:  9, ci_width: 0.49, type: "consensus · overlooked",     cerf: true,  lat:  6.4,  lon: -66.6 },
+        { iso: "TCD", name: "Chad",          rank: 10, ci_width: 0.48, type: "consensus · overlooked",     cerf: true,  lat: 15.5,  lon:  18.7 },
     ];
+
+    const POOL_SIZE = 22;  // HRP-eligible pool, 2025 cycle
 
     // Default rotation: anchored on Honduras (#1), then drifting east on
     // load. Frames the Latin-America / West-Africa cluster the model
@@ -261,7 +264,6 @@
         const cerf = d.cerf
             ? `<span class="panel-chip chip-on">CERF UFE pick (2024–25)</span>`
             : `<span class="panel-chip chip-off">Not picked by CERF UFE</span>`;
-        const ciWidth = (d.ci_hi - d.ci_lo);
         return `
             <div class="panel-eyebrow">Selected country</div>
             <div class="panel-name">${d.name}</div>
@@ -269,12 +271,12 @@
 
             <div class="panel-grid">
                 <div class="panel-metric">
-                    <div class="panel-metric-label">Posterior median θ̂</div>
-                    <div class="panel-metric-value">${d.theta.toFixed(2)}</div>
+                    <div class="panel-metric-label">Posterior rank</div>
+                    <div class="panel-metric-value">${d.rank}<span style="font-size: 0.55em; color: var(--muted); font-weight: 400; margin-left: 4px;">of ${POOL_SIZE}</span></div>
                 </div>
                 <div class="panel-metric">
                     <div class="panel-metric-label">90 % CI width</div>
-                    <div class="panel-metric-value">${ciWidth.toFixed(2)}</div>
+                    <div class="panel-metric-value">${d.ci_width.toFixed(2)}</div>
                 </div>
             </div>
 
@@ -282,9 +284,11 @@
             <div class="panel-chips">${cerf}</div>
 
             <p class="panel-note">
-                90 % credible interval [${d.ci_lo.toFixed(2)}, ${d.ci_hi.toFixed(2)}].
-                Among the ten most-overlooked HRP-eligible crises in the 2025 cycle
-                under the hierarchical Bayesian model.
+                Position in the 2025-cycle Bayesian posterior across ${POOL_SIZE} HRP-eligible
+                countries (those with an active humanitarian response plan). The 90 % CI width
+                on the latent says how confidently the model places this crisis — wide bands
+                mean the data alone cannot reliably distinguish this country from its neighbours
+                in the ranking.
             </p>
         `;
     }
@@ -293,7 +297,7 @@
     const tt = document.getElementById("globe-tooltip");
     function tooltipShow(ev, d) {
         if (!tt) return;
-        tt.textContent = `${d.name} · θ̂ = ${d.theta.toFixed(2)}`;
+        tt.textContent = `${d.name} · rank ${d.rank} of ${POOL_SIZE}`;
         tt.style.opacity = "1";
         tooltipMove(ev);
     }
