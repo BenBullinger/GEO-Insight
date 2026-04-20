@@ -1,0 +1,21 @@
+# Geo-Insight — unified Streamlit theme
+# Matches the slide-deck / landing-page design system (deep red on white).
+# Served project-wide when Streamlit is launched from the repo root.
+
+[theme]
+primaryColor          = "#7c1d1d"
+backgroundColor       = "#ffffff"
+secondaryBackgroundColor = "#fafafa"
+textColor             = "#111111"
+base                  = "light"
+font                  = "sans serif"
+
+[server]
+headless             = true
+runOnSave            = false
+
+[browser]
+gatherUsageStats     = false
+
+[client]
+toolbarMode          = "minimal"

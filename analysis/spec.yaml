@@ -1,0 +1,882 @@
+# Geo-Insight · Analysis Site · Design Specification
+# ───────────────────────────────────────────────────────────────────────────
+# Settled structure for the unsupervised-analysis dashboard. Captures:
+#   - every property we consume or derive, typed by level
+#   - every lens (curated property subset), composed from registered properties
+#   - UI modes + sidebar controls
+#   - code architecture + data flow
+#   - phased build plan
+#
+# Open design decisions live separately (not here) and are discussed in chat.
+# When a decision becomes settled, write it here first, code it second.
+#
+# Consumable by code later via PyYAML; for now this is a human-editable
+# authoritative spec.
+# ───────────────────────────────────────────────────────────────────────────
+
+meta:
+  version: "1.0"
+  status: settled-structure-pending-open-questions
+  date: 2026-04-18
+  invariants:
+    - Every property belongs to exactly one level (1–5).
+    - Every property name referenced by a lens must appear in `properties`.
+    - Every quantity displayed in the UI must map to a property name (→ provenance lookup).
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PROPERTIES
+# ═══════════════════════════════════════════════════════════════════════════
+# Level 1 — primitives, directly from a source file.
+# Level 2 — scale-normalised ratios and monotone transforms of primitives.
+# Level 3 — concentration / inequality measures (HHI, Gini, entropy).
+# Level 4 — temporal aggregates (baseline, delta, volatility, trend, persistence).
+# Level 5 — composite indices (our gap score, INFORM composite index).
+# ═══════════════════════════════════════════════════════════════════════════
+
+properties:
+
+  # ── Level 1 — Primitives ────────────────────────────────────────────────
+  pin_total:
+    level: 1
+    description: "Total people in humanitarian need in the country."
+    formula: "Σ over sectors of HNO `In Need`"
+    source: HNO
+    unit: people
+    granularity: country_year
+    failure_modes:
+      - HNO plan-scope drift across countries
+      - Vintage differences between HNO 2024/2025
+
+  pin_by_sector:
+    level: 1
+    description: "People in need broken out by sector cluster (health, food, WASH, etc.)."
+    formula: "HNO `In Need` per cluster"
+    source: HNO
+    unit: people
+    granularity: country_sector_year
+    failure_modes: ["HNO↔FTS cluster-name mismatch"]
+
+  requirements:
+    level: 1
+    description: "Total USD requested in the country's humanitarian appeal."
+    formula: "FTS `requirements` summed across plan types"
+    source: fts_requirements_funding_global
+    unit: USD
+    granularity: country_year
+    failure_modes: ["Mid-year plan revisions"]
+
+  requirements_by_sector:
+    level: 1
+    description: "Requested USD broken out by sector cluster."
+    formula: "FTS cluster `requirements`"
+    source: fts_requirements_funding_cluster_global
+    unit: USD
+    granularity: country_sector_year
+    failure_modes: ["Cluster-taxonomy drift vs HNO"]
+
+  funding_received:
+    level: 1
+    description: "Total USD reported as received against the appeal."
+    formula: "FTS `funding` summed across plan types"
+    source: fts_requirements_funding_global
+    unit: USD
+    granularity: country_year
+    failure_modes:
+      - Reporting lag (weeks to months)
+      - Private-donor under-reporting
+
+  funding_by_donor:
+    level: 1
+    description: "USD contributed by each donor, per country-year."
+    formula: "FTS incoming `amountUSD` grouped by srcOrganization"
+    source: fts_incoming_funding_global
+    unit: USD
+    granularity: country_donor_year
+    failure_modes:
+      - Multi-country destLocations need an allocation rule
+      - '"Various" donor aggregation inflates concentration'
+
+  funding_by_sector:
+    level: 1
+    description: "USD received broken out by sector cluster."
+    formula: "FTS cluster `funding`"
+    source: fts_requirements_funding_cluster_global
+    unit: USD
+    granularity: country_sector_year
+
+  population:
+    level: 1
+    description: "Country population (all ages, all genders)."
+    formula: "CoD-PS admin0 `Population` summed across all-age, all-gender rows"
+    source: cod_population_admin0
+    unit: people
+    granularity: country
+    failure_modes: ["Reference year varies 2018–2025 by country"]
+
+  severity_index:
+    level: 1
+    description: "INFORM's continuous composite severity score. Rescaled Feb 2026 — not directly comparable across that boundary."
+    formula: "INFORM `severity` (raw, as published)"
+    source: INFORM_severity
+    unit: continuous_rescaled_2026_02
+    granularity: country_month
+    failure_modes:
+      - Feb-2026 methodology rescaling — not comparable across 2026-01/02 boundary
+      - Prefer severity_category for time-series
+
+  severity_category:
+    level: 1
+    description: "INFORM's 1–5 ordinal severity bucket (Very Low → Very High). Stable across time."
+    formula: "INFORM `category` (1–5 ordinal)"
+    source: INFORM_severity
+    unit: ordinal_1_5
+    granularity: country_month
+    failure_modes: []  # stable across Feb-2026 rescaling
+
+  pin_phase_1:
+    level: 1
+    description: "People at minimal humanitarian conditions (least severe)."
+    formula: "# people at minimal humanitarian conditions"
+    source: INFORM_indicators
+    unit: people
+    granularity: country_month
+
+  pin_phase_2:
+    level: 1
+    description: "People at stressed humanitarian conditions."
+    formula: "# people at stressed humanitarian conditions"
+    source: INFORM_indicators
+    unit: people
+    granularity: country_month
+
+  pin_phase_3:
+    level: 1
+    description: "People at moderate humanitarian conditions."
+    formula: "# people at moderate humanitarian conditions"
+    source: INFORM_indicators
+    unit: people
+    granularity: country_month
+
+  pin_phase_4:
+    level: 1
+    description: "People at severe humanitarian conditions."
+    formula: "# people at severe humanitarian conditions"
+    source: INFORM_indicators
+    unit: people
+    granularity: country_month
+
+  pin_phase_5:
+    level: 1
+    description: "People at extreme/catastrophic humanitarian conditions."
+    formula: "# people at extreme humanitarian conditions"
+    source: INFORM_indicators
+    unit: people
+    granularity: country_month
+
+  affected:
+    level: 1
+    description: "Total people affected by the crisis (not all of whom are in need)."
+    source: INFORM_indicators
+    unit: people
+    granularity: country_month
+    failure_modes: ["Definition of 'affected' varies across country teams"]
+
+  displaced:
+    level: 1
+    description: "Crisis-related displaced population (IDPs + refugees)."
+    source: INFORM_indicators
+    unit: people
+    granularity: country_month
+
+  fatalities:
+    level: 1
+    description: "Crisis-related deaths reported."
+    source: INFORM_indicators
+    unit: people
+    granularity: country_month
+
+  access_limited:
+    level: 1
+    description: "People in need facing LIMITED access to humanitarian assistance."
+    formula: "INFORM `access_limited` — people in need facing limited access"
+    source: INFORM_indicators
+    unit: people
+    granularity: country_month
+
+  access_restricted:
+    level: 1
+    description: "People in need facing RESTRICTED access (more severe than limited)."
+    formula: "INFORM `access_restricted` — people in need facing restricted access"
+    source: INFORM_indicators
+    unit: people
+    granularity: country_month
+
+  impediments:
+    level: 1
+    description: "Bureaucratic/administrative impediments to humanitarian entry."
+    formula: "INFORM `impediments_bureaucratic` — bureaucratic and administrative impediments"
+    source: INFORM_indicators
+    unit: ordinal
+    granularity: country_month
+
+  cbpf_allocation:
+    level: 1
+    description: "USD allocated to the country via Country-Based Pooled Funds."
+    formula: "CBPF `Budget` summed per country-year"
+    source: cbpf_project_summary
+    unit: USD
+    granularity: country_year
+    failure_modes: ["PooledFundName → ISO3 mapping is heuristic"]
+
+
+  # ── Level 2 — Scale-normalised ratios + monotone transforms ─────────────
+  coverage:
+    level: 2
+    description: "Share of the appeal that's been funded. 1.0 = fully funded, 0 = nothing received."
+    formula: "funding_received / requirements, clipped at 1.5"
+    inputs: [funding_received, requirements]
+    unit: fraction
+    granularity: country_year
+
+  coverage_shortfall:
+    level: 2
+    description: "How much of the appeal is unmet. 0 = fully funded, 1 = nothing received."
+    formula: "1 − min(coverage, 1)"
+    inputs: [coverage]
+    unit: fraction
+    granularity: country_year
+
+  coverage_by_sector:
+    level: 2
+    description: "Per-cluster funding coverage (one value per sector within the country)."
+    formula: "funding_by_sector / requirements_by_sector per cluster"
+    inputs: [funding_by_sector, requirements_by_sector]
+    unit: fraction_per_sector
+    granularity: country_sector_year
+
+  need_intensity:
+    level: 2
+    description: "Fraction of the country's population that is in humanitarian need."
+    formula: "pin_total / population"
+    inputs: [pin_total, population]
+    unit: fraction
+    granularity: country_year
+    failure_modes: ["Small-country denominator instability"]
+
+  affected_intensity:
+    level: 2
+    description: "Fraction of the country's population affected by the crisis."
+    formula: "affected / population"
+    inputs: [affected, population]
+    unit: fraction
+    granularity: country_year
+
+  displaced_intensity:
+    level: 2
+    description: "Fraction of the country's population that has been displaced."
+    formula: "displaced / population"
+    inputs: [displaced, population]
+    unit: fraction
+    granularity: country_year
+
+  phase_45_share:
+    level: 2
+    description: "Share of affected people in severe or extreme humanitarian conditions."
+    formula: "(pin_phase_4 + pin_phase_5) / affected"
+    inputs: [pin_phase_4, pin_phase_5, affected]
+    unit: fraction
+    granularity: country_month
+
+  phase_5_share:
+    level: 2
+    description: "Share of affected people in extreme/catastrophic conditions alone."
+    formula: "pin_phase_5 / affected"
+    inputs: [pin_phase_5, affected]
+    unit: fraction
+    granularity: country_month
+
+  displaced_share_of_pin:
+    level: 2
+    description: "Fraction of people in need who are also displaced."
+    formula: "displaced / pin_total"
+    inputs: [displaced, pin_total]
+    unit: fraction
+    granularity: country_month
+
+  access_restricted_share:
+    level: 2
+    description: "Fraction of people in need facing restricted humanitarian access."
+    formula: "access_restricted / pin_total"
+    inputs: [access_restricted, pin_total]
+    unit: fraction
+    granularity: country_month
+
+  access_limited_share:
+    level: 2
+    description: "Fraction of people in need facing limited humanitarian access."
+    formula: "access_limited / pin_total"
+    inputs: [access_limited, pin_total]
+    unit: fraction
+    granularity: country_month
+
+  per_pin_gap:
+    level: 2
+    description: "Dollars of unmet requirement per person in need."
+    formula: "max(0, requirements − funding_received) / pin_total"
+    inputs: [requirements, funding_received, pin_total]
+    unit: USD_per_person
+    granularity: country_year
+
+  per_pin_allocated:
+    level: 2
+    description: "Dollars received per person in need."
+    formula: "funding_received / pin_total"
+    inputs: [funding_received, pin_total]
+    unit: USD_per_person
+    granularity: country_year
+
+  log_pin_total:
+    level: 2
+    description: "Log-transformed people in need, so small and large crises are comparable on the same axis."
+    formula: "log(1 + pin_total)"
+    inputs: [pin_total]
+    unit: log_people
+    granularity: country_year
+
+  log_requirements:
+    level: 2
+    description: "Log-transformed USD requirements."
+    formula: "log(1 + requirements)"
+    inputs: [requirements]
+    unit: log_USD
+    granularity: country_year
+
+  log_affected:
+    level: 2
+    description: "Log-transformed total affected."
+    formula: "log(1 + affected)"
+    inputs: [affected]
+    unit: log_people
+    granularity: country_month
+
+  log_displaced:
+    level: 2
+    description: "Log-transformed displaced count."
+    formula: "log(1 + displaced)"
+    inputs: [displaced]
+    unit: log_people
+    granularity: country_month
+
+  log_fatalities:
+    level: 2
+    description: "Log-transformed fatality count."
+    formula: "log(1 + fatalities)"
+    inputs: [fatalities]
+    unit: log_people
+    granularity: country_month
+
+
+  # ── Level 3 — Concentration / inequality ────────────────────────────────
+  donor_hhi:
+    level: 3
+    description: "Herfindahl–Hirschman index of donor concentration — 0 = perfectly diversified, 1 = single donor."
+    formula: "Σ_d s_d²,  s_d = funding_by_donor[d] / Σ_d funding_by_donor"
+    inputs: [funding_by_donor]
+    unit: "[0,1]"
+    granularity: country_year
+    failure_modes:
+      - Undefined at n_donors < 2
+      - "'Various'-aggregated donor inflates concentration"
+
+  donor_top1_share:
+    level: 3
+    description: "Share of all funding coming from the single biggest donor."
+    formula: "max_d s_d"
+    inputs: [funding_by_donor]
+    unit: "[0,1]"
+    granularity: country_year
+
+  donor_top3_share:
+    level: 3
+    description: "Share of all funding coming from the top-3 donors combined."
+    formula: "sum of top-3 s_d"
+    inputs: [funding_by_donor]
+    unit: "[0,1]"
+    granularity: country_year
+
+  n_donors:
+    level: 3
+    description: "Number of distinct donors who contributed."
+    formula: "count of donors with funding_by_donor > 0"
+    inputs: [funding_by_donor]
+    unit: integer
+    granularity: country_year
+
+  donor_entropy:
+    level: 3
+    description: "Shannon entropy of the donor-share distribution — higher values indicate more diversification."
+    formula: "−Σ s_d · log(s_d)"
+    inputs: [funding_by_donor]
+    unit: nats
+    granularity: country_year
+
+  cluster_gini:
+    level: 3
+    description: "PIN-weighted Gini of sector-coverage ratios — 0 = every cluster equally funded, 1 = all funding to one cluster."
+    formula: "PIN-weighted Gini of coverage_by_sector within a country"
+    inputs: [coverage_by_sector, pin_by_sector]
+    unit: "[0,1]"
+    granularity: country_year
+    failure_modes:
+      - Undefined for single-cluster crises
+      - Sector-taxonomy mismatch between HNO and FTS requires cluster_map
+
+  cluster_min_coverage:
+    level: 3
+    description: "The worst-funded sector's coverage ratio (the starved cluster)."
+    formula: "min_c coverage_by_sector[c]"
+    inputs: [coverage_by_sector]
+    unit: fraction
+    granularity: country_year
+
+  cluster_min_name:
+    level: 3
+    description: "Name of the sector with the lowest coverage ratio."
+    formula: "argmin_c coverage_by_sector[c]"
+    inputs: [coverage_by_sector]
+    unit: cluster_name
+    granularity: country_year
+
+  phase_gini:
+    level: 3
+    description: "Gini coefficient of the Phase 1–5 humanitarian-conditions distribution within the crisis."
+    formula: "Gini of (pin_phase_1, …, pin_phase_5) distribution"
+    inputs: [pin_phase_1, pin_phase_2, pin_phase_3, pin_phase_4, pin_phase_5]
+    unit: "[0,1]"
+    granularity: country_month
+
+  cbpf_reliance:
+    level: 3
+    description: "Share of the country's humanitarian funding that comes from pooled funds (CBPF)."
+    formula: "cbpf_allocation / funding_received"
+    inputs: [cbpf_allocation, funding_received]
+    unit: fraction
+    granularity: country_year
+
+
+  # ── Level 4 — Temporal aggregates (windowed) ────────────────────────────
+  severity_baseline_24m:
+    level: 4
+    description: "Median severity category over the last 24 months — the country's chronic baseline."
+    formula: "median(severity_category, trailing 24 months)"
+    inputs: [severity_category]
+    window: 24_months
+    unit: ordinal_1_5
+    granularity: country
+
+  severity_acute_delta_3m:
+    level: 4
+    description: "Recent deviation from the chronic baseline — positive values indicate acute deterioration."
+    formula: "severity_category[T] − median(severity_category, [T−3, T−1])"
+    inputs: [severity_category]
+    window: 3_months
+    unit: ordinal_1_5
+    granularity: country
+
+  severity_volatility_12m:
+    level: 4
+    description: "Month-to-month variability of severity category over the last 12 months."
+    formula: "std(severity_category, trailing 12 months)"
+    inputs: [severity_category]
+    window: 12_months
+    unit: ordinal_1_5
+    granularity: country
+
+  severity_trend_12m:
+    level: 4
+    description: "Directional trend in severity category over the last 12 months (slope per month)."
+    formula: "OLS slope of severity_category vs month, trailing 12 months"
+    inputs: [severity_category]
+    window: 12_months
+    unit: change_per_month
+    granularity: country
+
+  severity_momentum_learned:
+    level: 4
+    description: "Learned 6-month-ahead severity-delta forecast from a small Mamba-style selective SSM over the monthly INFORM panel. Higher values indicate predicted escalation."
+    formula: "Mamba2-style selective SSM, 2 blocks, 19k params; trained on 24-month windows with a 6-month-ahead mean-severity-delta target; temporal train/test split at 2025-01."
+    inputs: [severity, category, affected, displaced, fatalities, pin_level_5, access_restricted]
+    window: 24_months
+    unit: change_per_6_months
+    granularity: country
+    failure_modes:
+      - "Average test MAE matches the persistence baseline (last-observed severity). Per-country scalar still differentiates trajectory direction, but the raw forecast is not better on average than 'no change'."
+      - "Encoder trained on 2445 windows across 109 countries, 2020-09 to 2024-12. Transfer to countries with sparse INFORM history is extrapolation."
+      - "Informed only by INFORM severity + sub-indicators — does not see funding, displacement flows outside INFORM, or structural features."
+    provenance: "analysis/learned/train_momentum.py · reproducible from Data/learned/sequences.npz"
+
+  phase_45_share_baseline_12m:
+    level: 4
+    description: "12-month baseline of the share of affected in severe/extreme phases."
+    formula: "median(phase_45_share, trailing 12 months)"
+    inputs: [phase_45_share]
+    window: 12_months
+    unit: fraction
+    granularity: country
+
+  phase_45_share_delta_3m:
+    level: 4
+    description: "Recent 3-month deviation in phase-4/5 share from the 12-month baseline."
+    formula: "phase_45_share[T] − median([T−3, T−1])"
+    inputs: [phase_45_share]
+    window: 3_months
+    unit: fraction
+    granularity: country
+
+  access_restricted_baseline_12m:
+    level: 4
+    description: "12-month baseline of the restricted-access share."
+    formula: "median(access_restricted_share, trailing 12 months)"
+    inputs: [access_restricted_share]
+    window: 12_months
+    unit: fraction
+    granularity: country
+
+  access_restricted_delta_3m:
+    level: 4
+    description: "Recent 3-month deviation in restricted-access share from the 12-month baseline."
+    formula: "access_restricted_share[T] − median([T−3, T−1])"
+    inputs: [access_restricted_share]
+    window: 3_months
+    unit: fraction
+    granularity: country
+
+  persistence_P4_plus:
+    level: 4
+    description: "Longest consecutive run of months with Phase 4+ population share above 15% — chronic severe-need persistence."
+    formula: "max consecutive months with phase_45_share > 0.15"
+    inputs: [phase_45_share]
+    window: full_panel
+    unit: months
+    granularity: country
+
+  coverage_baseline_3y:
+    level: 4
+    description: "Median coverage ratio over the last 3 years — chronic funding adequacy baseline."
+    formula: "median(coverage, trailing 3 years)"
+    inputs: [coverage]
+    window: 3_years
+    unit: fraction
+    granularity: country
+
+  coverage_trend_3y:
+    level: 4
+    description: "Directional trend in coverage over the last 3 years (slope per year)."
+    formula: "OLS slope of coverage vs year, 3-year window"
+    inputs: [coverage]
+    window: 3_years
+    unit: change_per_year
+    granularity: country
+
+  displaced_growth_12m:
+    level: 4
+    description: "Ratio of current displaced population to 12 months ago — displacement growth factor."
+    formula: "displaced[T] / displaced[T − 12 months]"
+    inputs: [displaced]
+    window: 12_months
+    unit: ratio
+    granularity: country
+
+
+  # ── Level 5 — Bayesian posterior over latent overlookedness θ ─────────────
+  theta_median:
+    level: 5
+    description: "Posterior median of the latent overlookedness θ. Higher = more overlooked. Computed only for HRP-eligible countries (those with an observed per_pin_gap)."
+    formula: "median of posterior samples θ ~ p(θ | a₁,…,a₆) under the hierarchical Bayesian model"
+    inputs: [coverage_shortfall, per_pin_gap, need_intensity, severity_category, donor_hhi, cluster_gini]
+    unit: latent_z
+    granularity: country_year
+
+  theta_ci_lo:
+    level: 5
+    description: "5th percentile of the posterior over θ — lower bound of the 90 % credible interval."
+    formula: "5th percentile of posterior samples"
+    inputs: [theta_median]
+    unit: latent_z
+    granularity: country_year
+
+  theta_ci_hi:
+    level: 5
+    description: "95th percentile of the posterior over θ — upper bound of the 90 % credible interval."
+    formula: "95th percentile of posterior samples"
+    inputs: [theta_median]
+    unit: latent_z
+    granularity: country_year
+
+  theta_ci_width:
+    level: 5
+    description: "Width of the 90 % credible interval over θ — direct uncertainty proxy for the country's overlookedness estimate."
+    formula: "theta_ci_hi - theta_ci_lo"
+    inputs: [theta_ci_lo, theta_ci_hi]
+    unit: latent_z_spread
+    granularity: country_year
+
+  inform_severity_index:
+    level: 5
+    description: "INFORM's native composite severity score, imported as-is (flagged for the Feb-2026 rescaling)."
+    formula: "INFORM native composite — imported as-is"
+    inputs: [severity_index]
+    unit: continuous_rescaled_2026_02
+    granularity: country_month
+    failure_modes: ["Feb-2026 rescaling — use severity_category for time-series"]
+
+  completeness:
+    level: 5
+    description: "Fraction of the six attributes observed for this country (1.0 = all six, 0 = none). Reported alongside the posterior so analysts can read CI width in context."
+    formula: "count of non-null attributes / 6"
+    inputs: [coverage_shortfall, per_pin_gap, need_intensity, severity_category, donor_hhi, cluster_gini]
+    unit: fraction
+    granularity: country_year
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# LENSES
+# ═══════════════════════════════════════════════════════════════════════════
+# Each lens is a curated subset of properties. Ordered by prominence within
+# the lens (first property is the "headline" axis). All analytics (ranking,
+# PCA, clustering, profile card) run scoped to this subset.
+# ═══════════════════════════════════════════════════════════════════════════
+
+lenses:
+
+  - id: magnitude
+    name: Magnitude
+    question: "How big is this crisis?"
+    properties: [log_pin_total, log_requirements, log_affected, log_displaced, log_fatalities]
+
+  - id: intensity
+    name: Intensity
+    question: "How deep is the need per capita?"
+    properties: [need_intensity, affected_intensity, displaced_intensity]
+
+  - id: severity_composition
+    name: Severity composition
+    question: "Who inside the crisis is worst off?"
+    properties: [phase_45_share, phase_5_share, phase_gini, severity_category, cluster_min_coverage]
+
+  - id: funding_pressure
+    name: Funding pressure
+    question: "How overlooked by resourcing?"
+    properties: [coverage_shortfall, per_pin_gap, cluster_gini, cluster_min_coverage, coverage_baseline_3y, coverage_trend_3y]
+
+  - id: donor_fragility
+    name: Donor fragility
+    question: "How concentrated and fragile is funding?"
+    properties: [donor_hhi, donor_top1_share, donor_top3_share, n_donors, donor_entropy, cbpf_reliance]
+
+  - id: temporal_dynamics
+    name: Temporal dynamics
+    question: "Chronic or acute?"
+    properties: [severity_baseline_24m, severity_acute_delta_3m, severity_volatility_12m, severity_trend_12m, persistence_P4_plus, severity_momentum_learned]
+
+  - id: access_friction
+    name: Access & friction
+    question: "Can aid reach them?"
+    properties: [access_restricted_share, access_limited_share, impediments, access_restricted_baseline_12m, access_restricted_delta_3m]
+
+  - id: geo_insight_score
+    name: Geo-Insight score
+    question: "Our framework's readout"
+    properties: [theta_median, theta_ci_lo, theta_ci_hi, theta_ci_width, completeness]
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# UI
+# ═══════════════════════════════════════════════════════════════════════════
+
+ui:
+
+  sidebar:
+    - component: lens_selector
+      default: funding_pressure
+      options: [all_features, magnitude, intensity, severity_composition, funding_pressure, donor_fragility, temporal_dynamics, access_friction, geo_insight_score]
+
+    - component: country_filter
+      default: all_eligible
+
+    - component: temporal_window_sliders
+      defaults:
+        baseline_window_months: 24
+        acute_delta_months: 3
+        volatility_window_months: 12
+
+    - component: snapshot_anchor
+      default: latest
+
+  modes:
+    - id: atlas
+      name: Atlas
+      description: "Ranked table per crisis, columns = lens properties + provenance info icons."
+      default: true
+
+    - id: pca
+      name: PCA within lens
+      description: "Scree, loadings table, PC1×PC2 biplot with loading arrows."
+      min_lens_properties: 4
+
+    - id: cluster
+      name: Clustering within lens
+      description: "k-means + hierarchical; silhouette curve, centroids in original units, PC-space scatter."
+
+    - id: profile
+      name: Profile card
+      description: "Per-crisis deep dive: all lens properties with values, ranks, provenance. Radar."
+
+    - id: cross_lens
+      name: Cross-lens
+      description: "Radar per crisis with one axis per lens. Only active in 'all_features' lens view."
+      requires_lens: all_features
+
+    - id: validation
+      name: Validation
+      description: "Posterior median of θ vs independent external benchmarks (CERF UFE, CARE Breaking the Silence). Overlap@K, Spearman ρ, agreement table."
+      requires_lens: geo_insight_score
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CODE ARCHITECTURE
+# ═══════════════════════════════════════════════════════════════════════════
+
+code_architecture:
+
+  files:
+    - path: analysis/ontology.py
+      status: new
+      purpose: "Property + Lens dataclasses; loads this YAML at import time."
+
+    - path: analysis/aggregations/__init__.py
+      status: new
+
+    - path: analysis/aggregations/concentration.py
+      status: new
+      purpose: "Level-3 properties: donor_hhi, donor_top{1,3}_share, n_donors, donor_entropy, cluster_gini, cluster_min_*, phase_gini, cbpf_reliance."
+
+    - path: analysis/aggregations/temporal.py
+      status: new
+      purpose: "Level-4 windowed properties: baselines, deltas, volatility, trends, persistence."
+
+    - path: analysis/aggregations/sectoral.py
+      status: new
+      purpose: "Cluster-level joins between FTS cluster and HNO for coverage_by_sector and cluster_gini."
+
+    - path: analysis/features.py
+      status: extended
+      purpose: "Level-1 loaders (cached); build_enriched_frame() orchestrates Levels 1-5."
+
+    - path: analysis/views/__init__.py
+      status: new
+
+    - path: analysis/views/atlas.py
+      status: new
+      purpose: "Mode A: ranked table with provenance tooltips."
+
+    - path: analysis/views/pca.py
+      status: new
+      purpose: "Mode B: lens-scoped PCA."
+
+    - path: analysis/views/cluster.py
+      status: new
+      purpose: "Mode C: lens-scoped clustering (k-means + hierarchical)."
+
+    - path: analysis/views/profile.py
+      status: new
+      purpose: "Mode D: per-crisis profile card with radar."
+
+    - path: analysis/views/cross_lens.py
+      status: new
+      purpose: "Mode E: cross-lens radar and contested-crisis detection."
+
+    - path: analysis/app.py
+      status: rewritten
+      purpose: "Thin orchestrator — reads sidebar, loads enriched frame, dispatches to views."
+
+  data_flow:
+    - step: 1
+      description: "CSVs → features.load_*() returns Level-1 DataFrames. Cached with @st.cache_data."
+    - step: 2
+      description: "build_enriched_frame() computes Level-2 ratios inline."
+    - step: 3
+      description: "aggregations.concentration adds Level-3 columns."
+    - step: 4
+      description: "aggregations.temporal adds Level-4 columns."
+    - step: 5
+      description: "features.compute_overlookedness_posterior adds Level-5 columns (Bayesian posterior over θ)."
+    - step: 6
+      description: "Enriched frame persisted to analysis/enriched.parquet (audit + fast reload)."
+    - step: 7
+      description: "views.* read (enriched, lens) and render their mode."
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# BUILD PHASES
+# ═══════════════════════════════════════════════════════════════════════════
+
+build_phases:
+
+  - phase: 1
+    name: "Ontology skeleton + Funding Pressure lens — end-to-end"
+    goal: "Prove the pattern on one full lens round-trip; pressure-test the ontology."
+    steps:
+      - "ontology.py with Property + Lens dataclasses and YAML loader."
+      - "aggregations/concentration.py: donor_hhi, cluster_gini, cluster_min_coverage, cluster_min_name."
+      - "features.build_enriched_frame() producing Level 1-3 columns used by Funding Pressure."
+      - "All five view modes (atlas / pca / cluster / profile / cross_lens) for Funding Pressure only."
+      - "End-to-end smoke test: atlas ranks defensibly, PCA loadings readable, centroids interpretable."
+    loc_estimate: 500
+    duration_estimate_hours: 6
+
+  - phase: 2
+    name: "Scale to remaining 6 lenses"
+    goal: "Multiply the pattern; no new view code, only registry and aggregations."
+    steps:
+      - "aggregations/temporal.py: all Level-4 windowed properties."
+      - "features.build_enriched_frame() extended to Level 4."
+      - "Registry entries and lens compositions validated."
+      - "Lens sidebar picker wired; views auto-render per lens."
+    duration_estimate_hours: 4
+
+  - phase: 3
+    name: "Geo-Insight score lens + Cross-lens view (Mode E)"
+    goal: "Close the loop; the Bayesian posterior lives inside the ontology as one lens among many."
+    steps:
+      - "Implement Bayesian posterior pipeline (Level-5) via aggregations/composites.compute_overlookedness_posterior."
+      - "views/cross_lens.py radar + contested-crisis detection (CI overlap)."
+      - "External validation against CERF UFE and CARE BTS."
+    duration_estimate_hours: 4
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PERSISTENCE
+# ═══════════════════════════════════════════════════════════════════════════
+
+persistence:
+  enriched_frame:
+    path: analysis/enriched.parquet
+    purpose: "Audit artefact + fast reload; regenerated when source data changes."
+    gitignored: true
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# VALIDATION BENCHMARKS (external, for Lens 8 cross-check)
+# ═══════════════════════════════════════════════════════════════════════════
+
+benchmarks:
+  - name: CERF Underfunded Emergencies
+    url: https://cerf.un.org/what-we-do/underfunded-emergencies
+    maps_to_lens: geo_insight_score
+    axis: consensus
+  - name: CARE Breaking the Silence
+    url: https://reliefweb.int/report/angola/breaking-silence-10-most-under-reported-humanitarian-crises-2023
+    maps_to_lens: geo_insight_score
+    axis: under_reported

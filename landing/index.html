@@ -1,0 +1,1646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Geo-Insight</title>
+    <link rel="stylesheet" href="shared.css">
+    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [["$", "$"], ["\\(", "\\)"]] },
+            svg: { fontCache: "global" }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+    <style>
+        /* ══════════════════════════════════════════════════════════════
+           LANDING LAYOUT — five-section scrolling narrative.
+           Design tokens live in shared.css; this file composes them.
+           ══════════════════════════════════════════════════════════════ */
+
+        body {
+            padding: 0;
+            margin: 0;
+        }
+
+        .page {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--s-5);
+        }
+
+        /* ── Fade-in on scroll ────────────────────────────────────── */
+        [data-fade] {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 540ms ease-out, transform 540ms ease-out;
+            will-change: opacity, transform;
+        }
+        [data-fade].is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Respect users who've asked for reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            [data-fade] { opacity: 1; transform: none; transition: none; }
+        }
+
+        /* ── Left-edge section index ─────────────────────────────── */
+        #section-index {
+            position: fixed;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            z-index: 50;
+            padding: 8px 0;
+        }
+        .section-dot {
+            position: relative;
+            width: 14px;
+            height: 2px;
+            background: var(--faint);
+            border-radius: 1px;
+            transition: width 180ms ease, background 180ms ease;
+            display: block;
+            text-decoration: none;
+        }
+        .section-dot:hover { background: var(--subtle); width: 22px; }
+        .section-dot.is-active {
+            background: var(--accent);
+            width: 28px;
+        }
+        .section-dot-label {
+            position: absolute;
+            left: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 180ms ease;
+        }
+        .section-dot:hover .section-dot-label { opacity: 1; }
+
+        @media (max-width: 900px) {
+            #section-index { display: none; }
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           §1 — HERO
+           ══════════════════════════════════════════════════════════════ */
+        /* ── Disclaimer banner ────────────────────────────────────── */
+        .disclaimer-banner {
+            background: #fff8ef;
+            border-bottom: 1px solid #e7ddc9;
+            color: #5c4a1e;
+            font-size: 0.82rem;
+            line-height: 1.5;
+            padding: 10px 24px;
+            text-align: center;
+        }
+        .disclaimer-banner strong { color: #7a5a18; }
+        .disclaimer-banner a {
+            color: inherit;
+            text-decoration: underline;
+            text-decoration-thickness: 1px;
+            text-underline-offset: 2px;
+        }
+
+        .hero {
+            padding: var(--s-8) 0 var(--s-7);
+        }
+        .hero-top {
+            display: grid;
+            grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+            column-gap: var(--s-8);
+            align-items: end;
+            margin-bottom: var(--s-7);
+        }
+        .hero-title-block .eyebrow { margin-bottom: var(--s-3); }
+        .hero-title-block .accent-bar {
+            display: block;
+            margin-bottom: var(--s-4);
+        }
+        .hero-title-block h1 {
+            font-size: 5rem;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            line-height: 0.95;
+            margin: 0 0 var(--s-4) 0;
+        }
+        .hero-title-block .tagline {
+            font-size: 1.4rem;
+            color: var(--muted);
+            margin: 0;
+            max-width: 28ch;
+            line-height: 1.3;
+            letter-spacing: -0.015em;
+        }
+        .hero-abstract-block {
+            padding-bottom: var(--s-2);
+        }
+        .hero-abstract-block .abstract {
+            font-size: 0.95rem;
+            color: var(--text);
+            line-height: 1.65;
+            margin: 0 0 var(--s-3) 0;
+        }
+        .hero-abstract-block .abstract strong { color: var(--ink); }
+        .hero-abstract-block .abstract em     { color: var(--accent); font-style: normal; font-weight: 500; }
+        .paper-link {
+            margin: 0;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        .paper-link a {
+            color: var(--accent);
+            font-family: var(--font-mono);
+            font-size: 0.95em;
+            text-decoration: none;
+            border-bottom: 1px solid var(--accent-soft);
+            transition: color 150ms ease, border-color 150ms ease;
+        }
+        .paper-link a:hover { color: var(--accent-dim); border-bottom-color: var(--accent); }
+        .paper-link-sep { color: var(--subtle); margin: 0 6px; font-family: var(--font-mono); }
+
+        /* Globe row */
+        .globe-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+            gap: var(--s-7);
+            align-items: start;
+        }
+        .globe-wrap {
+            position: relative;
+            width: 100%;
+        }
+        #globe { position: relative; width: 100%; }
+        .globe-hint {
+            position: absolute;
+            left: var(--s-3);
+            bottom: var(--s-3);
+            font-size: 0.68rem;
+            color: var(--subtle);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 4px 10px;
+            border-radius: 2px;
+            pointer-events: none;
+        }
+        #globe-tooltip {
+            position: absolute;
+            pointer-events: none;
+            background: var(--ink);
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 0.72rem;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 120ms ease;
+            z-index: 10;
+        }
+
+        /* Sidecar panel */
+        .globe-panel {
+            min-height: 340px;
+            padding: var(--s-5);
+            background: var(--surface);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent);
+        }
+        .panel-eyebrow {
+            font-size: 0.62rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--subtle);
+            font-weight: 600;
+            margin-bottom: var(--s-2);
+        }
+        .panel-name {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--ink);
+            letter-spacing: -0.025em;
+            line-height: 1;
+            margin-bottom: var(--s-1);
+        }
+        .panel-iso {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--accent);
+            font-weight: 500;
+            margin-bottom: var(--s-5);
+            letter-spacing: 0.04em;
+        }
+        .panel-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--s-4);
+            margin-bottom: var(--s-4);
+            padding-top: var(--s-3);
+            border-top: 1px solid var(--rule);
+        }
+        .panel-metric-label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+            font-weight: 600;
+            margin-bottom: var(--s-1);
+        }
+        .panel-metric-value {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 1.55rem;
+            font-weight: 500;
+            color: var(--ink);
+            letter-spacing: -0.02em;
+            line-height: 1;
+        }
+        .panel-type {
+            font-size: 0.82rem;
+            color: var(--text);
+            font-weight: 500;
+            padding-top: var(--s-3);
+            border-top: 1px solid var(--rule);
+        }
+        .panel-chips { margin-top: var(--s-2); }
+        .panel-chip {
+            display: inline-block;
+            font-size: 0.68rem;
+            padding: 2px 8px;
+            border-radius: 2px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+        .panel-chip.chip-on  { background: var(--accent-wash); color: var(--accent); }
+        .panel-chip.chip-off { background: var(--surface); color: var(--subtle); border: 1px solid var(--rule); }
+        .panel-explain {
+            margin-top: var(--s-4);
+            padding-top: var(--s-3);
+            border-top: 1px solid var(--rule);
+            font-size: 0.78rem;
+            color: var(--text);
+            line-height: 1.65;
+        }
+        .panel-note {
+            margin-top: var(--s-3);
+            font-size: 0.78rem;
+            color: var(--text);
+            line-height: 1.65;
+        }
+        .panel-links {
+            margin-top: var(--s-3);
+            display: flex;
+            gap: var(--s-2);
+            flex-wrap: wrap;
+        }
+        .panel-links a {
+            display: inline-block;
+            font-size: 0.68rem;
+            padding: 2px 8px;
+            border-radius: 2px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            text-decoration: none;
+            background: var(--surface);
+            color: var(--subtle);
+            border: 1px solid var(--rule);
+            transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
+        }
+        .panel-links a:hover {
+            color: var(--accent);
+            border-color: var(--accent-soft);
+            background: var(--accent-wash);
+        }
+        .term {
+            border-bottom: 1px dotted var(--muted);
+            cursor: help;
+            position: relative;
+            white-space: nowrap;
+        }
+        .term::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--ink);
+            color: var(--bg);
+            font-size: 0.69rem;
+            line-height: 1.45;
+            padding: 5px 9px;
+            border-radius: 3px;
+            width: 200px;
+            white-space: normal;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 150ms ease;
+            z-index: 100;
+        }
+        .term:hover::after { opacity: 1; }
+
+        /* ══════════════════════════════════════════════════════════════
+           §2 — THE PROBLEM
+           ══════════════════════════════════════════════════════════════ */
+        .problem {
+            background: var(--surface);
+            padding: var(--s-8) 0;
+            margin: var(--s-8) calc(50% - 50vw) 0;
+            padding-left: calc(50vw - 50%);
+            padding-right: calc(50vw - 50%);
+        }
+        .problem-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--s-5);
+        }
+        .problem .section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: var(--s-5);
+        }
+        .problem-quote {
+            font-size: 2.8rem;
+            font-weight: 500;
+            color: var(--ink);
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            max-width: 22ch;
+            margin: 0 0 var(--s-6) 0;
+            border-left: 2px solid var(--ink);
+            padding-left: var(--s-5);
+        }
+        .problem-quote em { color: var(--accent); font-style: normal; }
+        .problem-sub {
+            font-size: 1rem;
+            color: var(--muted);
+            max-width: 64ch;
+            line-height: 1.65;
+            margin: 0 0 var(--s-7) 0;
+            padding-left: var(--s-5);
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--s-7);
+            padding-top: var(--s-5);
+            border-top: 1px solid var(--rule);
+        }
+        .stats .stat-value {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 2.6rem;
+            font-weight: 500;
+            color: var(--ink);
+            letter-spacing: -0.035em;
+            line-height: 1;
+            margin-bottom: var(--s-3);
+            display: block;
+        }
+        .stats .stat-label {
+            font-size: 0.78rem;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           §3 — THE METHOD
+           ══════════════════════════════════════════════════════════════ */
+        .method {
+            padding: var(--s-8) 0;
+        }
+        .method-header { margin-bottom: var(--s-6); }
+        .method h2 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+            color: var(--ink);
+            margin: 0 0 var(--s-3) 0;
+            line-height: 1.1;
+        }
+        .method-header .section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: var(--s-3);
+        }
+        .method-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+            gap: var(--s-7);
+            align-items: start;
+        }
+
+        /* The funnel — same encoding as slide 7 */
+        .funnel {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-width: 560px;
+        }
+        .funnel-row {
+            display: grid;
+            grid-template-columns: 40px 40px 1fr;
+            column-gap: 14px;
+            align-items: center;
+            height: 48px;
+            padding: 0 20px;
+            color: white;
+            border-radius: 2px;
+            font-size: 0.85rem;
+            transition: transform 150ms ease;
+        }
+        .funnel-row:hover { transform: translateX(-3px); }
+        .funnel-row .f-tag {
+            font-family: var(--font-mono);
+            font-size: 0.62rem;
+            font-weight: 500;
+            letter-spacing: 0.12em;
+            color: rgba(255,255,255,0.58);
+            text-transform: uppercase;
+        }
+        .funnel-row .f-count {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 1rem;
+            font-weight: 500;
+            text-align: right;
+            color: rgba(255,255,255,0.95);
+        }
+        .funnel-row .f-name {
+            font-size: 0.88rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+        .funnel-row .f-desc {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.75);
+            margin-left: var(--s-2);
+            font-weight: 400;
+        }
+        .funnel-row.lvl-5 { background: #5c1414; }
+        .funnel-row.lvl-4 { background: #782020; }
+        .funnel-row.lvl-3 { background: #942d2d; }
+        .funnel-row.lvl-2 { background: #af3d3d; }
+        .funnel-row.lvl-1 { background: #c95555; }
+
+        .method-prose p {
+            font-size: 0.92rem;
+            color: var(--text);
+            line-height: 1.7;
+            margin: 0 0 var(--s-4) 0;
+        }
+        .method-prose p strong { color: var(--ink); font-weight: 600; }
+        .method-prose p em     { color: var(--accent); font-style: normal; font-weight: 500; }
+        .method-links {
+            margin-top: var(--s-5);
+            padding-top: var(--s-4);
+            border-top: 1px solid var(--rule);
+            display: flex;
+            flex-direction: column;
+            gap: var(--s-2);
+            font-size: 0.85rem;
+        }
+        .method-links a {
+            color: var(--accent);
+            font-family: var(--font-mono);
+            text-decoration: none;
+            border-bottom: 1px solid var(--accent-soft);
+            width: fit-content;
+        }
+        .method-links a:hover { color: var(--accent-dim); }
+
+        /* ══════════════════════════════════════════════════════════════
+           §3.5 — THE BAYESIAN MODEL
+           ══════════════════════════════════════════════════════════════ */
+        .model {
+            padding: var(--s-8) 0;
+        }
+        .model-header { margin-bottom: var(--s-6); }
+        .model h2 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+            color: var(--ink);
+            margin: 0 0 var(--s-3) 0;
+            line-height: 1.1;
+        }
+        .model-header .section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: var(--s-3);
+        }
+        .model-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+            gap: var(--s-7);
+            align-items: start;
+        }
+        .model-equations {
+            font-size: 0.92rem;
+            color: var(--text);
+            line-height: 1.7;
+        }
+        .model-equations p {
+            margin: 0 0 var(--s-4) 0;
+        }
+        .model-equations p strong { color: var(--ink); font-weight: 600; }
+        .model-equations p em { color: var(--accent); font-style: normal; font-weight: 500; }
+        .eq-stack {
+            background: var(--surface);
+            border-left: 3px solid var(--accent);
+            padding: var(--s-4) var(--s-5);
+            margin: var(--s-4) 0;
+            border-radius: 0 4px 4px 0;
+            font-size: 0.92rem;
+            line-height: 1.6;
+        }
+        .eq-row {
+            padding: 6px 0;
+        }
+        .eq-row + .eq-row {
+            border-top: 1px solid var(--rule);
+            margin-top: 6px;
+        }
+        .eq-tag {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            font-weight: 500;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-right: var(--s-2);
+            min-width: 8.5em;
+        }
+        .model-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--s-3);
+            margin-top: var(--s-5);
+            padding-top: var(--s-4);
+            border-top: 1px solid var(--rule);
+        }
+        .model-stat {
+            font-size: 0.75rem;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+        .model-stat-value {
+            display: block;
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 1.4rem;
+            color: var(--ink);
+            font-weight: 500;
+            letter-spacing: -0.02em;
+            margin-bottom: 2px;
+        }
+        .model-figure {
+            margin: 0;
+        }
+        .model-figure img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border: 1px solid var(--rule);
+            border-radius: 3px;
+        }
+        .model-figure figcaption {
+            margin-top: var(--s-3);
+            font-size: 0.78rem;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+        /* ══════════════════════════════════════════════════════════════
+           §3.7 — WHAT THE POSTERIOR SAYS (rank forest)
+           ══════════════════════════════════════════════════════════════ */
+        .ranking {
+            background: var(--surface);
+            padding: var(--s-8) 0;
+            margin: 0 calc(50% - 50vw);
+            padding-left: calc(50vw - 50%);
+            padding-right: calc(50vw - 50%);
+        }
+        .ranking-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--s-5);
+        }
+        .ranking .section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: var(--s-3);
+        }
+        .ranking h2 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+            color: var(--ink);
+            margin: 0 0 var(--s-6) 0;
+            line-height: 1.1;
+        }
+        .ranking-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+            gap: var(--s-7);
+            align-items: start;
+        }
+        .ranking-prose p {
+            font-size: 0.92rem;
+            color: var(--text);
+            line-height: 1.7;
+            margin: 0 0 var(--s-4) 0;
+        }
+        .ranking-prose p strong { color: var(--ink); font-weight: 600; }
+        .ranking-prose p em { color: var(--accent); font-style: normal; font-weight: 500; }
+        .ranking-callout {
+            margin-top: var(--s-5);
+            padding: var(--s-4) var(--s-5);
+            background: var(--background);
+            border-left: 3px solid var(--accent);
+            border-radius: 0 4px 4px 0;
+            font-size: 0.86rem;
+            color: var(--text);
+            line-height: 1.65;
+        }
+        .ranking-callout strong { color: var(--ink); font-weight: 600; }
+        .ranking-figure { margin: 0; }
+        .ranking-figure img {
+            width: 100%;
+            height: auto;
+            display: block;
+            background: white;
+            border: 1px solid var(--rule);
+            border-radius: 3px;
+        }
+        .ranking-figure figcaption {
+            margin-top: var(--s-3);
+            font-size: 0.78rem;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           §3.8 — STAKEHOLDERS, CONSENSUS, CONTESTED
+           ══════════════════════════════════════════════════════════════ */
+        .stakeholders {
+            padding: var(--s-8) 0;
+        }
+        .stakeholders-header { margin-bottom: var(--s-6); }
+        .stakeholders h2 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+            color: var(--ink);
+            margin: 0 0 var(--s-3) 0;
+            line-height: 1.1;
+        }
+        .stakeholders-header .section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: var(--s-3);
+        }
+        .stakeholders-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+            gap: var(--s-7);
+            align-items: start;
+        }
+        .stakeholders-prose p {
+            font-size: 0.92rem;
+            color: var(--text);
+            line-height: 1.7;
+            margin: 0 0 var(--s-4) 0;
+        }
+        .stakeholders-prose p strong { color: var(--ink); font-weight: 600; }
+        .stakeholders-prose p em { color: var(--accent); font-style: normal; font-weight: 500; }
+        .consensus-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--s-3);
+            margin-top: var(--s-5);
+            padding-top: var(--s-4);
+            border-top: 1px solid var(--rule);
+        }
+        .consensus-tile {
+            padding: var(--s-3) var(--s-4);
+            border-radius: 3px;
+        }
+        .consensus-tile.tile-consensus {
+            background: var(--accent-wash);
+            border-left: 3px solid var(--accent);
+        }
+        .consensus-tile.tile-contested {
+            background: var(--surface);
+            border-left: 3px solid var(--subtle);
+        }
+        .consensus-tile-label {
+            font-size: 0.62rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-weight: 600;
+            margin-bottom: var(--s-1);
+        }
+        .tile-consensus .consensus-tile-label { color: var(--accent); }
+        .tile-contested .consensus-tile-label { color: var(--muted); }
+        .consensus-tile-iso {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--ink);
+            line-height: 1.4;
+            letter-spacing: 0.04em;
+        }
+        .consensus-tile-count {
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 1.1rem;
+            color: var(--ink);
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        .stakeholders-figure { margin: 0; }
+        .stakeholders-figure img {
+            width: 100%;
+            height: auto;
+            display: block;
+            background: white;
+            border: 1px solid var(--rule);
+            border-radius: 3px;
+        }
+        .stakeholders-figure figcaption {
+            margin-top: var(--s-3);
+            font-size: 0.78rem;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        /* Cross-lens radar (orthogonal check sitting below the stakeholders grid) */
+        .cross-lens-figure {
+            margin: var(--s-7) 0 0 0;
+            padding-top: var(--s-6);
+            border-top: 1px solid var(--rule);
+        }
+        .cross-lens-figure .above {
+            margin: 0 0 var(--s-5) 0;
+            font-size: 0.95rem;
+            color: var(--text);
+            line-height: 1.55;
+            max-width: 70ch;
+        }
+        .cross-lens-figure .above strong { color: var(--ink); font-weight: 600; }
+        .cross-lens-figure .above em { color: var(--accent); font-style: normal; font-weight: 500; }
+        .cross-lens-figure img {
+            width: 100%;
+            max-width: 880px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            background: white;
+            border: 1px solid var(--rule);
+            border-radius: 3px;
+        }
+        .cross-lens-figure figcaption:not(.above) {
+            margin-top: var(--s-3);
+            font-size: 0.78rem;
+            color: var(--muted);
+            line-height: 1.55;
+            text-align: center;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           §4 — THE EVIDENCE
+           ══════════════════════════════════════════════════════════════ */
+        .evidence {
+            background: var(--surface);
+            padding: var(--s-8) 0;
+            margin: 0 calc(50% - 50vw);
+            padding-left: calc(50vw - 50%);
+            padding-right: calc(50vw - 50%);
+        }
+        .evidence-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--s-5);
+        }
+        .evidence .section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: var(--s-3);
+        }
+        .evidence h2 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+            color: var(--ink);
+            margin: 0 0 var(--s-6) 0;
+            line-height: 1.1;
+        }
+        .evidence-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+            gap: var(--s-8);
+            align-items: start;
+        }
+        .hero-number-block {
+            display: flex;
+            align-items: baseline;
+            line-height: 0.9;
+        }
+        .hero-number {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 9rem;
+            font-weight: 400;
+            letter-spacing: -0.05em;
+            color: var(--accent);
+            line-height: 0.9;
+        }
+        .hero-number-unit {
+            font-family: var(--font-mono);
+            font-size: 4rem;
+            font-weight: 400;
+            color: var(--accent-soft);
+            margin-left: 2px;
+            line-height: 0.9;
+        }
+        .hero-number-caption {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.65;
+            margin: var(--s-4) 0 0 0;
+            max-width: 32ch;
+        }
+        .hero-number-caption strong { color: var(--ink); }
+
+        .evidence-dek {
+            font-size: 0.95rem;
+            color: var(--muted);
+            line-height: 1.55;
+            max-width: 62ch;
+            margin: calc(-1 * var(--s-5)) 0 var(--s-6) 0;
+        }
+        .evidence-dek strong { color: var(--ink); font-weight: 600; }
+
+        .evidence-table {
+            border-top: 1px solid var(--rule);
+        }
+        .evidence-table .row {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) 80px 80px;
+            gap: var(--s-4);
+            padding: var(--s-4) 0;
+            border-bottom: 1px solid var(--rule);
+            align-items: baseline;
+        }
+        .evidence-table .row.head {
+            font-size: 0.62rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--subtle);
+            font-weight: 600;
+            padding: var(--s-3) 0;
+        }
+        .evidence-table .row .cell-num {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-weight: 500;
+            color: var(--ink);
+            text-align: right;
+            font-size: 1rem;
+            letter-spacing: -0.01em;
+        }
+        .evidence-table .row.head .cell-num {
+            color: var(--subtle);
+            font-family: var(--font-sans);
+            font-size: 0.62rem;
+            font-weight: 600;
+        }
+        .evidence-table .row .cell-label {
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+        .evidence-table .row .cell-label strong { color: var(--ink); font-weight: 600; }
+        .evidence-footnote {
+            margin-top: var(--s-4);
+            font-size: 0.78rem;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           §4.5 — LEARNED LAYER (prototype)
+           ══════════════════════════════════════════════════════════════ */
+        .learned {
+            padding: var(--s-8) 0 var(--s-7);
+            border-top: 1px solid var(--rule);
+        }
+        .learned .section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: var(--s-3);
+        }
+        .learned h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            color: var(--ink);
+            margin: 0 0 var(--s-3) 0;
+        }
+        .learned .learned-dek {
+            font-size: 0.95rem;
+            color: var(--text);
+            line-height: 1.6;
+            max-width: 70ch;
+            margin: 0 0 var(--s-6) 0;
+        }
+        .learned .learned-arch {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr auto 1fr;
+            gap: var(--s-4);
+            align-items: stretch;
+            margin: 0 0 var(--s-5) 0;
+        }
+        .learned .la-node {
+            background: var(--surface, #fafafa);
+            border: 1px solid var(--rule);
+            border-radius: 4px;
+            padding: var(--s-4) var(--s-5);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: var(--s-2);
+        }
+        .learned .la-node.is-lvm {
+            border-color: var(--accent-soft);
+            background: var(--accent-wash, #f8ecec);
+        }
+        .learned .la-node-tag {
+            font-size: 0.62rem;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: var(--subtle);
+            font-weight: 600;
+        }
+        .learned .la-node.is-lvm .la-node-tag {
+            color: var(--accent);
+        }
+        .learned .la-node-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--ink);
+            letter-spacing: -0.01em;
+        }
+        .learned .la-node-sub {
+            font-size: 0.78rem;
+            color: var(--muted);
+            line-height: 1.45;
+        }
+        .learned .la-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--faint, #bcbcbc);
+            font-size: 1.2rem;
+            font-weight: 300;
+        }
+        .learned .learned-frame {
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.6;
+            max-width: 70ch;
+            margin: 0 0 var(--s-4) 0;
+        }
+        .learned .learned-frame code {
+            font-family: var(--font-mono);
+            font-size: 0.82em;
+            color: var(--muted);
+        }
+        .learned .learned-disclaimer {
+            font-size: 0.8rem;
+            color: var(--muted);
+            line-height: 1.6;
+            max-width: 70ch;
+            margin: 0;
+            padding-top: var(--s-3);
+            border-top: 1px dashed var(--rule);
+        }
+        .learned .learned-disclaimer strong { color: var(--ink); font-weight: 600; }
+        .learned .learned-disclaimer em { color: var(--accent); font-style: normal; font-weight: 500; }
+
+        .learned .learned-figure {
+            margin: var(--s-5) 0 var(--s-5) 0;
+        }
+        .learned .learned-figure img {
+            width: 100%;
+            max-width: 880px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            background: white;
+            border: 1px solid var(--rule);
+            border-radius: 3px;
+        }
+        .learned .learned-figure figcaption {
+            margin-top: var(--s-3);
+            font-size: 0.78rem;
+            color: var(--muted);
+            line-height: 1.55;
+            text-align: center;
+            max-width: 880px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Subtle pointer from the L4 funnel row to the §7 learned-feature slot */
+        .funnel-row .f-aside {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           §5 — SURFACES + FOOTER
+           ══════════════════════════════════════════════════════════════ */
+        .surfaces {
+            padding: var(--s-8) 0 var(--s-6);
+        }
+        .surfaces .section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--subtle);
+            font-weight: 600;
+            margin-bottom: var(--s-5);
+        }
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: var(--s-4);
+        }
+
+        .footer {
+            padding: var(--s-5) 0 var(--s-6);
+            border-top: 1px solid var(--rule);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: var(--s-3);
+            font-size: 0.78rem;
+            color: var(--subtle);
+        }
+        .footer code {
+            background: var(--surface);
+            padding: 2px 8px;
+            border-radius: 3px;
+            color: var(--muted);
+            font-size: 0.85em;
+        }
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--s-2);
+        }
+        .status-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: inline-block;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           RESPONSIVE
+           ══════════════════════════════════════════════════════════════ */
+        @media (max-width: 1000px) {
+            .hero-top,
+            .globe-row,
+            .method-grid,
+            .model-grid,
+            .ranking-grid,
+            .stakeholders-grid,
+            .evidence-grid { grid-template-columns: 1fr; gap: var(--s-5); }
+            .consensus-list { grid-template-columns: 1fr; }
+            .hero-title-block h1 { font-size: 3.2rem; }
+            .problem-quote { font-size: 2rem; padding-left: var(--s-4); }
+            .hero-number { font-size: 6.5rem; }
+            .hero-number-unit { font-size: 3rem; }
+            .stats { grid-template-columns: repeat(2, 1fr); gap: var(--s-5); }
+            .cards { grid-template-columns: 1fr; }
+            .learned-arch {
+                grid-template-columns: 1fr;
+                gap: var(--s-3);
+            }
+            .learned-arch .la-arrow {
+                transform: rotate(90deg);
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── Disclaimer banner (always visible) ───────────────────────── -->
+<div class="disclaimer-banner" role="note">
+    <strong>Hackathon proof-of-concept.</strong> Built for Datathon 2026; not a policy recommendation, not a production system, not peer-reviewed, and not endorsed by any data provider referenced here. Rankings are statistical estimates with uncertainty intervals — they must not substitute for humanitarian expert judgement. Code is MIT-licensed; third-party attributions in <a href="https://github.com/BenBullinger/GEO-Insight/blob/main/NOTICE.md">NOTICE.md</a>.
+</div>
+
+<!-- ── Left-edge section index ─────────────────────────────────── -->
+<nav id="section-index" aria-label="Section index"></nav>
+
+<div class="page">
+
+    <!-- ════════════════════════════════════════════════════════════
+         §1 — HERO
+         ════════════════════════════════════════════════════════════ -->
+    <section id="hero" class="hero" data-index data-index-label="Overview" data-fade>
+        <div class="hero-top">
+            <div class="hero-title-block">
+                <div class="eyebrow">Datathon 2026</div>
+                <span class="accent-bar"></span>
+                <h1>Geo-Insight</h1>
+                <p class="tagline">Which humanitarian crises are most overlooked?</p>
+            </div>
+            <div class="hero-abstract-block">
+                <p class="abstract">
+                    When nearly every response is underfunded, a single coverage ratio no longer discriminates. Geo-Insight treats overlookedness as a <strong>latent scalar θ</strong> and infers its posterior from six signals through a <em>hierarchical Bayesian model</em>, calibrated against NUTS on every fit and validated externally against CERF Underfunded Emergencies and CARE <em>Breaking the Silence</em>.
+                </p>
+                <p class="paper-link">
+                    Full methodology: <a href="methodology/">read on this site</a> <span class="paper-link-sep">·</span> <a href="proposal.pdf" target="_blank">download PDF</a>
+                </p>
+            </div>
+        </div>
+
+        <div class="globe-row">
+            <div class="globe-wrap">
+                <div id="globe"></div>
+                <div id="globe-tooltip"></div>
+                <div class="globe-hint">Drag to rotate · click a hotspot</div>
+            </div>
+            <aside id="globe-panel" class="globe-panel">
+                <div class="panel-eyebrow">Loading…</div>
+            </aside>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════
+         §2 — THE PROBLEM
+         ════════════════════════════════════════════════════════════ -->
+    <section id="problem" class="problem" data-index data-index-label="The problem" data-fade>
+        <div class="problem-inner">
+            <div class="section-label">§ 1 · The problem</div>
+            <p class="problem-quote">
+                When <em>every</em> response is underfunded, "underfunded" stops being useful.
+            </p>
+            <p class="problem-sub">
+                Nineteen country contexts now sit below fifty per cent coverage. A single coverage ratio can't distinguish them; the useful variation is no longer <em>whether</em> a crisis is underfunded, but <em>how</em>, and <em>for whom</em>.
+            </p>
+            <div class="stats">
+                <div class="stat">
+                    <span class="stat-value" data-count-target="33" data-count-prefix="$" data-count-suffix="B">$0B</span>
+                    <span class="stat-label">2026 Global Humanitarian Overview appeal · 135 M people in need.</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value" data-count-target="19">0</span>
+                    <span class="stat-label">Country contexts below 50 % coverage in 2025, up from eight in 2021.</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value" data-count-target="71">0</span>
+                    <span class="stat-label">Typed properties across five derivation levels in the ontology.</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value" data-count-target="114">0</span>
+                    <span class="stat-label">Countries scored, each carrying its own declared completeness flag.</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════
+         §3 — THE METHOD
+         ════════════════════════════════════════════════════════════ -->
+    <section id="method" class="method" data-index data-index-label="The method" data-fade>
+        <div class="method-header">
+            <div class="section-label">§ 2 · The method</div>
+            <h2>Raw data to posterior, every value traceable.</h2>
+        </div>
+        <div class="method-grid">
+            <div class="funnel">
+                <div class="funnel-row lvl-5">
+                    <span class="f-tag">L5</span>
+                    <span class="f-count">9</span>
+                    <span><span class="f-name">Posterior</span><span class="f-desc">Bayesian posterior over θ · 90 % CI · typology</span></span>
+                </div>
+                <div class="funnel-row lvl-4">
+                    <span class="f-tag">L4</span>
+                    <span class="f-count">12</span>
+                    <span><span class="f-name">Trends</span><span class="f-desc">baselines, change over time <span class="f-aside">· learned severity forecast in § 7</span></span></span>
+                </div>
+                <div class="funnel-row lvl-3">
+                    <span class="f-tag">L3</span>
+                    <span class="f-count">10</span>
+                    <span><span class="f-name">Inequality</span><span class="f-desc">sector + donor spread</span></span>
+                </div>
+                <div class="funnel-row lvl-2">
+                    <span class="f-tag">L2</span>
+                    <span class="f-count">18</span>
+                    <span><span class="f-name">Ratios</span><span class="f-desc">scale-normalised signals</span></span>
+                </div>
+                <div class="funnel-row lvl-1">
+                    <span class="f-tag">L1</span>
+                    <span class="f-count">22</span>
+                    <span><span class="f-name">Observations</span><span class="f-desc">raw HNO · HRP · FTS · INFORM</span></span>
+                </div>
+            </div>
+            <div class="method-prose">
+                <p>
+                    Seventy-one properties in <strong>five levels</strong>. Every derived value declares its formula, its source, and its known failure modes before it is computed. Nothing appears on screen that isn't registered in the ontology.
+                </p>
+                <p>
+                    Level 5 is not a weighted sum. It is the posterior over the latent overlookedness θ — the model, next section. Everything below Level 5 is the evidence that posterior is conditioned on.
+                </p>
+                <div class="method-links">
+                    <a href="methodology/" target="_blank">Methodology · walkthrough →</a>
+                    <a href="http://localhost:8502" target="_blank">Semantic layer · localhost:8502 →</a>
+                </div>
+            </div>
+        </div>
+
+        <figure class="cross-lens-figure">
+            <figcaption class="above">
+                <strong>Same data, eight questions.</strong>
+                Rank each crisis through the eight semantic lenses. SSD traces a smooth
+                octagon: every lens agrees. TCD collapses to a jagged star: the rank
+                depends on the question. <em>The shape is the signal</em> — and why
+                §&nbsp;3 synthesises it into one latent.
+            </figcaption>
+            <img src="methodology/figures/fig_cross_lens_radar.png"
+                 alt="Two polar radar plots side by side. South Sudan (SSD) on the left shows a smooth near-octagonal outline across all eight semantic lenses (magnitude, intensity, severity, funding, donor, temporal, access, geo-insight). Chad (TCD) on the right shows a jagged star shape — high on temporal and geo-insight, low on severity, donor and access.">
+            <figcaption>
+                Rank fraction within each lens. 1.0 = top of that lens.
+            </figcaption>
+        </figure>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════
+         §3.5 — THE BAYESIAN MODEL
+         ════════════════════════════════════════════════════════════ -->
+    <section id="model" class="model" data-index data-index-label="The model" data-fade>
+        <div class="model-header">
+            <div class="section-label">§ 3 · The model</div>
+            <h2>One latent. Three likelihoods. A calibrated posterior.</h2>
+        </div>
+        <div class="model-grid">
+            <div class="model-equations">
+                <p>
+                    Overlookedness is a <strong>latent scalar $\theta(u)$</strong>, inferred from six
+                    attribute likelihoods matched to each attribute's support. Sign-constrained
+                    positive slopes make larger attribute values mean more overlooked.
+                </p>
+
+                <div class="eq-stack">
+                    <div class="eq-row">
+                        <span class="eq-tag">Beta regression</span>
+                        $a_i \mid \theta \sim \mathrm{Beta}\bigl(\sigma(\alpha_i + \beta_i\theta)\,\phi_i,\;(1-\sigma(\alpha_i + \beta_i\theta))\,\phi_i\bigr)$
+                    </div>
+                    <div class="eq-row">
+                        <span class="eq-tag">Log-normal</span>
+                        $\log a_2 \mid \theta \sim \mathcal{N}(\alpha_2 + \beta_2\theta,\,\sigma_2^2)$
+                    </div>
+                    <div class="eq-row">
+                        <span class="eq-tag">Ordered logistic</span>
+                        $a_4 \mid \theta \sim \mathrm{OrderedLogistic}(\alpha_4 + \beta_4\theta,\,\kappa)$
+                    </div>
+                </div>
+
+                <p>
+                    A Gaussian population prior on $\theta$ pools partial-data countries:
+                    sparser data, wider posteriors, by construction. Inference is variational
+                    with a full-covariance Gaussian guide (3 s on CPU), calibrated against NUTS
+                    on every fit.
+                </p>
+
+                <div class="model-stats">
+                    <div class="model-stat">
+                        <span class="model-stat-value">ρ = 0.89</span>
+                        Spearman correlation, SVI vs NUTS posterior medians.
+                    </div>
+                    <div class="model-stat">
+                        <span class="model-stat-value">≥ 0.91</span>
+                        Posterior predictive coverage at 90 %, every attribute.
+                    </div>
+                </div>
+            </div>
+
+            <figure class="model-figure">
+                <img src="methodology/figures/fig_ppc.png"
+                     alt="Six-panel posterior predictive check overlaying observed and simulated marginals for each of the six attributes">
+                <figcaption>
+                    Posterior predictive check, six attributes. Filled: 1{,}000 replicates.
+                    Outline: observed. 90 % predictive coverage ${\geq}\,0.91$ on every
+                    attribute.
+                </figcaption>
+            </figure>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════
+         §3.7 — WHAT THE POSTERIOR SAYS (rank forest)
+         ════════════════════════════════════════════════════════════ -->
+    <section id="ranking" class="ranking" data-index data-index-label="The ranking" data-fade>
+        <div class="ranking-inner">
+            <div class="section-label">§ 4 · What the posterior says</div>
+            <h2>Twenty-two crises on one axis.</h2>
+            <div class="ranking-grid">
+                <div class="ranking-prose">
+                    <p>
+                        Every HRP-eligible country on one latent axis, with a 90 % credible
+                        interval. The <em>top ten</em>, highlighted, are the crises the model
+                        places at the overlooked end of the active-response pool.
+                    </p>
+                    <p>
+                        <strong>Ordering over absolute values.</strong> The scale is the
+                        posterior median of $\theta$, recentered on the median country. Right
+                        is more overlooked; raw numbers have no external anchor. Only ordering
+                        and interval overlap carry meaning.
+                    </p>
+                    <p>
+                        <strong>Set membership over ranking.</strong> The 90 % intervals
+                        overlap heavily across the top ten — within-top-10 ordering is not
+                        supported by the data. The defensible claim is membership: these ten
+                        crises, with comparable evidence behind each.
+                    </p>
+                    <p>
+                        <strong>Funding-overlookedness axis.</strong> Coverage shortfall
+                        ($r = 0.76$) and donor concentration ($r = 0.82$) drive the latent.
+                        Need, sectoral equity, and severity sit near attribute ceilings across
+                        the HRP pool — they constrain the posterior without differentiating
+                        between countries.
+                    </p>
+                    <div class="ranking-callout">
+                        Seven of the ten countries highlighted here also appear on CERF
+                        Underfunded Emergencies allocations in 2024–25 — the model recovers
+                        expert consensus with a credible interval on every pick.
+                    </div>
+                </div>
+                <figure class="ranking-figure">
+                    <img src="methodology/figures/fig_posterior_ranking.png"
+                         alt="Forest plot of 22 HRP-eligible countries with their posterior medians and 90 percent credible intervals; top-10 highlighted.">
+                    <figcaption>
+                        Posterior median (dot) and 90 % CI (bar) for every HRP-eligible
+                        country, 2025 cycle. Recentered on the median country.
+                    </figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════
+         §3.8 — STAKEHOLDERS, CONSENSUS, CONTESTED
+         ════════════════════════════════════════════════════════════ -->
+    <section id="stakeholders" class="stakeholders" data-index data-index-label="Stakeholders" data-fade>
+        <div class="stakeholders-header">
+            <div class="section-label">§ 5 · Stakeholders, consensus, contested</div>
+            <h2>Four lenses, one dataset.</h2>
+        </div>
+        <div class="stakeholders-grid">
+            <div class="stakeholders-prose">
+                <p>
+                    Stakeholder disagreement is a difference between <strong>priors over the
+                    six slopes $\beta$</strong>, not weights in a sum. We pre-register four
+                    lenses: <em>CERF</em> (severity), <em>ECHO</em> (sectoral equity),
+                    <em>USAID</em> (donor concentration), <em>NGO consortia</em> (cluster
+                    equity). Each produces a separate posterior on $\theta$.
+                </p>
+                <p>
+                    <strong>Honduras — most contested.</strong> Three lenses cluster near the
+                    same modestly-overlooked position; USAID's density sits visibly right.
+                    All four keep HND in the top-10 — the <em>degree</em> of overlookedness
+                    depends on whose priors you apply.
+                </p>
+                <p>
+                    <strong>Haiti — most consensus.</strong> All four densities stack almost
+                    perfectly. The data overrides every prior; a safe pick under any lens.
+                </p>
+                <p>
+                    Across the pool: 5 of 22 are consensus, 11 contested under at least one
+                    lens. <em>Contestation is itself the signal</em> — it flags where
+                    stakeholder dialogue matters most for allocation.
+                </p>
+            </div>
+
+            <figure class="stakeholders-figure">
+                <img src="methodology/figures/fig_stakeholder_consensus.png"
+                     alt="Ten countries stacked vertically, each showing four-stakeholder posteriors. Eight rows are 1D credible interval bars; two rows (HND most contested, HTI most consensus) show overlaid 2D posterior density curves.">
+                <figcaption>
+                    Top-10 under the canonical fit; rows recentered per stakeholder.
+                    HND (most contested) and HTI (most consensus) shown as full densities;
+                    the other eight as 90 % CI bars.
+                </figcaption>
+            </figure>
+        </div>
+
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════
+         §4 — THE EVIDENCE
+         ════════════════════════════════════════════════════════════ -->
+    <section id="evidence" class="evidence" data-index data-index-label="The evidence" data-fade>
+        <div class="evidence-inner">
+            <div class="section-label">§ 6 · The evidence</div>
+            <h2>Against independent expert consensus.</h2>
+            <p class="evidence-dek">
+                Shown beside a <strong>naïve mean</strong> of the six attributes — the simplest
+                plausible scorer on the same pool, our floor to clear.
+            </p>
+            <div class="evidence-grid">
+                <div>
+                    <div class="hero-number-block">
+                        <span class="hero-number" data-count-target="5" data-count-duration="900">0</span><span class="hero-number-unit">/10</span>
+                    </div>
+                    <p class="hero-number-caption">
+                        precision @ 10 against <strong>CERF UFE March 2025</strong>. Half the UN's underfunded-emergency picks appear in our independent top-10 — without ever training on CERF labels.
+                    </p>
+                </div>
+                <div class="evidence-table">
+                    <div class="row head">
+                        <span>External benchmark</span>
+                        <span class="cell-num">Bayesian</span>
+                        <span class="cell-num">Naïve mean</span>
+                    </div>
+                    <div class="row">
+                        <span class="cell-label"><strong>CERF UFE 2024 w2</strong> · top-10</span>
+                        <span class="cell-num">3/10</span>
+                        <span class="cell-num">3/10</span>
+                    </div>
+                    <div class="row">
+                        <span class="cell-label"><strong>CERF UFE 2025 w1</strong> · top-10</span>
+                        <span class="cell-num">5/10</span>
+                        <span class="cell-num">5/10</span>
+                    </div>
+                    <div class="row">
+                        <span class="cell-label"><strong>CERF UFE 2025 w2</strong> · top-7</span>
+                        <span class="cell-num">2/7</span>
+                        <span class="cell-num">1/7</span>
+                    </div>
+                    <div class="row">
+                        <span class="cell-label"><strong>CARE BTS 2024</strong> · top-10</span>
+                        <span class="cell-num">3/10</span>
+                        <span class="cell-num">1/10</span>
+                    </div>
+                    <p class="evidence-footnote">
+                        Pool: 22 HRP-eligible countries — those with a formal HNO filed and positive FTS requirements, the same population CERF UFE largely draws from. Eight CERF UFE / CARE BTS picks (AGO, BDI, ETH, MDG, MRT, MWI, SYR, ZMB) sit outside this pool because they lack the HRP data infrastructure. Expanding the gate either reintroduces the non-HRP pathology (small flash appeals whose coverage-shortfall attribute saturates at 1) or degrades precision @ k. Held-out test: a 2024-only fit predicts March-2025 CERF picks at 4/10 without seeing any 2025 data.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════
+         §7 — LEARNED LAYER (prototype)
+         ════════════════════════════════════════════════════════════ -->
+    <section id="learned" class="learned" data-index data-index-label="Forecast" data-fade>
+        <div class="section-label">§ 7 · Forecasting monthly severity</div>
+        <h2>Persistence is the wall. At 12 months we clear it.</h2>
+        <p class="learned-dek">
+            Up to here the model is cross-sectional — a snapshot. Over the 65-month
+            INFORM panel we can also <em>forecast</em>. A 2-block selective state-space
+            model (Mamba, 19k parameters) reads 24 months per country and predicts the
+            mean severity $H$ months out on the 1–5 scale. No funding data, no
+            stakeholder priors, no Bayesian θ — just the monthly panel. Temporal split
+            at January 2025.
+        </p>
+
+        <div class="learned-arch">
+            <div class="la-node">
+                <div class="la-node-tag">Input</div>
+                <div class="la-node-title">Monthly INFORM panel</div>
+                <div class="la-node-sub">109 countries × 65 months × 8 channels</div>
+            </div>
+            <div class="la-arrow">→</div>
+            <div class="la-node">
+                <div class="la-node-tag">Encoder</div>
+                <div class="la-node-title">Mamba · selective SSM</div>
+                <div class="la-node-sub">2 blocks · 19k params · ~2 min on CPU</div>
+            </div>
+            <div class="la-arrow">→</div>
+            <div class="la-node is-lvm">
+                <div class="la-node-tag">Output</div>
+                <div class="la-node-title">$H$-mo forecast</div>
+                <div class="la-node-sub">one scalar per country · 1–5 scale</div>
+            </div>
+        </div>
+
+        <figure class="learned-figure">
+            <img src="methodology/figures/fig_learned_forecast.png"
+                 alt="Two-panel forecasting figure. Left: held-out MAE vs forecast horizon (1, 3, 6, 9, 12 months) for Mamba, persistence, seasonal, and mean baselines. Mamba and persistence track closely at 1-6 months with persistence slightly lower; at 9 and 12 months Mamba crosses below persistence. Right: zoom on H=12 months showing Mamba MAE 0.298 vs persistence 0.407 (1.37x better), seasonal 0.402, mean 0.928.">
+            <figcaption>
+                MAE vs forecast horizon on held-out windows. Below 6 months
+                persistence — <em>tomorrow looks like today</em> — is the right
+                baseline on a slow-moving ordinal, and it wins. At 9 and 12 months
+                persistence breaks down; the Mamba encoder separates.
+            </figcaption>
+        </figure>
+
+        <p class="learned-frame">
+            <strong>The headline at 12 months.</strong>
+            Mamba MAE <strong>0.294</strong> · persistence
+            <strong>0.407</strong> (<strong>1.38×</strong> better) ·
+            seasonal <strong>0.402</strong> (1.37×) · mean <strong>0.928</strong>
+            (3.15×). Not a big model — 19k parameters, two selective-SSM blocks,
+            two minutes on a CPU — but the horizon is where trajectory information
+            compounds and a static ``last value'' rule runs out. Short horizons
+            remain persistence's territory; we don't overclaim.
+        </p>
+
+        <p class="learned-frame">
+            <strong>As an L4 feature in the Bayesian LVM.</strong>
+            The per-country forecast is registered in the ontology as
+            <code>severity_momentum_learned</code> and fed to the LVM as a seventh
+            sign-constrained attribute. On the 22-country HRP pool this currently
+            moves the top-10 by three countries without a net precision gain across
+            the four external benchmarks — honest extension, no uplift to claim.
+            The forecasting result above is the standalone contribution.
+        </p>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════
+         §8 — SURFACES + FOOTER
+         ════════════════════════════════════════════════════════════ -->
+    <section id="surfaces" class="surfaces" data-index data-index-label="Surfaces" data-fade>
+        <div class="section-label">§ 8 · Surfaces</div>
+        <div class="cards">
+            <a class="card" href="http://localhost:8000" target="_blank" rel="noopener">
+                <span class="card-arrow">→</span>
+                <div class="card-label">Deck</div>
+                <h3>Presentation</h3>
+                <p>Ten slides, problem to validated result to forecast.</p>
+                <span class="card-url">localhost:8000</span>
+            </a>
+
+            <a class="card" href="http://localhost:8501" target="_blank" rel="noopener">
+                <span class="card-arrow">→</span>
+                <div class="card-label">Provenance</div>
+                <h3>Data sources</h3>
+                <p>One tab per upstream dataset: HNO, HRP, FTS, CoD-PS, CBPF, INFORM.</p>
+                <span class="card-url">localhost:8501</span>
+            </a>
+
+            <a class="card" href="http://localhost:8502" target="_blank" rel="noopener">
+                <span class="card-arrow">→</span>
+                <div class="card-label">Analysis</div>
+                <h3>Semantic layer</h3>
+                <p>Eight lenses, six modes. Start from featured views or the full grid.</p>
+                <span class="card-url">localhost:8502</span>
+            </a>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <span class="status"><span class="status-dot"></span>Datathon 2026 hackathon POC · MIT licensed</span>
+        <span>Launch with <code>./run.sh</code> · stop with <kbd>Ctrl-C</kbd> · attributions in <a href="https://github.com/BenBullinger/GEO-Insight/blob/main/NOTICE.md">NOTICE.md</a></span>
+    </footer>
+
+</div>
+
+<script src="globe.js"></script>
+<script src="landing.js"></script>
+</body>
+</html>

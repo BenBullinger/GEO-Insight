@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Semantic stack · Geo-Insight</title>
+<style>
+body {
+    margin: 0;
+    padding: 28px 110px 28px 40px;
+    background: white;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 26px;
+    color: #222;
+    -webkit-font-smoothing: antialiased;
+}
+.onto-funnel {
+    position: relative;
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.onto-bar {
+    display: grid;
+    grid-template-columns: 40px 48px 150px 1fr;
+    column-gap: 20px;
+    align-items: center;
+    height: 56px;
+    padding: 0 28px;
+    color: white;
+    box-sizing: border-box;
+    width: 100%;
+}
+.onto-bar .b-tag {
+    font-family: "JetBrains Mono", "Menlo", monospace;
+    font-size: 0.6em;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.55);
+    text-transform: uppercase;
+}
+.onto-bar .b-count {
+    font-family: "JetBrains Mono", "Menlo", monospace;
+    font-size: 1em;
+    font-weight: 500;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: rgba(255,255,255,0.95);
+    line-height: 1;
+}
+.onto-bar .b-name {
+    font-size: 0.82em;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: white;
+    line-height: 1;
+}
+.onto-bar .b-desc {
+    font-size: 0.6em;
+    font-weight: 400;
+    color: rgba(255,255,255,0.78);
+    line-height: 1.35;
+    margin-left: 0.7em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.onto-bar.r-5 { background: #5c1414; }
+.onto-bar.r-4 { background: #782020; }
+.onto-bar.r-3 { background: #942d2d; }
+.onto-bar.r-2 { background: #af3d3d; }
+.onto-bar.r-1 { background: #c95555; }
+.onto-axis {
+    position: absolute;
+    top: 0;
+    right: -84px;
+    bottom: 0;
+    width: 72px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    font-size: 0.5em;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: #888;
+    font-weight: 600;
+    padding: 4px 0;
+}
+</style>
+</head>
+<body>
+<div class="onto-funnel">
+    <div class="onto-bar r-5">
+        <span class="b-tag">L5</span>
+        <span class="b-count">9</span>
+        <span><span class="b-name">Posterior</span><span class="b-desc">Bayesian posterior over θ · 90 % CI · typology</span></span>
+    </div>
+    <div class="onto-bar r-4">
+        <span class="b-tag">L4</span>
+        <span class="b-count">12</span>
+        <span><span class="b-name">Trends</span><span class="b-desc">baselines · year-on-year change · acceleration</span></span>
+    </div>
+    <div class="onto-bar r-3">
+        <span class="b-tag">L3</span>
+        <span class="b-count">10</span>
+        <span><span class="b-name">Inequality</span><span class="b-desc">sector and donor distribution indices</span></span>
+    </div>
+    <div class="onto-bar r-2">
+        <span class="b-tag">L2</span>
+        <span class="b-count">18</span>
+        <span><span class="b-name">Ratios</span><span class="b-desc">scale-normalised signals</span></span>
+    </div>
+    <div class="onto-bar r-1">
+        <span class="b-tag">L1</span>
+        <span class="b-count">22</span>
+        <span><span class="b-name">Observations</span><span class="b-desc">raw HNO · HRP · FTS · INFORM</span></span>
+    </div>
+    <div class="onto-axis">
+        <span>derived</span>
+        <span class="axis-line"></span>
+        <span>observed</span>
+    </div>
+</div>
+</body>
+</html>

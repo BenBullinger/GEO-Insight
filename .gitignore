@@ -1,0 +1,45 @@
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+proposal/build.log
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Data caches
+*.parquet.tmp
+.cache/
+analysis/enriched.parquet
+
+# Downloaded source data — too large for GitHub, reproduced via Data/download.py
+Data/hno/
+Data/hrp/
+Data/cod-ps/
+Data/fts/
+Data/cbpf/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+notes/
+
+# Removed from public repo — see NOTICE.md for rationale
+literature/
+task/
+Data/Third-Party/IPCInfo/

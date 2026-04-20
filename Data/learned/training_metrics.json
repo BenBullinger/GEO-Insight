@@ -1,0 +1,29 @@
+{
+  "task": "12-month-ahead severity value (absolute, 1-5 scale)",
+  "window": 24,
+  "horizon": 12,
+  "train_cutoff": "2025-01",
+  "n_train_windows": 2400,
+  "n_test_windows": 78,
+  "params": 19233,
+  "mae_mamba": 0.2942809760570526,
+  "mae_persistence": 0.40662394043726796,
+  "mae_seasonal": 0.4019230932761461,
+  "mae_mean": 0.9282699953287076,
+  "uplift_vs_persistence": 1.3817540837516975,
+  "uplift_vs_seasonal": 1.3657800740684807,
+  "per_class": {
+    "changing": {
+      "n": 4,
+      "mae_mamba": 0.6210719347000122,
+      "mae_persist": 1.694791704416275,
+      "mae_seasonal": 1.2093749642372131
+    },
+    "flat": {
+      "n": 74,
+      "mae_mamba": 0.27661657333374023,
+      "mae_persist": 0.3369932504924568,
+      "mae_seasonal": 0.35827704619716955
+    }
+  }
+}

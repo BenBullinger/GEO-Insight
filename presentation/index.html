@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Geo-Insight — Datathon 2026</title>
+
+    <link rel="stylesheet" href="vendor/reveal.js/dist/reset.css">
+    <link rel="stylesheet" href="vendor/reveal.js/dist/reveal.css">
+    <link rel="stylesheet" href="vendor/reveal.js/dist/theme/white.css" id="theme">
+    <link rel="stylesheet" href="css/theme-un.css">
+    <link rel="stylesheet" href="vendor/reveal.js/dist/plugin/highlight/monokai.css">
+</head>
+
+<body>
+<div class="reveal">
+    <div class="slides">
+        <!-- ═══════════════════════════════════════════════════════════════
+             1 · Title
+             ═══════════════════════════════════════════════════════════════ -->
+        <section class="title-slide">
+            <div class="eyebrow">Datathon 2026 · hackathon proof-of-concept</div>
+            <h1>Geo-Insight</h1>
+            <div class="subtitle">Which humanitarian crises are most overlooked?</div>
+            <div class="meta">19 April 2026</div>
+            <p style="font-size: 0.5em; color: #888; margin-top: 28px; max-width: 820px; line-height: 1.5;">
+                Student team submission — not a policy recommendation, not a production system, not peer-reviewed, not endorsed by any data provider. Rankings are statistical estimates and must not substitute for humanitarian expert judgement. Code is MIT-licensed; third-party attributions in <code>NOTICE.md</code>.
+            </p>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             2 · The problem
+             ═══════════════════════════════════════════════════════════════ -->
+        <section>
+            <h1>Every response is underfunded.</h1>
+            <p>A single coverage ratio no longer separates three kinds of neglect.</p>
+            <div class="big-stats">
+                <div class="stat-block"><span class="val">$33B</span><span class="desc">2026 GHO appeal<br>for 135&nbsp;M people in need</span></div>
+                <div class="stat-block"><span class="val">$12B</span><span class="desc">raised in 2025<br>lowest in a decade</span></div>
+                <div class="stat-block"><span class="val">19</span><span class="desc">contexts below 50&nbsp;% coverage<br>up from 8 in 2021</span></div>
+            </div>
+            <div class="kind-cards" style="margin-top: 18px;">
+                <div class="kind-card">
+                    <div class="traits">low funding · low attention</div>
+                    <h3>Forgotten</h3>
+                    <p class="example">Angola 2023 — 7&nbsp;M affected, 1,049 news articles.</p>
+                </div>
+                <div class="kind-card">
+                    <div class="traits">low funding · global attention</div>
+                    <h3>Contested</h3>
+                    <p class="example">Sudan 2025 — world's largest displacement, still fell to 35&nbsp;% covered.</p>
+                </div>
+                <div class="kind-card">
+                    <div class="traits">adequate aggregate · starved sector</div>
+                    <h3>Sector-starved</h3>
+                    <p class="example">60&nbsp;% overall can mask a health cluster at 20&nbsp;%.</p>
+                </div>
+            </div>
+            <div class="footer"><span>Geo-Insight</span><span>1</span></div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             3 · The model
+             ═══════════════════════════════════════════════════════════════ -->
+        <section>
+            <h1>Don't score. Infer.</h1>
+            <p>Treat <em>overlookedness</em> as one unobserved number per country, $\theta$. Infer its posterior from six signals, each with a likelihood matched to its natural range.</p>
+            <figure style="margin: 14px 0 10px 0;">
+                <img src="figures/fig2_observation_model.png"
+                     alt="Four panels: Beta regression for bounded fractions; log-normal for positive reals; ordered logistic over five severity categories; missingness widens the posterior on θ rather than shifting it"
+                     style="width: 100%; height: auto; display: block; border-radius: 3px;">
+            </figure>
+            <div class="cols-3" style="gap: 20px;">
+                <div>
+                    <h4 style="margin: 0 0 4px 0;">Directions we know</h4>
+                    <p style="font-size: 0.72em; color: var(--muted); margin: 0; line-height: 1.5;">Each slope $\beta_i$ — how strongly a signal raises $\theta$ — is fixed positive. A bigger funding gap can only mean more overlooked.</p>
+                </div>
+                <div>
+                    <h4 style="margin: 0 0 4px 0;">Honest uncertainty</h4>
+                    <p style="font-size: 0.72em; color: var(--muted); margin: 0; line-height: 1.5;">Sparse-data countries pool toward the global mean; credible intervals widen automatically when evidence is thin.</p>
+                </div>
+                <div>
+                    <h4 style="margin: 0 0 4px 0;">Mask, never impute</h4>
+                    <p style="font-size: 0.72em; color: var(--muted); margin: 0; line-height: 1.5;">Missing signals widen the posterior, never shift it. No fabricated values in the fit.</p>
+                </div>
+            </div>
+            <div class="footer"><span>Geo-Insight</span><span>2</span></div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             4 · Semantic layer
+             ═══════════════════════════════════════════════════════════════ -->
+        <section>
+            <h1>No magic numbers.</h1>
+            <p>Seventy-one properties across five levels. Each declares its formula, source, and known failure modes before it's computed. Nothing reaches a slide unless it's in the ontology.</p>
+            <div class="onto-funnel" style="margin-top: 18px;">
+                <div class="onto-bar r-5">
+                    <span class="b-tag">L5</span>
+                    <span class="b-count">9</span>
+                    <span><span class="b-name">Posterior</span><span class="b-desc">Bayesian posterior over θ · 90 % CI · typology</span></span>
+                </div>
+                <div class="onto-bar r-4">
+                    <span class="b-tag">L4</span>
+                    <span class="b-count">12</span>
+                    <span><span class="b-name">Trends</span><span class="b-desc">baselines, year-on-year change, acceleration</span></span>
+                </div>
+                <div class="onto-bar r-3">
+                    <span class="b-tag">L3</span>
+                    <span class="b-count">10</span>
+                    <span><span class="b-name">Inequality</span><span class="b-desc">sector and donor distribution indices</span></span>
+                </div>
+                <div class="onto-bar r-2">
+                    <span class="b-tag">L2</span>
+                    <span class="b-count">18</span>
+                    <span><span class="b-name">Ratios</span><span class="b-desc">scale-normalised signals</span></span>
+                </div>
+                <div class="onto-bar r-1">
+                    <span class="b-tag">L1</span>
+                    <span class="b-count">22</span>
+                    <span><span class="b-name">Observations</span><span class="b-desc">raw HNO · HRP · FTS · INFORM</span></span>
+                </div>
+                <div class="onto-axis">
+                    <span>derived</span>
+                    <span class="axis-line"></span>
+                    <span>observed</span>
+                </div>
+            </div>
+            <div class="footer"><span>Geo-Insight</span><span>3</span></div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             4 · The posterior
+             ═══════════════════════════════════════════════════════════════ -->
+        <section>
+            <h1>Twenty-two crises on one overlookedness axis.</h1>
+            <div class="figure-slide">
+                <div class="prose">
+                    <p>One posterior median and 90&nbsp;% credible interval per country with an active response plan. The ten highlighted are the most overlooked.</p>
+                    <p><strong>Membership, not rank.</strong> Intervals overlap across the top-10 — which ten we pick is defensible; the order <em>within</em> is not.</p>
+                    <p><strong>Seven of the ten</strong> independently appear on the UN's Underfunded Emergencies lists, 2024–25.</p>
+                </div>
+                <figure class="fig">
+                    <img src="figures/fig_posterior_ranking.png" alt="Forest plot of 22 HRP-eligible countries with posterior medians and 90 % credible intervals, top-10 highlighted">
+                    <figcaption>Posterior median and 90&nbsp;% credible interval, recentered on the median country.</figcaption>
+                </figure>
+            </div>
+            <div class="footer"><span>Geo-Insight</span><span>4</span></div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             6 · Stakeholders
+             ═══════════════════════════════════════════════════════════════ -->
+        <section>
+            <h1>Agencies disagree on what should count, not on the answer.</h1>
+            <div class="figure-slide">
+                <div class="prose">
+                    <p>Four agencies, each weighting the six signals differently. Each weighting is a prior on $\beta$; each yields its own posterior on $\theta$.</p>
+                    <ul style="font-size: 0.82em; margin: 0 0 12px 1.1em; line-height: 1.55;">
+                        <li><strong>CERF</strong> weights severity.</li>
+                        <li><strong>ECHO</strong> weights balance across sectors.</li>
+                        <li><strong>USAID</strong> weights donor concentration.</li>
+                        <li><strong>NGO consortia</strong> weight cluster-level equity.</li>
+                    </ul>
+                    <p style="font-size: 0.86em;"><strong>Honduras — most contested.</strong> All four keep it in the top-10; USAID's posterior sits visibly further toward "more overlooked".</p>
+                    <p style="font-size: 0.86em;"><strong>Haiti — most consensus.</strong> All four posteriors stack tight — the data overrides every prior.</p>
+                    <div class="consensus-pair" style="margin-top: 14px;">
+                        <div class="ctile tile-consensus">
+                            <div class="ctile-label">Consensus</div>
+                            <span class="ctile-count">5</span>
+                            <div class="ctile-iso">HND · SLV · GTM · HTI · SOM</div>
+                        </div>
+                        <div class="ctile tile-contested">
+                            <div class="ctile-label">Contested</div>
+                            <span class="ctile-count">11</span>
+                            <div class="ctile-iso">under at least one lens</div>
+                        </div>
+                    </div>
+                </div>
+                <figure class="fig">
+                    <img src="figures/fig_stakeholder_consensus.png" alt="Top-10 stacked with four stakeholder posteriors per row; HND most contested and HTI most consensus shown as 2D density curves">
+                    <figcaption>Top-10 per row, recentered per stakeholder.</figcaption>
+                </figure>
+            </div>
+            <div class="footer"><span>Geo-Insight</span><span>5</span></div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             7 · Validation
+             ═══════════════════════════════════════════════════════════════ -->
+        <section>
+            <h1>Against independent expert consensus.</h1>
+            <div class="figure-slide" style="grid-template-columns: 1fr 1fr; gap: 24px;">
+                <div class="prose">
+                    <p style="font-size: 0.82em; margin-bottom: 10px;">Two independently curated expert lists, neither seen during fitting. A naïve mean of the six signals on the same pool is our floor.</p>
+                    <table style="font-size: 0.85em; margin: 0 0 16px 0;">
+                        <thead>
+                            <tr><th>Benchmark</th><th>$k$</th><th>Bayesian</th><th>Naïve mean</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>CERF UFE 2024 w2</td><td>10</td><td>3/10</td><td>3/10</td></tr>
+                            <tr><td>CERF UFE 2025 w1</td><td>10</td><td><strong>5/10</strong></td><td><strong>5/10</strong></td></tr>
+                            <tr><td>CERF UFE 2025 w2</td><td>7</td><td><strong>2/7</strong></td><td>1/7</td></tr>
+                            <tr><td>CARE BTS 2024</td><td>10</td><td><strong>3/10</strong></td><td>1/10</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="font-size: 0.75em; margin-bottom: 0.5em;"><strong>Held out in time.</strong> A 2024-only fit predicts CERF's March-2025 picks at 4/10, with no 2025 data seen.</p>
+                    <p style="font-size: 0.75em; margin-bottom: 0;"><strong>Calibration.</strong> Our 3-second variational fit is validated against exact MCMC every run: Spearman $\rho = 0.89$, CI widths within $2\times$.</p>
+                </div>
+                <figure class="fig">
+                    <img src="figures/fig_ppc.png" alt="Six-panel posterior predictive check overlaying observed and simulated marginals for each attribute">
+                    <figcaption>Posterior predictive coverage $\geq 0.91$ on every attribute.</figcaption>
+                </figure>
+            </div>
+            <div class="footer"><span>Geo-Insight</span><span>6</span></div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             7 · Forecasting — a learned L4 feature
+             ═══════════════════════════════════════════════════════════════ -->
+        <section>
+            <h1>Forecasting severity twelve months out.</h1>
+            <p>A 19k-parameter selective state-space model — <em>Mamba</em> — reads 24 months of INFORM and predicts the mean severity of the next twelve. No funding data, no $\theta$, no priors. Temporal split at January 2025.</p>
+            <div class="figure-slide" style="grid-template-columns: 1fr 1.25fr; gap: 24px; margin-top: 8px;">
+                <div class="prose">
+                    <div class="big-stat-row" style="margin-bottom: 14px;">
+                        <span class="big-stat-val">1.38×</span>
+                        <div class="big-stat-body">
+                            <p>Lower error than <strong>persistence</strong> — "severity next year equals today's" — at 12 months. MAE <strong>0.294</strong> vs <strong>0.407</strong> on 78 held-out windows.</p>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.78em; margin-bottom: 0.4em;"><strong>Lead grows with horizon.</strong> 1.33× at 9 months, 1.38× at 12 — drift lets multivariate trajectory structure pay off.</p>
+                    <p style="font-size: 0.78em; margin-bottom: 0.4em;"><strong>Honest inside 6 months.</strong> Severity rarely moves; persistence is the right baseline and we don't claim uplift.</p>
+                    <p style="font-size: 0.78em; margin-bottom: 0;"><strong>Back into the model.</strong> The forecast enters the Bayesian fit as a 7<sup>th</sup> sign-constrained signal.</p>
+                </div>
+                <figure class="fig">
+                    <img src="figures/fig_learned_forecast.png" alt="Two-panel forecasting figure. Left: MAE vs forecast horizon (1, 3, 6, 9, 12 months) for Mamba, persistence, seasonal, and mean baselines. Persistence wins at short horizons; Mamba crosses below persistence at 9 months and leads by 1.37x at 12 months. Right: zoom on H=12 bar chart.">
+                    <figcaption>Held-out MAE by horizon. Mamba's lead compounds as the horizon grows.</figcaption>
+                </figure>
+            </div>
+            <div class="footer"><span>Geo-Insight</span><span>7</span></div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             8 · Scope + what's next
+             ═══════════════════════════════════════════════════════════════ -->
+        <section>
+            <h1>Twenty-two is where the data lands.</h1>
+            <div class="cols" style="grid-template-columns: 1fr 1.05fr; gap: 32px;">
+                <div>
+                    <h3 style="margin-top: 0;">Why twenty-two</h3>
+                    <p style="font-size: 0.82em; margin-bottom: 0.5em;">Eligibility: a formal needs assessment and a funding request. The same pool CERF itself draws from.</p>
+                    <p style="font-size: 0.82em; margin-bottom: 0.5em;">Eight benchmark picks sit outside (AGO, BDI, ETH, MDG, MRT, MWI, SYR, ZMB) — six lack a response plan; two have no 2025 needs data.</p>
+                    <p style="font-size: 0.82em; margin-bottom: 0;">Expanding the gate degrades precision @ $k$. Twenty-two is not a cap — it's where the data lands.</p>
+                </div>
+                <div>
+                    <h3 style="margin-top: 0;">What comes next</h3>
+                    <div class="roadmap" style="grid-template-columns: 1fr; gap: 10px;">
+                        <div class="step">
+                            <div class="num">1</div>
+                            <h4>Calibrated agency priors</h4>
+                            <p>Regress real allocation histories on the six signals to recover each agency's priors empirically.</p>
+                        </div>
+                        <div class="step">
+                            <div class="num">2</div>
+                            <h4>Temporal AR(1) on $\theta$</h4>
+                            <p>Chronic and acute fall out of one posterior, anchored by monthly INFORM.</p>
+                        </div>
+                        <div class="step">
+                            <div class="num">3</div>
+                            <h4>Longer monthly panel</h4>
+                            <p>The encoder only beats persistence at 12 months. More history per country is the unlock — not a bigger model.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="footer"><span>Geo-Insight</span><span>8</span></div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             10 · Close
+             ═══════════════════════════════════════════════════════════════ -->
+        <section class="headline-slide">
+            <p class="eyebrow-small">Thank you</p>
+            <p class="headline">Questions?</p>
+            <p class="subhead">Overlookedness as one latent number · six observed signals · four agency priors · calibrated uncertainty · externally validated. Methodology at <code>localhost:7777/methodology/</code>.</p>
+        </section>
+</div>
+
+<script src="vendor/reveal.js/dist/reveal.js"></script>
+<script src="vendor/reveal.js/dist/plugin/highlight.js"></script>
+<script src="vendor/reveal.js/dist/plugin/notes.js"></script>
+<script src="vendor/reveal.js/dist/plugin/math.js"></script>
+
+<script>
+    Reveal.initialize({
+        hash: true,
+        slideNumber: false,
+        controls: true,
+        progress: true,
+        center: false,
+        transition: 'fade',
+        transitionSpeed: 'fast',
+        width: 1280,
+        height: 800,
+        margin: 0.06,
+        minScale: 0.2,
+        maxScale: 2.0,
+        katex: {
+            version: 'latest',
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\(', right: '\\)', display: false},
+                {left: '\\[', right: '\\]', display: true}
+            ],
+            ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+        },
+        plugins: [RevealHighlight, RevealNotes, RevealMath.KaTeX]
+    });
+</script>
+</body>
+</html>

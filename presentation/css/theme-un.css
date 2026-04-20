@@ -1,0 +1,1290 @@
+/* Geo-Insight presentation theme.
+ * Principles: generous whitespace, confident typography, single accent,
+ * zero visual clutter. */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+    /* Neutrals */
+    --ink:      #111111;
+    --text:     #222222;
+    --muted:    #555555;
+    --subtle:   #888888;
+    --faint:    #bcbcbc;
+    --rule:     #e8e8e8;
+    --surface:  #fafafa;
+    --bg:       #ffffff;
+
+    /* Single accent — deep red, with graduated shades for depth */
+    --accent:       #7c1d1d;
+    --accent-dim:   #9a2a2a;
+    --accent-soft:  #c9554f;
+    --accent-wash:  #f8ecec;
+    --accent-mist:  #fcf5f5;
+
+    /* Legacy compat (old HTML still uses these) */
+    --un-blue:       var(--accent);
+    --un-blue-dark:  var(--accent);
+    --un-blue-deep:  var(--ink);
+    --un-gray-dark:  var(--text);
+    --un-gray:       var(--muted);
+    --un-gray-light: var(--subtle);
+    --un-bg:         var(--bg);
+    --un-bg-alt:     var(--surface);
+    --un-rule:       var(--rule);
+    --un-accent-warm: var(--accent-dim);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Base
+   ───────────────────────────────────────────────────────────────────── */
+html, body, .reveal-viewport { background: var(--bg); }
+
+.reveal {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 26px;
+    font-weight: 400;
+    color: var(--text);
+    letter-spacing: -0.005em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.reveal .slides { text-align: left; }
+
+.reveal .slides > section,
+.reveal .slides > section > section {
+    padding: 56px 72px 72px;
+    line-height: 1.5;
+    height: 100%;
+    box-sizing: border-box;
+    background: var(--bg);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Typography
+   ───────────────────────────────────────────────────────────────────── */
+.reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+    font-family: inherit;
+    color: var(--ink);
+    text-transform: none;
+    text-shadow: none;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.55em 0;
+    line-height: 1.15;
+}
+
+.reveal h1 {
+    font-size: 1.55em;
+    font-weight: 600;
+    padding: 0;
+    border: none;
+    margin-bottom: 0.5em;
+}
+
+.reveal h2 { font-size: 1.25em; font-weight: 600; }
+.reveal h3 { font-size: 1em;    font-weight: 600; color: var(--ink); }
+.reveal h4 {
+    font-size: 0.65em;
+    font-weight: 600;
+    color: var(--subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 0.8em;
+}
+
+.reveal p { margin: 0 0 0.7em 0; font-weight: 400; }
+
+.reveal strong, .reveal b {
+    color: var(--ink);
+    font-weight: 600;
+}
+
+.reveal em, .reveal i {
+    color: var(--accent);
+    font-style: normal;
+    font-weight: 500;
+}
+
+/* Lists */
+.reveal ul, .reveal ol { margin: 0 0 0.7em 1.1em; padding: 0; }
+.reveal ul li, .reveal ol li { margin-bottom: 0.3em; }
+.reveal ul li::marker { color: var(--accent); }
+
+/* Code */
+.reveal code, .reveal pre {
+    font-family: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+}
+
+.reveal code {
+    font-size: 0.82em;
+    background: var(--accent-mist);
+    padding: 1px 7px;
+    border-radius: 3px;
+    color: var(--accent);
+    font-weight: 500;
+}
+
+/* Math */
+.reveal .katex { color: var(--ink); }
+
+/* Links */
+.reveal a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent-soft);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Tables
+   ───────────────────────────────────────────────────────────────────── */
+.reveal table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.6em 0;
+    font-size: 0.7em;
+    background: var(--bg);
+}
+
+.reveal table th {
+    background: transparent;
+    color: var(--subtle);
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 14px 8px;
+    border: none;
+    border-bottom: 2px solid var(--ink);
+    text-transform: uppercase;
+    font-size: 0.8em;
+    letter-spacing: 0.08em;
+}
+
+.reveal table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+    color: var(--text);
+}
+
+.reveal table td strong { color: var(--ink); font-weight: 600; }
+
+.reveal table tbody tr:last-child td { border-bottom: none; }
+.reveal table tbody tr:hover { background: var(--surface); }
+
+.reveal table td.partial {
+    color: var(--accent);
+    font-weight: 500;
+}
+
+.reveal table th { white-space: nowrap; }
+
+/* ─────────────────────────────────────────────────────────────────────
+   Controls + progress
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .controls { color: var(--accent); }
+.reveal .progress {
+    color: var(--accent);
+    background: var(--rule);
+    height: 3px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Footer
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .footer {
+    position: absolute;
+    bottom: 24px;
+    left: 72px;
+    right: 72px;
+    font-size: 0.42em;
+    color: var(--subtle);
+    display: flex;
+    justify-content: space-between;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Title slide
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .title-slide {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding: 72px 96px !important;
+}
+
+.reveal .title-slide::before {
+    content: "";
+    display: block;
+    width: 48px;
+    height: 3px;
+    background: var(--accent);
+    margin-bottom: 40px;
+}
+
+.reveal .title-slide .eyebrow {
+    font-size: 0.5em;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    margin-bottom: 1.4em;
+    font-weight: 600;
+}
+
+.reveal .title-slide h1 {
+    font-size: 3.6em;
+    font-weight: 700;
+    border: none;
+    padding: 0;
+    margin-bottom: 0.15em;
+    color: var(--ink);
+    line-height: 1;
+    letter-spacing: -0.035em;
+}
+
+.reveal .title-slide .subtitle {
+    font-size: 1.3em;
+    color: var(--muted);
+    font-weight: 400;
+    margin: 0.4em 0 2.2em 0;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    max-width: 42ch;
+}
+
+.reveal .title-slide .meta {
+    font-size: 0.5em;
+    color: var(--subtle);
+    padding-top: 0;
+    border: none;
+    line-height: 1.6;
+    min-width: 0;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+}
+
+.reveal .title-slide .meta strong {
+    color: var(--muted);
+    font-weight: 600;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Section divider — bold red with white text
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .section-divider {
+    background: var(--accent) !important;
+    color: white;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding: 72px 96px !important;
+}
+
+.reveal .section-divider h1 {
+    color: white !important;
+    border: none !important;
+    padding: 0 !important;
+    font-size: 3em;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin: 0;
+}
+
+.reveal .section-divider .eyebrow {
+    font-size: 0.5em;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: rgba(255,255,255,0.65);
+    margin-bottom: 1.2em;
+    font-weight: 600;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Headline slide — generous, confident typography
+   ───────────────────────────────────────────────────────────────────── */
+.reveal section.headline-slide {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding: 72px 96px !important;
+}
+
+.reveal section.headline-slide .eyebrow-small {
+    font-size: 0.45em;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    font-weight: 600;
+    margin: 0 0 2.2em 0;
+}
+
+.reveal section.headline-slide .headline {
+    font-size: 2em;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+    margin: 0 0 1em 0;
+    max-width: 32ch;
+}
+
+.reveal section.headline-slide .headline em {
+    color: var(--accent);
+    font-style: normal;
+    font-weight: 600;
+}
+
+.reveal section.headline-slide .subhead {
+    font-size: 0.78em;
+    color: var(--muted);
+    max-width: 56ch;
+    margin: 0;
+    line-height: 1.55;
+    font-weight: 400;
+}
+
+.reveal section.headline-slide .subhead em {
+    color: var(--ink);
+    font-weight: 500;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Big stats (3-column)
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .big-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 48px;
+    margin: 40px 0 0;
+}
+
+.reveal .big-stats .stat-block .val {
+    font-size: 3.2em;
+    font-weight: 300;
+    color: var(--ink);
+    line-height: 1;
+    letter-spacing: -0.04em;
+    display: block;
+    font-variant-numeric: tabular-nums;
+}
+
+.reveal .big-stats .stat-block .desc {
+    font-size: 0.55em;
+    color: var(--muted);
+    margin-top: 16px;
+    line-height: 1.5;
+    display: block;
+    font-weight: 400;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Kind cards (3 types of overlooked)
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .kind-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+    margin-top: 32px;
+}
+
+.reveal .kind-card {
+    padding: 24px 0 0 0;
+    border-top: 2px solid var(--ink);
+}
+
+.reveal .kind-card .traits {
+    font-size: 0.5em;
+    color: var(--subtle);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+}
+
+.reveal .kind-card h3 {
+    margin: 0 0 14px 0;
+    font-size: 1.15em;
+    color: var(--ink);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+.reveal .kind-card .example {
+    color: var(--muted);
+    margin: 0;
+    font-size: 0.7em;
+    line-height: 1.55;
+}
+
+.reveal .kind-card .example strong { color: var(--ink); font-weight: 600; }
+.reveal .kind-card .example em     { color: var(--accent); font-weight: 500; }
+
+.reveal .kind-card.muted {
+    border-top-color: var(--faint);
+}
+
+.reveal .kind-card.muted h3,
+.reveal .kind-card.muted .traits {
+    color: var(--subtle);
+}
+
+.reveal .kind-card.muted .example {
+    color: var(--subtle);
+}
+
+.reveal .kind-card.muted .example strong {
+    color: var(--muted);
+}
+
+.reveal .kind-card.selected {
+    border-top-color: var(--accent);
+    border-top-width: 3px;
+}
+
+.reveal .kind-card.selected h3 { color: var(--accent); }
+.reveal .kind-card.selected .traits { color: var(--accent); }
+
+/* Chronic vs. acute time panels */
+.reveal .time-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    margin-top: 28px;
+}
+
+.reveal .time-panel h3 {
+    font-size: 0.9em;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 0 0 12px 0;
+    letter-spacing: -0.01em;
+}
+
+.reveal .time-panel svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.reveal .time-panel .time-desc {
+    font-size: 0.65em;
+    color: var(--muted);
+    margin-top: 12px;
+    line-height: 1.6;
+}
+
+.reveal .time-panel .time-desc strong { color: var(--ink); font-weight: 600; }
+
+/* "What this is not" grid */
+.reveal .not-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px 36px;
+    margin-top: 28px;
+}
+
+.reveal .not-grid > div {
+    padding-top: 14px;
+    border-top: 1px solid var(--rule);
+}
+
+.reveal .not-grid h4 {
+    font-size: 0.55em;
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin: 0 0 10px 0;
+}
+
+.reveal .not-grid p {
+    font-size: 0.65em;
+    color: var(--text);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.reveal .not-grid p em { color: var(--accent); font-weight: 500; }
+
+/* Small grey footnote used under charts/tables */
+.reveal .slide-footnote {
+    font-size: 0.55em;
+    color: var(--subtle);
+    line-height: 1.6;
+    margin-top: 20px;
+    max-width: 88ch;
+}
+
+.reveal .slide-footnote strong { color: var(--muted); font-weight: 600; }
+.reveal .slide-footnote em     { color: var(--muted); font-style: normal; }
+
+/* ─────────────────────────────────────────────────────────────────────
+   Before / After layout
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .before-after {
+    display: grid;
+    grid-template-columns: 1fr 80px 1fr;
+    gap: 0;
+    align-items: stretch;
+    margin: 32px 0 24px;
+}
+
+.reveal .before-after .side {
+    padding: 32px 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    min-height: 260px;
+}
+
+.reveal .before-after .side.before {
+    background: var(--surface);
+    border-radius: 4px;
+}
+
+.reveal .before-after .side.after {
+    background: var(--accent-mist);
+    border-radius: 4px;
+}
+
+.reveal .before-after .arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4em;
+    color: var(--accent);
+    font-weight: 300;
+}
+
+.reveal .before-after .side .label {
+    font-size: 0.48em;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--subtle);
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.reveal .before-after .side .big-num {
+    font-size: 3.4em;
+    font-weight: 300;
+    color: var(--faint);
+    line-height: 1;
+    margin: 4px 0 18px 0;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+}
+
+.reveal .before-after .side.after .axis {
+    font-size: 0.85em;
+    color: var(--ink);
+    font-weight: 600;
+    margin: 4px 0;
+    letter-spacing: -0.015em;
+}
+
+.reveal .before-after .side .sub {
+    font-size: 0.55em;
+    color: var(--muted);
+    line-height: 1.55;
+    margin-top: 14px;
+    font-weight: 400;
+}
+
+.reveal .before-after .side .sub em { color: var(--accent); font-weight: 500; }
+
+/* Sub-axis note on the before-after "after" side */
+.reveal .before-after .side.after .axis-sub {
+    color: var(--subtle);
+    margin-top: 10px;
+    font-size: 0.7em;
+    font-weight: 500;
+}
+
+.reveal .cols.cols-benchmark { margin-top: 24px; }
+
+.reveal .caption {
+    text-align: center;
+    font-size: 0.5em;
+    color: var(--subtle);
+    margin-top: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Equation block
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .equation-block {
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 32px 40px;
+    margin: 24px 0 16px 0;
+    text-align: center;
+    font-size: 1.05em;
+    border-left: 3px solid var(--accent);
+}
+
+.reveal .equation-legend {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 10px 24px;
+    margin-top: 14px;
+    font-size: 0.58em;
+    line-height: 1.5;
+}
+
+.reveal .equation-legend .tok {
+    font-family: "JetBrains Mono", monospace;
+    color: var(--accent);
+    font-weight: 500;
+}
+
+.reveal .equation-legend .tok-desc {
+    color: var(--muted);
+    margin-left: 8px;
+}
+
+.reveal .equation-note {
+    font-size: 0.6em;
+    color: var(--muted);
+    margin-top: 18px;
+    line-height: 1.65;
+    max-width: 78ch;
+}
+
+.reveal .equation-note strong { color: var(--ink); font-weight: 600; }
+.reveal .equation-note em     { color: var(--accent); }
+
+/* ─────────────────────────────────────────────────────────────────────
+   Semantic layer — equal-width bars, descriptions live inside each bar.
+   Swiss-grid style: strict alignment, no wrapping, generous negative space
+   between rows, graduated red encoding depth of derivation.
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .onto-funnel {
+    position: relative;
+    margin: 28px auto 0;
+    max-width: 960px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.reveal .onto-bar {
+    display: grid;
+    grid-template-columns: 40px 48px 150px 1fr;
+    column-gap: 20px;
+    align-items: center;
+    height: 56px;
+    padding: 0 28px;
+    color: white;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.reveal .onto-bar .b-tag {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6em;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.55);
+    text-transform: uppercase;
+}
+
+.reveal .onto-bar .b-count {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 1em;
+    font-weight: 500;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: rgba(255,255,255,0.95);
+    line-height: 1;
+}
+
+.reveal .onto-bar .b-name {
+    font-size: 0.82em;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: white;
+    line-height: 1;
+}
+
+.reveal .onto-bar .b-desc {
+    font-size: 0.6em;
+    font-weight: 400;
+    color: rgba(255,255,255,0.78);
+    line-height: 1.35;
+    letter-spacing: 0;
+    margin-left: 0.7em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Red gradient from deep (most-derived, L5 top) to pale (observed, L1 bottom). */
+.reveal .onto-bar.r-5 { background: #5c1414; }
+.reveal .onto-bar.r-4 { background: #782020; }
+.reveal .onto-bar.r-3 { background: #942d2d; }
+.reveal .onto-bar.r-2 { background: #af3d3d; }
+.reveal .onto-bar.r-1 { background: #c95555; }
+
+/* Axis label running down the right edge of the bar stack */
+.reveal .onto-axis {
+    position: absolute;
+    top: 0;
+    right: -72px;
+    bottom: 0;
+    width: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    font-size: 0.42em;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--subtle);
+    font-weight: 600;
+    padding: 4px 0;
+}
+
+.reveal .onto-axis .axis-line {
+    width: 1px;
+    flex: 1;
+    background: var(--rule);
+    margin: 6px 0 6px 4px;
+}
+
+/* Single sentence under the stack */
+.reveal .onto-narrative {
+    font-size: 0.6em;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 760px;
+    margin: 28px auto 0;
+    text-align: left;
+}
+
+.reveal .onto-narrative em {
+    color: var(--accent);
+    font-weight: 600;
+    font-style: normal;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Legacy pyramid (kept for backward compat, unused in current deck)
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .semantic-layer {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 36px;
+    margin-top: 24px;
+    align-items: start;
+}
+
+.reveal .level-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.reveal .level-row {
+    display: grid;
+    grid-template-columns: 140px 44px 1fr;
+    column-gap: 14px;
+    align-items: center;
+    padding: 10px 16px;
+    border-radius: 3px;
+    font-size: 0.58em;
+    line-height: 1.3;
+    color: white;
+}
+
+.reveal .level-row .level-tag {
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    font-size: 1.08em;
+    white-space: nowrap;
+}
+
+.reveal .level-row .level-count {
+    font-family: "JetBrains Mono", monospace;
+    color: rgba(255,255,255,0.85);
+    font-size: 1.7em;
+    font-weight: 600;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+.reveal .level-row .level-desc {
+    color: rgba(255,255,255,0.85);
+    font-size: 1em;
+    grid-row: 1;
+    grid-column: 3;
+}
+
+.reveal .level-row .level-ex {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.85em;
+    color: rgba(255,255,255,0.7);
+    background: none;
+    padding: 0;
+    grid-row: 2;
+    grid-column: 3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Shades of red, deepest at the top (conceptually "closer to output") */
+.reveal .level-row.lvl-5 { background: var(--accent);         margin: 0 0 0 48px; }
+.reveal .level-row.lvl-4 { background: #8f2a2a;              margin: 0 0 0 36px; }
+.reveal .level-row.lvl-3 { background: #a13636;              margin: 0 0 0 24px; }
+.reveal .level-row.lvl-2 { background: #b34545;              margin: 0 0 0 12px; }
+.reveal .level-row.lvl-1 { background: #c55757;              margin: 0; }
+
+.reveal .semantic-side {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-self: start;
+    padding-top: 8px;
+}
+
+.reveal .failure-card {
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: 3px;
+    padding: 14px 18px;
+    background: var(--bg);
+    font-size: 0.58em;
+    line-height: 1.5;
+}
+
+.reveal .failure-card .failure-head {
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.8em;
+    font-weight: 600;
+    color: var(--subtle);
+    margin-bottom: 10px;
+}
+
+.reveal .failure-card code {
+    background: var(--accent-wash);
+    color: var(--accent);
+}
+
+.reveal .failure-card em { color: var(--ink); font-weight: 500; }
+.reveal .failure-card .failure-body { color: var(--text); margin-bottom: 8px; }
+.reveal .failure-card .failure-foot { color: var(--muted); font-size: 0.95em; }
+
+.reveal .lens-block {
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: 3px;
+    padding: 14px 18px;
+    background: var(--bg);
+    font-size: 0.58em;
+    line-height: 1.55;
+}
+
+.reveal .lens-block .lens-head {
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.8em;
+    color: var(--subtle);
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.reveal .lens-block .lens-head strong {
+    color: var(--ink);
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+.reveal .lens-block .lens-list { color: var(--ink); font-weight: 500; margin-bottom: 6px; }
+.reveal .lens-block .lens-modes { color: var(--muted); font-size: 0.95em; }
+
+/* ─────────────────────────────────────────────────────────────────────
+   2×2 Quadrant
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .quadrant {
+    display: grid;
+    grid-template-columns: 30px repeat(2, 1fr);
+    grid-template-rows: auto 1fr 1fr;
+    gap: 8px;
+    margin: 24px 0;
+    font-size: 0.72em;
+    max-height: 460px;
+}
+
+.reveal .quadrant .col-head {
+    padding: 8px 10px;
+    font-weight: 600;
+    color: var(--subtle);
+    text-transform: uppercase;
+    font-size: 0.78em;
+    letter-spacing: 0.12em;
+    text-align: center;
+}
+
+.reveal .quadrant .row-head {
+    font-weight: 600;
+    color: var(--subtle);
+    text-transform: uppercase;
+    font-size: 0.78em;
+    letter-spacing: 0.12em;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    text-align: center;
+    padding: 10px 2px;
+}
+
+.reveal .quadrant .cell {
+    padding: 18px 22px;
+    background: var(--surface);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 70px;
+}
+
+.reveal .quadrant .cell .label {
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 6px;
+    font-size: 1.02em;
+    letter-spacing: -0.01em;
+}
+
+.reveal .quadrant .cell .desc {
+    color: var(--muted);
+    font-size: 0.9em;
+    line-height: 1.45;
+}
+
+.reveal .quadrant .cell.highlight {
+    background: var(--accent-mist);
+    box-shadow: inset 2px 0 0 var(--accent);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Two-column layout helper
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+}
+
+.reveal .cols-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+    align-items: start;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Callout boxes
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .callout {
+    background: var(--accent-mist);
+    border-left: 3px solid var(--accent);
+    padding: 16px 22px;
+    margin: 20px 0;
+    font-size: 0.78em;
+    border-radius: 0 4px 4px 0;
+    line-height: 1.55;
+}
+
+.reveal .callout strong { color: var(--accent); font-weight: 600; }
+
+.reveal .callout-warn {
+    background: var(--surface);
+    border-left: 3px solid var(--ink);
+    padding: 16px 22px;
+    margin: 20px 0;
+    font-size: 0.78em;
+    border-radius: 0 4px 4px 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Benchmark cards (validation setup)
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .benchmark-card {
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 24px 28px;
+    font-size: 0.78em;
+    border-left: 3px solid var(--accent);
+}
+
+.reveal .benchmark-card.blue { border-left-color: var(--accent); }
+.reveal .benchmark-card.warm { border-left-color: var(--ink); }
+
+.reveal .benchmark-card .badge {
+    font-size: 0.6em;
+    color: var(--subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.reveal .benchmark-card h3 {
+    margin: 0 0 14px 0;
+    font-size: 1.12em;
+    color: var(--ink);
+    font-weight: 600;
+}
+
+.reveal .benchmark-card p { line-height: 1.55; }
+
+.reveal .benchmark-card .map {
+    margin-top: 14px;
+    color: var(--accent);
+    font-weight: 500;
+    font-size: 0.92em;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   "What this is not" — stripped, minimal grid
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .cols-3 h4 {
+    color: var(--subtle) !important;
+    font-size: 0.5em !important;
+    margin-bottom: 0.6em;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Print mode
+   ───────────────────────────────────────────────────────────────────── */
+html.reveal-print .reveal .slides section {
+    padding: 56px 72px 72px !important;
+}
+
+html.reveal-print .reveal .slides section.section-divider {
+    padding: 72px 96px !important;
+}
+
+html.reveal-print .reveal .slides section.title-slide,
+html.reveal-print .reveal .slides section.headline-slide {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    padding: 72px 96px !important;
+}
+
+@media print {
+    .reveal .slides section { page-break-after: always; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Figure slides — prose + figure, used for the posterior-forest, the
+   stakeholder consensus, and the PPC panel.
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .figure-slide {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+    gap: 34px;
+    align-items: start;
+    margin-top: 12px;
+}
+.reveal .figure-slide .prose {
+    font-size: 0.78em;
+    line-height: 1.6;
+    color: var(--text);
+}
+.reveal .figure-slide .prose p { margin: 0 0 14px 0; }
+.reveal .figure-slide .prose p strong { color: var(--ink); font-weight: 600; }
+.reveal .figure-slide .prose p em { color: var(--accent); font-weight: 500; }
+.reveal .figure-slide .fig {
+    margin: 0;
+    padding: 0;
+}
+.reveal .figure-slide .fig img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    background: white;
+}
+.reveal .figure-slide .fig figcaption {
+    margin-top: 10px;
+    font-size: 0.58em;
+    color: var(--muted);
+    line-height: 1.5;
+}
+.reveal .figure-slide .stat-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--rule);
+}
+.reveal .figure-slide .stat-pair .tile {
+    padding: 10px 14px;
+}
+.reveal .figure-slide .stat-pair .tile-label {
+    font-size: 0.52em;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.reveal .figure-slide .stat-pair .tile-value {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 1.2em;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
+.reveal .figure-slide .stat-pair .tile-body {
+    font-size: 0.52em;
+    color: var(--muted);
+    line-height: 1.55;
+    margin-top: 4px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Consensus / contested tiles (slide 9)
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .consensus-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 14px;
+}
+.reveal .consensus-pair .ctile {
+    padding: 12px 16px;
+    border-radius: 3px;
+}
+.reveal .consensus-pair .ctile.tile-consensus {
+    background: var(--accent-mist);
+    border-left: 3px solid var(--accent);
+}
+.reveal .consensus-pair .ctile.tile-contested {
+    background: var(--surface);
+    border-left: 3px solid var(--subtle);
+}
+.reveal .consensus-pair .ctile-label {
+    font-size: 0.52em;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.reveal .consensus-pair .tile-consensus .ctile-label { color: var(--accent); }
+.reveal .consensus-pair .tile-contested .ctile-label { color: var(--muted); }
+.reveal .consensus-pair .ctile-count {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 1.15em;
+    font-weight: 500;
+    color: var(--ink);
+}
+.reveal .consensus-pair .ctile-iso {
+    font-family: var(--font-mono);
+    font-size: 0.58em;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: 0.04em;
+    margin-top: 6px;
+    line-height: 1.5;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Held-out predictive slide — a single clean stat
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .big-stat-row {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 34px;
+    align-items: center;
+    margin-top: 24px;
+}
+.reveal .big-stat-row .big-stat-val {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 4.5em;
+    color: var(--accent);
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+    font-weight: 400;
+}
+.reveal .big-stat-row .big-stat-val-unit {
+    color: var(--accent-soft);
+    font-size: 0.55em;
+    margin-left: 2px;
+}
+.reveal .big-stat-row .big-stat-body p {
+    font-size: 0.8em;
+    line-height: 1.6;
+    margin: 0 0 10px 0;
+}
+.reveal .big-stat-row .big-stat-body p strong { color: var(--ink); font-weight: 600; }
+.reveal .big-stat-row .big-stat-body p em { color: var(--accent); font-weight: 500; }
+
+/* ─────────────────────────────────────────────────────────────────────
+   Closing slide — what's next + limitations
+   ───────────────────────────────────────────────────────────────────── */
+.reveal .roadmap {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 18px;
+}
+.reveal .roadmap .step {
+    padding: 14px 16px;
+    background: var(--surface);
+    border-radius: 3px;
+    border-top: 3px solid var(--accent-soft);
+}
+.reveal .roadmap .step .num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.65em;
+    color: var(--accent);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+}
+.reveal .roadmap .step h4 {
+    font-size: 0.82em;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 0 0 8px 0;
+}
+.reveal .roadmap .step p {
+    font-size: 0.58em;
+    color: var(--text);
+    margin: 0;
+    line-height: 1.55;
+}
+.reveal .limitations {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+    font-size: 0.62em;
+    color: var(--muted);
+    line-height: 1.65;
+}
+.reveal .limitations strong { color: var(--ink); font-weight: 600; }
